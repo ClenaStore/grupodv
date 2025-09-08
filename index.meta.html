@@ -19,7 +19,6 @@
     *{box-sizing:border-box}
     body{margin:0;font-family:ui-sans-serif,Segoe UI,Roboto,Arial;background:var(--bg);color:var(--text)}
 
-    /* Header */
     header{
       position:sticky;top:0;z-index:10;
       backdrop-filter:saturate(160%) blur(8px);
@@ -40,122 +39,114 @@
     .user-menu a,.user-menu button{display:block;padding:10px 12px;border:none;background:transparent;text-align:left;width:100%;border-radius:10px;cursor:pointer;color:var(--text)}
     .user-menu a:hover,.user-menu button:hover{background:rgba(0,0,0,.06)}
 
-    /* Container tela cheia */
     .container{padding:20px;max-width:100%;margin:auto}
-
-    /* Filtros */
     .filters{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:20px;align-items:end}
     .filters label{font-weight:800;font-size:.95em;color:var(--muted);display:block;margin-bottom:6px}
     .filters select{padding:10px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--text);width:100%}
     .filters button{padding:10px 16px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--text);font-weight:800;cursor:pointer}
 
-    /* Calendário único */
     .periodo-wrap{position:relative}
     .periodo-btn{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:10px 12px;width:100%;text-align:left;cursor:pointer}
-    .calendario{position:absolute;top:100%;left:0;margin-top:8px;z-index:50;background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);width:320px;padding:12px;display:none}
-    .calendario.open{display:block}
-    .calendario table{width:100%;border-collapse:collapse;text-align:center}
-    .calendario th{padding:6px;color:var(--muted)}
-    .calendario td{padding:6px;cursor:pointer;border-radius:6px}
-    .calendario td:hover{background:var(--brand);color:#fff}
-    .calendario td.selected{background:var(--brand-2);color:#fff}
-    .calendario .footer{margin-top:8px;display:flex;justify-content:space-between}
-
-    /* Cards */
-    .metas-box{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:20px;margin-bottom:20px;box-shadow:var(--shadow)}
+    .metas-box{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:20px;margin-bottom:20px;box-shadow:var(--shadow);cursor:pointer}
     .metas-box h2{margin:0 0 10px;font-size:1.2em;color:var(--text)}
     .metas-box p{margin:5px 0;font-size:.95em}
-
-    /* Chart */
     .chart-box{background:var(--card);border-radius:12px;box-shadow:var(--shadow);padding:20px;margin-bottom:20px}
     .chart-box canvas{width:100% !important;height:300px !important}
+
+    /* Modal */
+    .modal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:1000}
+    .modal.open{display:flex}
+    .modal-card{background:var(--surface);color:var(--text);border-radius:14px;padding:20px;width:min(1000px,95%);max-height:90vh;overflow:auto;box-shadow:var(--shadow)}
+    .modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+    .close-x{cursor:pointer;font-weight:bold;font-size:20px;color:var(--muted)}
+
+    /* Loader */
+    #loader{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:2000;display:none;align-items:center;justify-content:center;color:#fff;font-size:1.4rem;font-weight:bold}
   </style>
 </head>
 <body>
-  <!-- Header -->
-  <header>
-    <div class="head-wrap">
-      <a class="brand" href="index.html">
-        <img src="https://github.com/ClenaStore/painel-principal/blob/main/img/GRUPO%20DV%20(1).png?raw=true" alt="Logo">
-        <div class="title">Metas de Receita</div>
-      </a>
-      <div class="head-spacer"></div>
-      <button id="themeToggle" class="icon-btn">🌓 Tema</button>
-      <div class="user" id="userMenu">
-        <button class="user-btn"><img src="https://github.com/ClenaStore/grupodv/blob/main/paste/Imagem%20do%20WhatsApp%20de%202025-09-08%20%C3%A0(s)%2011.54.12_884bebc9.jpg?raw=true"><strong style="font-size:13px">Leonardo</strong></button>
-        <div class="user-menu">
-          <a href="perfil.html">👤 Meu Perfil</a>
-          <button onclick="logout()">🚪 Sair</button>
-        </div>
-      </div>
-    </div>
-  </header>
-
-  <div class="container">
-    <!-- Filtros -->
-    <div class="filters">
-      <div class="periodo-wrap">
-        <label>Período:</label>
-        <button id="btnPeriodo" class="periodo-btn">📅 <span id="periodoTexto">Selecionar</span></button>
-        <div id="calendario" class="calendario">
-          <div id="mesAno" style="text-align:center;font-weight:bold;margin-bottom:8px"></div>
-          <table id="tabelaCal"></table>
-          <div class="footer">
-            <button id="cancelar">Cancelar</button>
-            <button id="aplicar">Aplicar</button>
-          </div>
-        </div>
-      </div>
-      <div>
-        <label>Empresa:</label>
-        <select id="empresaFiltro"><option value="">Todas</option></select>
-      </div>
-      <div><button id="btnWhats">📲 WhatsApp</button></div>
-    </div>
-
-    <div id="painelMetas"></div>
-
-    <div class="chart-box">
-      <h3>📈 Evolução do Faturamento</h3>
-      <canvas id="graficoFaturamento"></canvas>
+<header>
+  <div class="head-wrap">
+    <a class="brand" href="index.html"><img src="https://github.com/ClenaStore/painel-principal/blob/main/img/GRUPO%20DV%20(1).png?raw=true"><div class="title">Metas de Receita</div></a>
+    <div class="head-spacer"></div>
+    <button id="themeToggle" class="icon-btn">🌓 Tema</button>
+    <div class="user" id="userMenu">
+      <button class="user-btn"><img src="https://github.com/ClenaStore/grupodv/blob/main/paste/Imagem%20do%20WhatsApp%20de%202025-09-08%20%C3%A0(s)%2011.54.12_884bebc9.jpg?raw=true"><strong style="font-size:13px">Leonardo</strong></button>
+      <div class="user-menu"><a href="perfil.html">👤 Meu Perfil</a><button onclick="logout()">🚪 Sair</button></div>
     </div>
   </div>
+</header>
+
+<div class="container">
+  <div class="filters">
+    <div class="periodo-wrap">
+      <label>Período:</label>
+      <button id="btnPeriodo" class="periodo-btn">📅 <span id="periodoTexto"></span></button>
+    </div>
+    <div>
+      <label>Empresa:</label>
+      <select id="empresaFiltro"><option value="">Todas</option></select>
+    </div>
+    <div><button id="btnWhats">📲 WhatsApp</button></div>
+  </div>
+  <div id="painelMetas"></div>
+</div>
+
+<!-- Modal Evolução -->
+<div class="modal" id="modalEvolucao">
+  <div class="modal-card">
+    <div class="modal-header"><h3 id="tituloEvolucao"></h3><span class="close-x" onclick="fecharModal()">&times;</span></div>
+    <canvas id="graficoEvolucao"></canvas>
+  </div>
+</div>
+
+<!-- Loader -->
+<div id="loader">⏳ Carregando...</div>
 
 <script>
-const urlBase='/api/meta'; let chart;
-let inicio=null,fim=null,dataAtual=new Date();
+const urlBase='/api/meta'; let chartEvolucao=null;
+let inicio=null,fim=null;
 const BRL=v=>(+v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
 
-function renderCalendario(mes=dataAtual.getMonth(),ano=dataAtual.getFullYear()){
-  const tabela=document.getElementById("tabelaCal"); tabela.innerHTML="";
-  document.getElementById("mesAno").textContent=new Date(ano,mes).toLocaleDateString('pt-BR',{month:'long',year:'numeric'});
-  const primeiroDia=new Date(ano,mes,1).getDay(); const dias=new Date(ano,mes+1,0).getDate();
-  let row=document.createElement("tr");
-  ["D","S","T","Q","Q","S","S"].forEach(d=>{let th=document.createElement("th");th.textContent=d;row.appendChild(th);});
-  tabela.appendChild(row);
-  row=document.createElement("tr"); for(let i=0;i<primeiroDia;i++){row.appendChild(document.createElement("td"));}
-  for(let d=1;d<=dias;d++){if(row.children.length===7){tabela.appendChild(row);row=document.createElement("tr");}
-    const td=document.createElement("td"); td.textContent=d; td.onclick=()=>selecionarDia(new Date(ano,mes,d)); 
-    if(inicio&&d===inicio.getDate()&&mes===inicio.getMonth()) td.classList.add("selected");
-    if(fim&&d===fim.getDate()&&mes===fim.getMonth()) td.classList.add("selected");
-    row.appendChild(td);}
-  tabela.appendChild(row);
+function setOntem(){
+  const hoje=new Date(); hoje.setDate(hoje.getDate()-1);
+  inicio=fim=new Date(hoje);
+  document.getElementById("periodoTexto").textContent=hoje.toLocaleDateString();
 }
-function selecionarDia(data){if(!inicio||fim){inicio=data;fim=null;}else{if(data<inicio){fim=inicio;inicio=data;}else{fim=data;}} renderCalendario(data.getMonth(),data.getFullYear());}
-document.getElementById("btnPeriodo").onclick=()=>{document.getElementById("calendario").classList.toggle("open");renderCalendario();}
-document.getElementById("cancelar").onclick=()=>document.getElementById("calendario").classList.remove("open");
-document.getElementById("aplicar").onclick=()=>{if(inicio&&fim){document.getElementById("periodoTexto").textContent=`${inicio.toLocaleDateString()} → ${fim.toLocaleDateString()}`; carregarMetas();}document.getElementById("calendario").classList.remove("open");}
+setOntem();
+window.onload=()=>carregarMetas();
 
 async function carregarMetas(){
-  const painel=document.getElementById("painelMetas"); painel.innerHTML="Carregando...";
+  toggleLoader(true);
+  const painel=document.getElementById("painelMetas"); painel.innerHTML="";
   const params=new URLSearchParams();
   if(inicio) params.append("dataInicio",inicio.toISOString().split('T')[0]);
   if(fim) params.append("dataFim",fim.toISOString().split('T')[0]);
   try{
     const r=await fetch(`${urlBase}?${params.toString()}`); const metas=await r.json();
-    painel.innerHTML=""; metas.forEach(linha=>{const div=document.createElement("div"); div.className="metas-box"; div.innerHTML=`<h2>${linha.Empresa}</h2><p>💰 Previsto: ${BRL(linha.Previsto)}</p><p>✅ Realizado: ${BRL(linha.Realizado)}</p>`; painel.appendChild(div);});
-  }catch(e){painel.innerHTML="Erro.";}
+    if(!metas.length){painel.innerHTML="<p style='text-align:center'>Nenhum dado.</p>";toggleLoader(false);return;}
+    const empresas=[...new Set(metas.map(m=>m.Empresa))];
+    const select=document.getElementById("empresaFiltro");
+    if(select.options.length<=1){empresas.forEach(e=>{let opt=document.createElement("option");opt.value=e;opt.textContent=e;select.appendChild(opt);});}
+    metas.forEach(linha=>{
+      const div=document.createElement("div"); div.className="metas-box";
+      div.innerHTML=`<h2>${linha.Empresa}</h2><p>💰 Previsto: ${BRL(linha.Previsto)}</p><p>✅ Realizado: ${BRL(linha.Realizado)}</p>`;
+      div.onclick=()=>abrirEvolucao(linha.Empresa);
+      painel.appendChild(div);
+    });
+  }catch(e){console.error(e);painel.innerHTML="Erro ao carregar";}
+  toggleLoader(false);
 }
+
+function abrirEvolucao(empresa){
+  document.getElementById("modalEvolucao").classList.add("open");
+  document.getElementById("tituloEvolucao").textContent=`Evolução - ${empresa}`;
+  const ctx=document.getElementById("graficoEvolucao").getContext("2d");
+  if(chartEvolucao){chartEvolucao.destroy();}
+  chartEvolucao=new Chart(ctx,{type:'line',data:{labels:["01","05","10","15","20","25","30"],datasets:[{label:"Faturamento",data:[10,20,15,25,40,60,80],borderColor:'#60a5fa',fill:false,tension:.3}]},options:{responsive:true}});
+}
+function fecharModal(){document.getElementById("modalEvolucao").classList.remove("open");if(chartEvolucao){chartEvolucao.destroy();chartEvolucao=null;}}
+function toggleLoader(show){document.getElementById("loader").style.display=show?"flex":"none";}
 function logout(){localStorage.removeItem('dv_pwd');location.reload();}
 </script>
 </body>
