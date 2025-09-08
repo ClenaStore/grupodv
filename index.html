@@ -1,314 +1,485 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-BR" data-theme="light">
 <head>
   <meta charset="UTF-8">
   <title>Análise Financeira</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
   <style>
-    body {
-      margin: 0;
-      font-family: 'Segoe UI', sans-serif;
-      background-color: white;
+    :root{
+      --bg: #0b1020;
+      --surface: #10172a;
+      --card: #0f172a;
+      --text: #e5e7eb;
+      --muted: #94a3b8;
+      --line: rgba(148,163,184,.25);
+      --brand: #60a5fa;
+      --brand-2: #22d3ee;
+      --ring: rgba(99,102,241,.35);
+      --shadow: 0 20px 60px rgba(2,6,23,.35);
+      --chip-bg:#0b1220;
+      --chip-active:#111827;
+      --chip-text:#cbd5e1;
+      --icon-bg: rgba(255,255,255,.06);
+      --grad: linear-gradient(135deg, var(--brand), var(--brand-2));
+    }
+    /* Tema claro */
+    [data-theme="light"]{
+      --bg: #f6f7fb;
+      --surface: #ffffff;
+      --card: #ffffff;
+      --text: #0f172a;
+      --muted: #475569;
+      --line: #e5e7eb;
+      --chip-bg:#eef2ff;
+      --chip-active:#1f2937;
+      --chip-text:#111827;
+      --icon-bg: rgba(2,6,23,.06);
+      --shadow: 0 16px 36px rgba(15,23,42,.08);
     }
 
-    #splash {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      background: white;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 9999;
-      transition: opacity 0.5s ease;
+    *{ box-sizing:border-box }
+    html,body{ height:100% }
+    body{
+      margin:0;
+      font-family: ui-sans-serif, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
     }
 
-    #splash img {
-      width: 150px;
-      animation: pulse 1.5s infinite;
+    /* Splash */
+    #splash{
+      position: fixed; inset:0; z-index: 9999;
+      display:flex; align-items:center; justify-content:center;
+      background: var(--bg);
+      transition: opacity .5s ease;
+    }
+    #splash .logo{
+      width: 120px; height: 120px; border-radius: 24px;
+      background: var(--grad);
+      display:grid; place-items:center;
+      box-shadow: var(--shadow);
+      animation: pop 1.2s ease infinite alternate;
+    }
+    #splash img{ width: 68px; filter: drop-shadow(0 2px 10px rgba(0,0,0,.3)); }
+    @keyframes pop{ to{ transform: translateY(-6px) scale(1.02); } }
+
+    /* Header */
+    header{
+      position: sticky; top:0; z-index: 50;
+      backdrop-filter: saturate(160%) blur(8px);
+      background: color-mix(in srgb, var(--surface) 80%, transparent);
+      border-bottom: 1px solid var(--line);
+    }
+    .head-wrap{
+      max-width: 1200px; margin: 0 auto; padding: 14px 18px;
+      display:flex; align-items:center; gap:12px;
+    }
+    .brand{
+      display:flex; align-items:center; gap:10px; text-decoration:none; color:inherit;
+    }
+    .brand img{ height:42px }
+    .title{
+      font-weight: 800; letter-spacing:.2px;
+      font-size: clamp(18px, 1.6vw, 22px);
+    }
+    .head-spacer{ flex:1 }
+    .head-actions{ display:flex; align-items:center; gap:10px }
+
+    .icon-btn{
+      border:1px solid var(--line); background: var(--surface);
+      color: var(--text); padding:10px 12px; border-radius: 12px;
+      font-weight:800; cursor:pointer; transition:.2s transform, .2s box-shadow;
+      text-decoration:none; display:inline-flex; align-items:center; gap:8px;
+    }
+    .icon-btn:hover{ transform: translateY(-2px); box-shadow: var(--shadow) }
+
+    /* User menu */
+    .user{
+      position: relative;
+    }
+    .user-btn{
+      display:flex; align-items:center; gap:10px; cursor:pointer;
+      border:1px solid var(--line); background: var(--surface);
+      padding:6px 8px; border-radius: 999px;
+    }
+    .user-btn img{
+      width:34px; height:34px; border-radius:50%; object-fit:cover;
+      background: var(--icon-bg);
+    }
+    .user-menu{
+      position:absolute; right:0; top:110%;
+      background: var(--surface); border:1px solid var(--line);
+      border-radius:12px; box-shadow: var(--shadow); min-width:200px;
+      padding:6px; display:none;
+    }
+    .user.open .user-menu{ display:block }
+    .user-menu a, .user-menu button{
+      display:flex; width:100%; background:transparent; color:var(--text);
+      border:none; text-align:left; padding:10px 12px; border-radius:10px; cursor:pointer;
+      text-decoration:none; font-weight:600;
+    }
+    .user-menu a:hover, .user-menu button:hover{ background: var(--icon-bg) }
+
+    /* Hero / filtros */
+    .hero{
+      max-width:1200px; margin:16px auto 0; padding: 0 18px 18px;
+    }
+    .hero h2{ margin:8px 0 12px; font-size: clamp(18px,1.4vw,20px); color: var(--muted) }
+    .tools{
+      display:flex; gap:10px; flex-wrap:wrap; align-items:center;
+    }
+    .search{
+      flex:1; position:relative;
+    }
+    .search input{
+      width:100%; border:1px solid var(--line); background: var(--surface);
+      color: var(--text); border-radius:12px; padding:12px 14px 12px 40px; outline:none;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.04);
+    }
+    .search .magnify{
+      position:absolute; left:12px; top:50%; transform: translateY(-50%); opacity:.6;
+    }
+    .chips{ display:flex; gap:8px; flex-wrap:wrap }
+    .chip{
+      border:1px solid var(--line); background: var(--chip-bg); color: var(--chip-text);
+      padding:8px 12px; border-radius:999px; font-weight:700; cursor:pointer; user-select:none;
+    }
+    .chip.active{ background: var(--grad); color:#fff; border-color:transparent }
+
+    /* Grid de cards */
+    .grid{
+      max-width:1200px; margin: 6px auto 28px; padding: 0 18px;
+      display:grid; gap:14px;
+      grid-template-columns: repeat(12, minmax(0,1fr));
+    }
+    /* responsivo */
+    @media (max-width: 1160px){ .grid{ grid-template-columns: repeat(8, 1fr); } }
+    @media (max-width: 760px){ .grid{ grid-template-columns: repeat(4, 1fr); } }
+
+    .section-title{
+      grid-column: 1 / -1; margin: 18px 0 6px; color: var(--muted); font-weight:800;
+      letter-spacing:.2px;
+    }
+    .card{
+      grid-column: span 3 / span 3;
+      background: var(--card);
+      border:1px solid var(--line);
+      border-radius:16px; text-decoration:none; color:inherit;
+      padding:16px; display:flex; gap:12px; align-items:center;
+      transition:.15s transform, .15s box-shadow, .15s border-color;
+      position:relative; overflow:hidden;
+    }
+    @media (max-width: 1160px){ .card{ grid-column: span 4 / span 4; } }
+    @media (max-width: 760px){ .card{ grid-column: span 4 / span 4; } }
+
+    .card::before{
+      content:""; position:absolute; inset:0 0 auto 0; height:4px;
+      background: var(--grad); opacity:.9;
+    }
+    .card:hover{ transform: translateY(-4px); box-shadow: var(--shadow); border-color: transparent; }
+    .card .icon{
+      width:46px; height:46px; border-radius:12px; display:grid; place-items:center;
+      background: var(--icon-bg); font-size:22px; font-weight:800;
+    }
+    .card h3{ margin:0 0 3px; font-size:16px }
+    .card p{ margin:0; color: var(--muted); font-size:13px }
+    .badge{
+      position:absolute; right:12px; top:12px; font-size:11px; font-weight:800;
+      padding:4px 8px; border-radius:999px; border:1px solid var(--line); color: var(--muted);
+      background: color-mix(in srgb, var(--surface) 90%, transparent);
     }
 
-    @keyframes pulse {
-      0% { transform: scale(1); opacity: 1; }
-      50% { transform: scale(1.05); opacity: 0.9; }
-      100% { transform: scale(1); opacity: 1; }
-    }
-
-    header {
-      background-color: white;
-      color: #2c3e50;
-      padding: 20px 40px;
-      display: flex;
-      align-items: center;
-      border-bottom: 1px solid #ccc;
-    }
-
-    .logo-left {
-      flex: 1;
-      display: flex;
-      align-items: center;
-    }
-
-    .logo-left img {
-      height: 60px;
-    }
-.user-profile {
-  display: inline-block;
-  margin-left: 15px;
-}
-
-.user-profile img {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 2px solid #ccc;
-  transition: transform 0.2s ease;
-}
-
-.user-profile img:hover {
-  transform: scale(1.1);
-  border-color: #2980b9;
-}
-
-    .title-left {
-  flex: 2;
-  text-align: left;
-}
-
-.title-left h1 {
-  font-size: 24px;
-  margin: 0;
-  font-weight: bold;
-}
-
-
-    .spacer {
-      flex: 1;
-      display: flex;
-      justify-content: flex-end;
-    }
-
-    .relatorio-link {
-      text-decoration: none;
-      font-size: 22px;
-      opacity: 0.5;
-      cursor: pointer;
-      transition: opacity 0.3s;
-    }
-
-    .relatorio-link:hover {
-      opacity: 1;
-    }
-
-    .container {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 20px;
-      padding: 30px;
-      max-width: 1200px;
-      margin: auto;
-    }
-
-    .card {
-      background: white;
-      border-radius: 12px;
-      padding: 30px 20px;
-      text-align: center;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-      transition: transform 0.2s ease;
-      text-decoration: none;
-      color: inherit;
-    }
-
-    .card:hover {
-      transform: translateY(-5px);
-      background-color: #f0f8ff;
-    }
-
-    .card h2 {
-      margin: 0;
-      font-size: 20px;
-      color: #2c3e50;
-    }
-
-    .icon {
-      font-size: 40px;
-      color: #2980b9;
-      margin-bottom: 10px;
-    }
-
-    @media (max-width: 500px) {
-  header {
-    flex-direction: column;
-    text-align: center;
-    position: relative;
-  }
-
-  .logo-left {
-    display: none;
-  }
-
-  .title-center {
-    flex: none;
-    width: 100%;
-  }
-
-  .spacer {
-    position: absolute;
-    top: 10px;
-    right: 20px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-
-  .card h2 {
-    font-size: 18px;
-  }
-
-  .icon {
-    font-size: 32px;
-  }
-
-      .card h2 {
-        font-size: 18px;
-      }
-
-      .icon {
-        font-size: 32px;
-      }
+    /* Footer */
+    footer{
+      max-width:1200px; margin: 10px auto 30px; padding: 0 18px;
+      color: var(--muted); font-size:12px; display:flex; justify-content:space-between; gap:12px;
+      border-top:1px dashed var(--line); padding-top:12px;
     }
   </style>
-<script>
-(function(){
-  const KEY_NAME = 'dv_pwd';
-  async function ensurePassword(){
-    let pwd = localStorage.getItem(KEY_NAME) || '';
-    while(!pwd){
-      pwd = prompt('Digite a senha de acesso:') || '';
-      if(!pwd) continue;
-      try{
-        const r = await fetch('/api/ping', {headers:{'x-api-key': pwd }});
-        if(r.ok){
+
+  <!-- Proteção por senha + interceptador de fetch -->
+  <script>
+  (function(){
+    const KEY_NAME = 'dv_pwd';
+
+    // tema salvo
+    const savedTheme = localStorage.getItem('dv_theme');
+    if(savedTheme){ document.documentElement.setAttribute('data-theme', savedTheme); }
+
+    async function ensurePassword(){
+      let pwd = localStorage.getItem(KEY_NAME) || '';
+      while(!pwd){
+        pwd = prompt('Digite a senha de acesso:') || '';
+        if(!pwd) continue;
+        try{
+          const r = await fetch('/api/ping', { headers:{ 'x-api-key': pwd } });
+          if(r.ok){
+            localStorage.setItem(KEY_NAME, pwd);
+            break;
+          }else{
+            alert('Senha incorreta.');
+            pwd = '';
+          }
+        }catch(e){
+          // se não deu pra validar agora, ainda salva e segue
           localStorage.setItem(KEY_NAME, pwd);
           break;
-        }else{
-          alert('Senha incorreta.');
-          pwd = '';
         }
-      }catch(e){
-        // se não der pra validar agora, ainda assim salva e segue
-        localStorage.setItem(KEY_NAME, pwd);
-        break;
       }
     }
-  }
 
-  // intercepta fetch para anexar a senha automaticamente
-  const _fetch = window.fetch.bind(window);
-  window.fetch = (input, init={})=>{
-    let url = (typeof input === 'string') ? input : (input && input.url) || '';
-    init = init || {};
-    const headers = new Headers(init.headers || ((typeof input !== 'string' && input.headers) || {}));
-    const pwd = localStorage.getItem(KEY_NAME) || '';
-    if(url.startsWith('/api/')){
-      if(pwd) headers.set('x-api-key', pwd);
-    }
-    return _fetch(input, Object.assign({}, init, { headers }));
-  };
+    // intercepta fetch para anexar a senha
+    const _fetch = window.fetch.bind(window);
+    window.fetch = (input, init={})=>{
+      let url = (typeof input === 'string') ? input : (input && input.url) || '';
+      init = init || {};
+      const headers = new Headers(init.headers || ((typeof input !== 'string' && input.headers) || {}));
+      const pwd = localStorage.getItem(KEY_NAME) || '';
+      if(url.startsWith('/api/') && pwd){ headers.set('x-api-key', pwd); }
+      return _fetch(input, Object.assign({}, init, { headers }));
+    };
 
-  // pede a senha apenas se ainda não houver
-  if(!localStorage.getItem(KEY_NAME)){
-    ensurePassword();
-  }
-})();
-</script>
+    if(!localStorage.getItem(KEY_NAME)){ ensurePassword(); }
+    window.__DV_PWD_KEY__ = KEY_NAME;
+  })();
+  </script>
 </head>
 <body>
 
   <!-- Splash -->
-  <div id="splash">
-    <img src="https://github.com/ClenaStore/painel-principal/blob/main/img/GRUPO%20DV%20(1).png?raw=true" alt="Logo CB Systems">
-  </div>
-
-  <!-- Cabeçalho -->
-  <header>
-    <div class="logo-left">
+  <div id="splash" aria-hidden="true">
+    <div class="logo">
       <img src="https://github.com/ClenaStore/painel-principal/blob/main/img/GRUPO%20DV%20(1).png?raw=true" alt="Logo">
     </div>
-    <div class="title-center">
-      <h1>Análise Financeira</h1>
-    </div>
-    <div class="spacer">
-  <a href="index.relatorios.html" class="relatorio-link" title="Relatório Consolidado">📄</a>
-  <a href="perfil.html" title="Perfil do Usuário" class="user-profile">
-    <img src="https://github.com/ClenaStore/grupodv/blob/main/paste/Imagem%20do%20WhatsApp%20de%202025-09-08%20%C3%A0(s)%2011.54.12_884bebc9.jpg?raw=true" alt="Usuário" />
-  </a>
-</div>
-
-  </header>
-
-  <!-- Cards -->
-  <div class="container">
-    <a class="card" href="index.resumofinanceiro.html">
-      <div class="icon">📈</div>
-      <h2>Resumo Financeiro</h2>
-    </a>
-
-    <a class="card" href="index.cancelamentos.html">
-      <div class="icon">❌</div>
-      <h2>Cancelamentos</h2>
-    </a>
-
-    <a class="card" href="index.delivery.html">
-      <div class="icon">🚚</div>
-      <h2>Vendas Delivery</h2>
-    </a>
-
-    <a class="card" href="index.meta.html">
-      <div class="icon">📊</div>
-      <h2>Meta de Faturamento</h2>
-    </a>
-   <a class="card" href="index.travas.html">
-      <div class="icon">🔒</div>
-      <h2>Travas</h2>
-    </a>
-    <a class="card" href="index.conciliacao.html">
-      <div class="icon">💳</div>
-      <h2>Conciliações</h2>
-    </a>
-
-   <a class="card" href="index.couvert.html">
-      <div class="icon">🎤</div>
-      <h2>Couvert</h2>
-    </a>
-  <a class="card" href="index.abc.html">
-      <div class="icon">ABC</div>
-      <h2>ABC de Vendas</h2>
-    </a>
-  <a class="card" href="index.avaliacoes.html">
-      <div class="icon">🔎</div>
-      <h2>Pesquisa de satisfação</h2>
-    </a>
-  <a class="card" href="index.reservas.html">
-      <div class="icon">🗓️</div>
-      <h2>Reservas Mercatto</h2>
-    </a>
   </div>
 
-  <!-- Script splash -->
+  <!-- Header -->
+  <header>
+    <div class="head-wrap">
+      <a class="brand" href="index.html" aria-label="Início">
+        <img src="https://github.com/ClenaStore/painel-principal/blob/main/img/GRUPO%20DV%20(1).png?raw=true" alt="Logo">
+        <div class="title">Análise Financeira</div>
+      </a>
+      <div class="head-spacer"></div>
+
+      <a class="icon-btn" href="index.relatorios.html" title="Relatório Consolidado">📄 Relatórios</a>
+
+      <button id="themeToggle" class="icon-btn" type="button" title="Alternar tema">🌓 Tema</button>
+
+      <div class="user" id="userMenu">
+        <button class="user-btn" type="button" title="Perfil">
+          <img src="https://github.com/ClenaStore/grupodv/blob/main/paste/Imagem%20do%20WhatsApp%20de%202025-09-08%20%C3%A0(s)%2011.54.12_884bebc9.jpg?raw=true" alt="Usuário">
+          <strong style="font-size:13px">Leonardo</strong>
+        </button>
+        <div class="user-menu">
+          <a href="perfil.html">👤 Meu Perfil</a>
+          <button onclick="handleLogout()">🚪 Sair</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero / Filtros -->
+  <section class="hero">
+    <h2>Selecione um painel ou filtre pelo nome</h2>
+    <div class="tools">
+      <div class="search" style="min-width:240px">
+        <span class="magnify">🔎</span>
+        <input id="searchInput" type="search" placeholder="Buscar (atalho: / )" autocomplete="off" />
+      </div>
+      <div class="chips" id="chips">
+        <span class="chip active" data-cat="all">Todos</span>
+        <span class="chip" data-cat="financeiro">Financeiro</span>
+        <span class="chip" data-cat="vendas">Vendas</span>
+        <span class="chip" data-cat="operacoes">Operações</span>
+        <span class="chip" data-cat="qualidade">Qualidade</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Grid -->
+  <main class="grid" id="grid">
+
+    <!-- Financeiro -->
+    <div class="section-title">Financeiro</div>
+    <a class="card" data-cat="financeiro" data-title="resumo financeiro" href="index.resumofinanceiro.html" aria-label="Resumo Financeiro">
+      <div class="icon">📈</div>
+      <div>
+        <h3>Resumo Financeiro</h3>
+        <p>Entradas por categoria, consolidação diária e WhatsApp</p>
+      </div>
+      <span class="badge">Financeiro</span>
+    </a>
+
+    <a class="card" data-cat="financeiro" data-title="conciliações cartões conciliaçao conciliacao" href="index.conciliacao.html" aria-label="Conciliações">
+      <div class="icon">💳</div>
+      <div>
+        <h3>Conciliações</h3>
+        <p>Comparativo de recebíveis e bandeiras</p>
+      </div>
+      <span class="badge">Financeiro</span>
+    </a>
+
+    <a class="card" data-cat="financeiro" data-title="meta faturamento metas" href="index.meta.html" aria-label="Meta de Faturamento">
+      <div class="icon">🎯</div>
+      <div>
+        <h3>Meta de Faturamento</h3>
+        <p>Acompanhamento mensal por loja</p>
+      </div>
+      <span class="badge">Financeiro</span>
+    </a>
+
+    <!-- Vendas -->
+    <div class="section-title">Vendas</div>
+    <a class="card" data-cat="vendas" data-title="delivery vendas ifood much" href="index.delivery.html" aria-label="Vendas Delivery">
+      <div class="icon">🚚</div>
+      <div>
+        <h3>Vendas Delivery</h3>
+        <p>Performance por canal e período</p>
+      </div>
+      <span class="badge">Vendas</span>
+    </a>
+
+    <a class="card" data-cat="vendas" data-title="abc vendas pareto" href="index.abc.html" aria-label="ABC de Vendas">
+      <div class="icon">🅰️🅱️</div>
+      <div>
+        <h3>ABC de Vendas</h3>
+        <p>Itens classe A/B/C e evolução</p>
+      </div>
+      <span class="badge">Vendas</span>
+    </a>
+
+    <!-- Operações -->
+    <div class="section-title">Operações</div>
+    <a class="card" data-cat="operacoes" data-title="travas bloqueios comparações" href="index.travas.html" aria-label="Travas">
+      <div class="icon">🔒</div>
+      <div>
+        <h3>Travas</h3>
+        <p>Regras e bloqueios operacionais</p>
+      </div>
+      <span class="badge">Operações</span>
+    </a>
+
+    <a class="card" data-cat="operacoes" data-title="couvert arrecadação pagamentos" href="index.couvert.html" aria-label="Couvert">
+      <div class="icon">🎤</div>
+      <div>
+        <h3>Couvert</h3>
+        <p>Arrecadação x pagamentos, histórico e a pagar</p>
+      </div>
+      <span class="badge">Operações</span>
+    </a>
+
+    <a class="card" data-cat="operacoes" data-title="reservas mercatto" href="index.reservas.html" aria-label="Reservas Mercatto">
+      <div class="icon">🗓️</div>
+      <div>
+        <h3>Reservas Mercatto</h3>
+        <p>Agenda e capacidade</p>
+      </div>
+      <span class="badge">Operações</span>
+    </a>
+
+    <!-- Qualidade -->
+    <div class="section-title">Qualidade</div>
+    <a class="card" data-cat="qualidade" data-title="cancelamentos" href="index.cancelamentos.html" aria-label="Cancelamentos">
+      <div class="icon">❌</div>
+      <div>
+        <h3>Cancelamentos</h3>
+        <p>Motivos e impacto no período</p>
+      </div>
+      <span class="badge">Qualidade</span>
+    </a>
+
+    <a class="card" data-cat="qualidade" data-title="pesquisa satisfação avaliações" href="index.avaliacoes.html" aria-label="Pesquisa de satisfação">
+      <div class="icon">🔎</div>
+      <div>
+        <h3>Pesquisa de satisfação</h3>
+        <p>Notas, comentários e tendências</p>
+      </div>
+      <span class="badge">Qualidade</span>
+    </a>
+  </main>
+
+  <footer>
+    <div>© Grupo DV • Painel</div>
+    <div>Atalho: pressione <strong>/</strong> para buscar</div>
+  </footer>
+
   <script>
+    // Splash
     window.addEventListener('load', () => {
       const splash = document.getElementById('splash');
       setTimeout(() => {
         splash.style.opacity = '0';
         setTimeout(() => splash.style.display = 'none', 500);
-      }, 1000);
+      }, 900);
     });
-  </script>
 
+    // Busca e filtros
+    const searchInput = document.getElementById('searchInput');
+    const chips = document.getElementById('chips');
+    const cards = Array.from(document.querySelectorAll('.card'));
+    let activeCat = 'all';
+
+    function applyFilters(){
+      const q = (searchInput.value || '').toLowerCase().trim();
+      cards.forEach(card=>{
+        const cat = card.getAttribute('data-cat');
+        const text = (card.getAttribute('data-title') || '').toLowerCase();
+        const matchCat = (activeCat==='all') || (cat===activeCat);
+        const matchText = !q || text.includes(q);
+        card.style.display = (matchCat && matchText) ? '' : 'none';
+      });
+    }
+
+    chips.addEventListener('click', (e)=>{
+      const chip = e.target.closest('.chip');
+      if(!chip) return;
+      chips.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));
+      chip.classList.add('active');
+      activeCat = chip.getAttribute('data-cat');
+      applyFilters();
+    });
+
+    searchInput.addEventListener('input', applyFilters);
+
+    // Atalho: "/" foca na busca
+    window.addEventListener('keydown', (e)=>{
+      if(e.key === '/' && document.activeElement !== searchInput){
+        e.preventDefault(); searchInput.focus();
+      }
+    });
+
+    // Tema (toggle)
+    const themeBtn = document.getElementById('themeToggle');
+    function toggleTheme(){
+      const cur = document.documentElement.getAttribute('data-theme') || 'light';
+      const next = (cur==='light') ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('dv_theme', next);
+      themeBtn.textContent = '🌓 Tema';
+    }
+    themeBtn.addEventListener('click', toggleTheme);
+
+    // Menu usuário
+    const user = document.getElementById('userMenu');
+    user.querySelector('.user-btn').addEventListener('click', ()=>{
+      user.classList.toggle('open');
+    });
+    window.addEventListener('click', (e)=>{
+      if(!user.contains(e.target)) user.classList.remove('open');
+    });
+
+    // Logout limpa a senha e recarrega
+    function handleLogout(){
+      try{
+        localStorage.removeItem('dv_pwd');
+        // opcional: limpar demais chaves do app
+        // Object.keys(localStorage).forEach(k=>/^dv_/i.test(k)&&localStorage.removeItem(k));
+      }catch(e){}
+      location.reload();
+    }
+    window.handleLogout = handleLogout;
+  </script>
 </body>
 </html>
