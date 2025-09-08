@@ -359,7 +359,10 @@ function isMonthClosed(){
 /* ---------- Página ---------- */
 function formatarNumero(v){ return (Number(v)||0).toLocaleString('pt-BR',{minimumFractionDigits:2}); }
 function formatarDataBR(iso){ const [y,m,d]=iso.split('-'); return `${d}/${m}/${y}`; }
-function daysInMonth(d){ return new Date(d.getFullYear(), d.getMonth()+1, 0).getDate(); }
+  
+function daysInMonth(d){ 
+  return new Date(d.getFullYear(), d.getMonth()+1, 0).getDate(); 
+}
 
 async function carregarMetas(){
   showLoading(true);
@@ -374,19 +377,16 @@ async function carregarMetas(){
     const rsp = await fetch(`${urlBase}?${params.toString()}`);
     const metas = await rsp.json();
 
-    // popular empresas
-    const select = $$('#empresaFiltro');
-    if(select.options.length<=1){
-      [...new Set(metas.map(m=>m.Empresa))].sort().forEach(e=>{
-        const o=document.createElement('option'); o.value=e; o.textContent=e; select.appendChild(o);
-      });
-    }
-
     if(!metas.length){
       painel.innerHTML = `<p style="text-align:center; color:var(--muted)">Nenhum dado encontrado.</p>`;
       hideGrafico();
       return;
     }
+
+    // total de dias do mês e dias corridos até a data final do filtro
+    const end = range.end || new Date();
+    const totalDiasMes = daysInMonth(end);
+    const diasCorridos = end.getDate();
 
     // Agrupar por empresa
     const porEmpresa = new Map();
@@ -394,60 +394,48 @@ async function carregarMetas(){
       const emp = r.Empresa;
       const real = toNum(r.Realizado);
       const prev = toNum(r.Previsto);
-      const data = r.Data;
-      if(!porEmpresa.has(emp)) porEmpresa.set(emp, {empresa:emp, realizado:0, prevHistory:[], rows:[]});
+      if(!porEmpresa.has(emp)) porEmpresa.set(emp, {empresa:emp, realizado:0, previsto:prev});
       const agg = porEmpresa.get(emp);
       agg.realizado += real;
-      agg.prevHistory.push({data, prev});
-      agg.rows.push({data, real});
+      agg.previsto = prev; // último previsto
     });
 
     const monthClosed = isMonthClosed();
-    const diasPeriodo = Math.floor((strip(range.end)-strip(range.start))/(1000*60*60*24)) + 1;
-    const totalDiasMes = daysInMonth(range.end);
 
     // Render cards
     [...porEmpresa.values()].sort((a,b)=> a.empresa.localeCompare(b.empresa)).forEach(agg=>{
-      // pegar a meta prevista do período (último informado)
-      agg.prevHistory.sort((a,b)=> new Date(a.data)-new Date(b.data));
-      const previsto = agg.prevHistory.length ? agg.prevHistory[agg.prevHistory.length-1].prev : 0;
-      const realizado = agg.realizado;
+      const {empresa, realizado, previsto} = agg;
       const atingido = previsto>0 ? (realizado/previsto)*100 : 0;
-      const mediaDiaria = realizado / Math.max(1, diasPeriodo);
-      const previsaoFinal = mediaDiaria * totalDiasMes;
+      const mediaDiaria = realizado / Math.max(1, diasCorridos); // CORRIGIDO
+      const previsaoFinal = mediaDiaria * totalDiasMes;           // CORRIGIDO
       const previsaoPercentual = previsto>0 ? (previsaoFinal/previsto)*100 : 0;
 
       const ok = realizado >= previsto;
       const div = document.createElement('div');
       div.className = `metas-box tooltip ${monthClosed ? (ok ? 'ok' : 'bad') : ''}`;
       div.setAttribute('data-tip', `Realizado: R$ ${formatarNumero(realizado)}`);
-      div.title = `Realizado: R$ ${formatarNumero(realizado)}`;
-
       div.innerHTML = `
-        <h2>${agg.empresa}</h2>
+        <h2>${empresa}</h2>
         <p>💰 Previsto: R$ ${formatarNumero(previsto)}</p>
         <p>✅ Realizado: <strong>R$ ${formatarNumero(realizado)}</strong></p>
         <p>📊 Atingido: ${formatarNumero(atingido)}%</p>
         <p>📅 Média/dia: R$ ${formatarNumero(mediaDiaria)}</p>
         <p>📈 Prev. mês: R$ ${formatarNumero(previsaoFinal)} (${formatarNumero(previsaoPercentual)}%)</p>
       `;
-      div.addEventListener('click', ()=>abrirEvolucaoEmpresa(agg.empresa));
+      div.addEventListener('click', ()=>abrirEvolucaoEmpresa(empresa));
       painel.appendChild(div);
     });
 
-    if(empresaSel){
-      mostrarGrafico(metas);
-    }else{
-      hideGrafico();
-    }
+    if(empresaSel) mostrarGrafico(metas); else hideGrafico();
   }catch(e){
     console.error(e);
-    $$('#painelMetas').innerHTML = `<p style="text-align:center; color:var(--muted)">Erro ao carregar dados.</p>`;
+    painel.innerHTML = `<p style="text-align:center; color:var(--muted)">Erro ao carregar dados.</p>`;
     hideGrafico();
   }finally{
     showLoading(false);
   }
 }
+
 
 function mostrarGrafico(metas){
   $$('#graficoContainer').style.display='block';
