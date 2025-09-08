@@ -1,524 +1,193 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-BR" data-theme="light">
 <head>
   <meta charset="UTF-8" />
-  <title>Metas de Receita - Grupo DV</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Metas de Receita - Grupo DV</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     :root{
-      --bg:#f7f7f7; --card:#fff; --line:#e5e7eb; --text:#0f172a;
-      --muted:#475569; --shadow:0 6px 18px rgba(0,0,0,.06);
-      --accent:#1e1e2f; --accent-2:#111827; --brand:#2563eb;
+      --bg: #0b1020; --surface:#10172a; --card:#0f172a;
+      --text:#e5e7eb; --muted:#94a3b8; --line:rgba(148,163,184,.25);
+      --brand:#60a5fa; --brand-2:#22d3ee;
+      --shadow:0 20px 60px rgba(2,6,23,.35);
     }
-    *{ box-sizing:border-box }
-    html,body{ height:100% }
-    body{ margin:0; font-family: Arial, sans-serif; background:var(--bg); color:var(--text); }
+    [data-theme="light"]{
+      --bg:#f6f7fb; --surface:#fff; --card:#fff;
+      --text:#0f172a; --muted:#475569; --line:#e5e7eb;
+      --shadow:0 16px 36px rgba(15,23,42,.08);
+    }
+    *{box-sizing:border-box}
+    body{margin:0; font-family:ui-sans-serif,Segoe UI,Roboto,Arial; background:var(--bg); color:var(--text)}
 
+    /* Header */
     header{
-      background:#fff; padding:12px 20px; display:flex; align-items:center; gap:16px;
-      border-bottom:1px solid #ccc; position:sticky; top:0; z-index:10;
+      position:sticky; top:0; z-index:10;
+      backdrop-filter:saturate(160%) blur(8px);
+      background:color-mix(in srgb,var(--surface) 80%,transparent);
+      border-bottom:1px solid var(--line);
     }
-    header img{ height:50px }
-    header h1{ margin:0 auto; font-size:1.6em; font-weight:bold; text-align:center; flex:1 }
+    .head-wrap{
+      max-width:1200px; margin:0 auto; padding:14px 18px;
+      display:flex; align-items:center; gap:12px;
+    }
+    .brand{display:flex; align-items:center; gap:10px; text-decoration:none; color:inherit}
+    .brand img{height:42px}
+    .title{font-weight:800; font-size:clamp(18px,1.6vw,22px)}
+    .head-spacer{flex:1}
+    .icon-btn{
+      border:1px solid var(--line); background:var(--surface);
+      color:var(--text); padding:10px 12px; border-radius:12px;
+      font-weight:800; cursor:pointer; display:inline-flex; gap:6px;
+    }
+    .user{position:relative}
+    .user-btn{
+      display:flex; align-items:center; gap:10px; cursor:pointer;
+      border:1px solid var(--line); background:var(--surface);
+      padding:6px 8px; border-radius:999px;
+    }
+    .user-btn img{width:34px; height:34px; border-radius:50%}
+    .user-menu{
+      position:absolute; right:0; top:110%; background:var(--surface);
+      border:1px solid var(--line); border-radius:12px; box-shadow:var(--shadow);
+      min-width:200px; padding:6px; display:none;
+    }
+    .user.open .user-menu{display:block}
+    .user-menu a, .user-menu button{
+      display:block; padding:10px 12px; border:none; background:transparent;
+      text-align:left; width:100%; border-radius:10px; cursor:pointer; color:var(--text);
+    }
+    .user-menu a:hover, .user-menu button:hover{background:rgba(0,0,0,.06)}
 
-    /* Tela cheia no desktop */
-    .container{ padding:20px; max-width:100%; margin:0 auto; }
+    /* Container */
+    .container{padding:20px; max-width:1200px; margin:auto}
 
-    .filters{
-      display:flex; flex-wrap:wrap; gap:12px; align-items:end; margin-bottom:16px; position:relative;
-    }
-    .filters > div{ flex:1 1 220px; min-width:220px }
-    .filters label{ font-weight:bold; color:var(--muted); display:block; margin-bottom:6px }
-    .filters input[type="date"], .filters select{
-      width:100%; padding:10px; border-radius:8px; border:1px solid #ccc; background:#fff;
-    }
-    .filters button{
-      padding:10px 16px; border:none; border-radius:8px; font-weight:bold; cursor:pointer;
-    }
-    .btn-dark{ background:var(--accent); color:#fff }
-    .btn{ background:#fff; border:1px solid #ccc; }
+    /* Filtros */
+    .filters{display:flex; flex-wrap:wrap; gap:12px; margin-bottom:20px; align-items:end}
+    .filters label{font-weight:800; font-size:.95em; color:var(--muted); display:block; margin-bottom:6px}
+    .filters select,.filters input{padding:10px; border-radius:8px; border:1px solid var(--line); background:var(--surface); color:var(--text); width:100%}
+    .filters button{padding:10px 16px; border:1px solid var(--line); border-radius:8px; background:var(--surface); color:var(--text); font-weight:800; cursor:pointer}
 
-    /* Botão período + popover calendário */
-    .periodo-wrap{ position:relative; }
-    .periodo-btn{ background:#fff; border:1px solid #ccc; border-radius:8px; padding:10px 12px; width:100%; text-align:left; cursor:pointer }
-    .periodo-btn strong{ color:#0f172a }
-    .popover{
-      position:absolute; top:100%; left:0; margin-top:8px; z-index:50;
-      background:#fff; border:1px solid var(--line); border-radius:12px; box-shadow:0 20px 40px rgba(0,0,0,.12);
-      width:min(520px, 90vw); padding:12px; display:none;
-    }
-    .popover.open{ display:block }
-    .popover .grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
-    .popover .row{ display:flex; gap:8px; flex-wrap:wrap; margin-top:8px }
-    .popover .row .btn{ flex:1 1 auto }
-    .popover .apply{ display:flex; justify-content:flex-end; margin-top:8px }
-    .popover input[type="date"]{ width:100%; padding:10px; border:1px solid #ccc; border-radius:8px }
+    /* Calendário popover */
+    .periodo-wrap{position:relative}
+    .periodo-btn{background:var(--surface); border:1px solid var(--line); border-radius:8px; padding:10px 12px; width:100%; text-align:left; cursor:pointer}
+    .popover{position:absolute; top:100%; left:0; margin-top:8px; z-index:50; background:var(--surface); border:1px solid var(--line); border-radius:12px; box-shadow:var(--shadow); width:300px; padding:12px; display:none}
+    .popover.open{display:block}
+    .popover .row{display:flex; gap:8px; flex-wrap:wrap; margin-top:8px}
+    .popover input{width:100%; padding:8px; margin-bottom:6px; border-radius:8px; border:1px solid var(--line); background:var(--surface); color:var(--text)}
 
     /* Cards */
-    .cards{
-      display:grid; gap:16px;
-      grid-template-columns: repeat(3, minmax(260px, 1fr));
-    }
-    @media (max-width:1100px){ .cards{ grid-template-columns: repeat(2, minmax(260px, 1fr)); } }
-    @media (max-width:680px){ .cards{ grid-template-columns: 1fr; } }
+    .metas-box{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:20px; margin-bottom:20px; box-shadow:var(--shadow)}
+    .metas-box h2{margin:0 0 10px; font-size:1.2em; color:var(--text)}
+    .metas-box p{margin:5px 0; font-size:.95em}
 
-    .meta-card{
-      background:var(--card); border:1px solid var(--line); border-radius:12px; box-shadow:var(--shadow);
-      padding:16px; cursor:pointer; transition:.15s transform, .15s box-shadow;
-    }
-    .meta-card:hover{ transform:translateY(-3px); box-shadow:0 10px 24px rgba(0,0,0,.08) }
-    .meta-card h2{ margin:0 0 8px; font-size:1.1em; color:#2c3e50 }
-    .meta-card .row{ display:flex; align-items:center; justify-content:space-between; margin:8px 0 }
-    .label{ color:var(--muted) }
-    .kpi{ font-weight:800 }
-    .small{ font-size:.86em; color:var(--muted); margin-top:6px }
-
-    /* Loading overlay */
-    #loading{
-      position:fixed; inset:0; background:rgba(0,0,0,.35); display:none; align-items:center; justify-content:center; z-index:1000;
-    }
-    #loading .box{
-      background:#111827; color:#fff; padding:14px 18px; border-radius:10px; box-shadow:var(--shadow); font-weight:800;
-    }
-
-    /* Modal */
-    .modal{ position:fixed; inset:0; background:rgba(0,0,0,.6); display:none; align-items:center; justify-content:center; padding:20px; z-index:1001 }
-    .modal.open{ display:flex }
-    .modal-card{
-      width:min(1100px, 96vw); background:#fff; border-radius:14px; box-shadow:0 20px 60px rgba(0,0,0,.2);
-      padding:18px; max-height:92vh; overflow:auto; color:#0f172a; border:1px solid #e5e7eb;
-    }
-    .modal-header{ display:flex; align-items:center; gap:12px; margin-bottom:10px }
-    .modal-header h3{ margin:0; font-size:1.1rem }
-    .close-x{ margin-left:auto; cursor:pointer; font-weight:bold; font-size:20px; color:#374151 }
-    #graficoWrap{ height:380px; border:1px solid #e5e7eb; border-radius:12px; padding:10px }
-    #graficoMes{ width:100% !important; height:100% !important }
+    /* Chart */
+    .chart-box{background:var(--card); border-radius:12px; box-shadow:var(--shadow); padding:20px; margin-bottom:20px}
+    .chart-box canvas{width:100% !important; height:300px !important}
   </style>
 
-  <!-- Proteção por senha + interceptador -->
+  <!-- Senha + Tema -->
   <script>
   (function(){
     const KEY_NAME='dv_pwd';
+    const savedTheme=localStorage.getItem('dv_theme');
+    if(savedTheme){document.documentElement.setAttribute('data-theme',savedTheme);}
+    window.__toggleTheme=()=>{const cur=document.documentElement.getAttribute('data-theme')||'light';const next=(cur==='light')?'dark':'light';document.documentElement.setAttribute('data-theme',next);localStorage.setItem('dv_theme',next);}
     async function ensurePassword(){
-      let pwd = localStorage.getItem(KEY_NAME) || '';
-      while(!pwd){
-        pwd = prompt('Digite a senha de acesso:') || '';
-        if(!pwd) continue;
-        try{
-          const r = await fetch('/api/ping', { headers:{'x-api-key': pwd} });
-          if(r.ok){ localStorage.setItem(KEY_NAME, pwd); break; }
-          else { alert('Senha incorreta.'); pwd=''; }
-        }catch(e){
-          localStorage.setItem(KEY_NAME, pwd); break;
-        }
-      }
+      let pwd=localStorage.getItem(KEY_NAME)||''; while(!pwd){pwd=prompt('Digite a senha de acesso:')||''; if(!pwd) continue; try{const r=await fetch('/api/ping',{headers:{'x-api-key':pwd}}); if(r.ok){localStorage.setItem(KEY_NAME,pwd); break;} else{alert('Senha incorreta.'); pwd='';}}catch(e){localStorage.setItem(KEY_NAME,pwd); break;}}
     }
-    const _fetch = window.fetch.bind(window);
-    window.fetch = (input, init={})=>{
-      let url = (typeof input==='string')?input:(input&&input.url)||'';
-      init = init||{};
-      const headers = new Headers(init.headers || ((typeof input!=='string' && input.headers) || {}));
-      const pwd = localStorage.getItem(KEY_NAME)||'';
-      if(url.startsWith('/api/') && pwd){ headers.set('x-api-key', pwd); }
-      return _fetch(input, Object.assign({}, init, { headers }));
-    };
-    if(!localStorage.getItem(KEY_NAME)){ ensurePassword(); }
+    const _fetch=window.fetch.bind(window);
+    window.fetch=(input,init={})=>{let url=(typeof input==='string')?input:(input&&input.url)||''; init=init||{}; const headers=new Headers(init.headers||(typeof input!=='string'&&input.headers)||{}); const pwd=localStorage.getItem(KEY_NAME)||''; if(url.startsWith('/api/')&&pwd){headers.set('x-api-key',pwd);} return _fetch(input,Object.assign({},init,{headers}));};
+    if(!localStorage.getItem(KEY_NAME)){ensurePassword();}
   })();
   </script>
 </head>
 <body>
 
-  <!-- Loading -->
-  <div id="loading"><div class="box">⏳ Carregando…</div></div>
-
+  <!-- Header -->
   <header>
-    <img src="https://github.com/ClenaStore/painel-principal/blob/main/img/GRUPO%20DV%20(1).png?raw=true" alt="Logo">
-    <h1>📊 Painel de Metas - Grupo DV</h1>
+    <div class="head-wrap">
+      <a class="brand" href="index.html">
+        <img src="https://github.com/ClenaStore/painel-principal/blob/main/img/GRUPO%20DV%20(1).png?raw=true" alt="Logo">
+        <div class="title">Metas de Receita</div>
+      </a>
+      <div class="head-spacer"></div>
+      <button id="themeToggle" class="icon-btn">🌓 Tema</button>
+      <div class="user" id="userMenu">
+        <button class="user-btn"><img src="https://github.com/ClenaStore/grupodv/blob/main/paste/Imagem%20do%20WhatsApp%20de%202025-09-08%20%C3%A0(s)%2011.54.12_884bebc9.jpg?raw=true" alt=""><strong style="font-size:13px">Leonardo</strong></button>
+        <div class="user-menu">
+          <a href="perfil.html">👤 Meu Perfil</a>
+          <button onclick="logout()">🚪 Sair</button>
+        </div>
+      </div>
+    </div>
   </header>
 
   <div class="container">
     <!-- Filtros -->
-    <div class="filters" id="filters">
-      <!-- Botão de período com popover (calendário) -->
+    <div class="filters">
       <div class="periodo-wrap">
         <label>Período:</label>
-        <button id="btnPeriodo" type="button" class="periodo-btn">📅 <strong id="periodoTexto">Selecionar período</strong></button>
-        <div id="popoverPeriodo" class="popover" role="dialog" aria-modal="true">
-          <div class="grid">
-            <div>
-              <label>Início</label>
-              <input type="date" id="popInicio">
-            </div>
-            <div>
-              <label>Fim</label>
-              <input type="date" id="popFim">
-            </div>
+        <button id="btnPeriodo" type="button" class="periodo-btn">📅 <span id="periodoTexto">Selecionar</span></button>
+        <div id="popoverPeriodo" class="popover">
+          <label>Início</label><input type="date" id="dataInicio">
+          <label>Fim</label><input type="date" id="dataFim">
+          <div class="row">
+            <button id="ontem">Ontem</button>
+            <button id="ult7">Últimos 7</button>
+            <button id="mes">Este mês</button>
           </div>
-          <div class="row" style="margin-top:10px">
-            <button class="btn" id="popOntem">Ontem</button>
-            <button class="btn" id="popUlt7">Últimos 7 dias</button>
-            <button class="btn" id="popMes">Este mês</button>
-          </div>
-          <div class="apply">
-            <button class="btn-dark" id="popAplicar">Aplicar período</button>
-          </div>
+          <div class="row" style="justify-content:flex-end"><button id="aplicar">Aplicar</button></div>
         </div>
       </div>
-
-      <div>
-        <label>Pesquisar dia:</label>
-        <input type="date" id="diaBusca">
-      </div>
-
       <div>
         <label>Empresa:</label>
         <select id="empresaFiltro"><option value="">Todas</option></select>
       </div>
-
-      <div style="display:flex; gap:8px; align-items:end">
-        <button id="btnOntem" class="btn">Ontem</button>
-        <button id="btnUlt7" class="btn">Últimos 7</button>
-        <button id="btnAplicar" class="btn-dark">Aplicar</button>
-      </div>
+      <div><button id="btnWhats">📲 WhatsApp</button></div>
     </div>
 
-    <!-- Cards -->
-    <div class="cards" id="cards"></div>
-  </div>
+    <div id="painelMetas"></div>
 
-  <!-- Modal evolução mensal -->
-  <div class="modal" id="modal">
-    <div class="modal-card">
-      <div class="modal-header">
-        <h3 id="modalTitulo">Evolução mensal</h3>
-        <span class="close-x" id="fecharModal">&times;</span>
-      </div>
-      <div id="graficoWrap"><canvas id="graficoMes"></canvas></div>
+    <div class="chart-box" id="graficoContainer">
+      <h3>📈 Evolução do Faturamento</h3>
+      <canvas id="graficoFaturamento"></canvas>
     </div>
   </div>
 
-  <script>
-  /* ===== Chart config ===== */
-  const POINT_RADIUS = 5, HOVER_RADIUS = 9, HIT_RADIUS = 28;
-  Chart.defaults.elements.point.radius = POINT_RADIUS;
-  Chart.defaults.elements.point.hoverRadius = HOVER_RADIUS;
-  Chart.defaults.elements.point.hitRadius = HIT_RADIUS;
-  Chart.defaults.interaction.mode = 'nearest';
-  Chart.defaults.interaction.intersect = false;
-  Chart.defaults.events = ['mousemove','mouseout','click','touchstart','touchmove','touchend'];
+<script>
+const urlBase='/api/meta'; let chart;
+const BRL=v=>(+v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
 
-  /* ===== Utils ===== */
-  const $ = s => document.querySelector(s);
-  const showLoading = on => { $('#loading').style.display = on?'flex':'none'; };
-  const BRL = n => (Number(n)||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
-  const pad2 = n => String(n).padStart(2,'0');
-  const toISO = d => `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
-  const parseISO = s => { const [y,m,d]=String(s).split('-').map(Number); return new Date(y,(m||1)-1,d||1); };
-  const diffDaysInc = (a,b)=> Math.floor((b - a)/(24*3600*1000)) + 1;
-  const daysInMonth = (y,m)=> new Date(y,m+1,0).getDate();
-  const fmtRange = (a,b)=> `${a.toLocaleDateString('pt-BR')} — ${b.toLocaleDateString('pt-BR')}`;
+document.getElementById('themeToggle').addEventListener('click',()=>window.__toggleTheme&&window.__toggleTheme());
+const user=document.getElementById('userMenu');user.querySelector('.user-btn').addEventListener('click',()=>user.classList.toggle('open'));window.addEventListener('click',e=>{if(!user.contains(e.target)) user.classList.remove('open')});
+function logout(){localStorage.removeItem('dv_pwd'); location.reload();}
 
-  // Converte "YYYY-MM-DD" ou "DD/MM/YYYY" para ISO "YYYY-MM-DD"
-  function toISODateFlexible(s){
-    if(!s) return '';
-    const str = String(s).slice(0,10);
-    if(str.includes('-')){ // ISO
-      return str;
-    }
-    if(str.includes('/')){ // BR
-      const [dd,mm,yy] = str.split('/');
-      return `${yy}-${pad2(mm)}-${pad2(dd)}`;
-    }
-    return str; // fallback
-  }
+function preencherOntem(){const hoje=new Date(); hoje.setDate(hoje.getDate()-1); const d=hoje.toISOString().split('T')[0]; document.getElementById("dataInicio").value=d; document.getElementById("dataFim").value=d; document.getElementById("periodoTexto").textContent=`${d}`;}
+window.onload=()=>{preencherOntem(); carregarMetas();};
 
-  // Converte número com vírgula/ponto
-  const toNum = v => parseFloat(String(v??0).toString().replace('.','').replace(',','.')) || 0;
-
-  /* ===== Estado ===== */
-  const API = '/api/meta';
-  let dados = [];     // {Empresa, Data, Previsto, Realizado, ...} + derivados
-  let rangeIni, rangeFim;
-  let empresaSel = '';
-  let chartMes = null;
-
-  /* ===== Calendário popover ===== */
-  const btnPeriodo = $('#btnPeriodo');
-  const popover = $('#popoverPeriodo');
-  const popIni = $('#popInicio');
-  const popFim = $('#popFim');
-  const periodoTexto = $('#periodoTexto');
-
-  btnPeriodo.addEventListener('click', ()=>{
-    // sincroniza datas atuais ao abrir
-    popIni.value = toISO(rangeIni);
-    popFim.value = toISO(rangeFim);
-    popover.classList.toggle('open');
-  });
-  document.addEventListener('click', (e)=>{
-    if(!popover.contains(e.target) && !btnPeriodo.contains(e.target)){
-      popover.classList.remove('open');
-    }
-  });
-  $('#popOntem').addEventListener('click', ()=>{
-    const hoje = new Date();
-    const fim = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate()-1);
-    popIni.value = toISO(fim); popFim.value = toISO(fim);
-  });
-  $('#popUlt7').addEventListener('click', ()=>{
-    const hoje = new Date();
-    const fim = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate()-1);
-    const ini = new Date(fim.getFullYear(), fim.getMonth(), fim.getDate()-6);
-    popIni.value = toISO(ini); popFim.value = toISO(fim);
-  });
-  $('#popMes').addEventListener('click', ()=>{
-    const d = new Date();
-    const ini = new Date(d.getFullYear(), d.getMonth(), 1);
-    const fim = new Date(d.getFullYear(), d.getMonth(), daysInMonth(d.getFullYear(), d.getMonth()));
-    popIni.value = toISO(ini); popFim.value = toISO(fim);
-  });
-  $('#popAplicar').addEventListener('click', ()=>{
-    if(popIni.value && popFim.value){
-      $('#dataInicio').value = popIni.value;
-      $('#dataFim').value = popFim.value;
-      $('#diaBusca').value = ''; // limpar pesquisa-dia
-      periodoTexto.textContent = fmtRange(parseISO(popIni.value), parseISO(popFim.value));
-      popover.classList.remove('open');
-      aplicar();
-    }
-  });
-
-  /* ===== Inicialização ===== */
-  window.addEventListener('load', async ()=>{
-    // padrão: ontem
-    const hoje = new Date();
-    const ontem = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate()-1);
-    rangeIni = new Date(ontem); rangeFim = new Date(ontem);
-    $('#dataInicio').value = toISO(rangeIni);
-    $('#dataFim').value = toISO(rangeFim);
-    $('#diaBusca').value = toISO(rangeIni);
-    periodoTexto.textContent = fmtRange(rangeIni, rangeFim);
-
-    await carregar();
-    aplicar();
-  });
-
-  async function carregar(){
-    showLoading(true);
-    try{
-      const r = await fetch(API);
-      const raw = await r.json();
-
-      // normaliza dados (DataISO, PrevistoNum, RealizadoNum)
-      dados = raw.map(row=>{
-        const iso = toISODateFlexible(row.Data);
-        return {
-          ...row,
-          DataISO: iso,
-          PrevistoNum: toNum(row.Previsto),
-          RealizadoNum: toNum(row.Realizado)
-        };
-      });
-
-      // popular empresas
-      const empresas = [...new Set(dados.map(x=>x.Empresa))].sort();
-      const sel = $('#empresaFiltro');
-      sel.innerHTML = '<option value="">Todas</option>' + empresas.map(e=>`<option>${e}</option>`).join('');
-    }catch(e){
-      console.error(e);
-      $('#cards').innerHTML = `<div class="meta-card" style="grid-column:1/-1"><h2>Não foi possível carregar os dados agora.</h2></div>`;
-    }finally{
-      showLoading(false);
-    }
-  }
-
-  /* ===== Aplicar filtros ===== */
-  function aplicar(){
-    showLoading(true);
-    setTimeout(()=>{
-      const iniStr = $('#dataInicio').value;
-      const fimStr = $('#dataFim').value;
-      const diaStr = $('#diaBusca').value;
-      empresaSel = $('#empresaFiltro').value || '';
-
-      if(diaStr){
-        rangeIni = parseISO(diaStr);
-        rangeFim = parseISO(diaStr);
-        $('#dataInicio').value = diaStr;
-        $('#dataFim').value = diaStr;
-        periodoTexto.textContent = fmtRange(rangeIni, rangeFim);
-      }else{
-        rangeIni = iniStr ? parseISO(iniStr) : rangeIni;
-        rangeFim = fimStr ? parseISO(fimStr) : rangeFim;
-        periodoTexto.textContent = fmtRange(rangeIni, rangeFim);
-      }
-
-      renderCards();
-      showLoading(false);
-    }, 20);
-  }
-
-  /* ===== Regras de cálculo =====
-     - 1 dia no período  => resultado = Realizado do dia (valor registrado)
-     - >= 2 dias         => resultado = último(Realizado) − primeiro(Realizado)
-     - % meta            => resultado / Previsto
-     - média/dia         => resultado / dias do período
-     - previsão do mês   => média/dia * (dias do mês da data final)
-  */
-  function renderCards(){
-    const iniISO = toISO(rangeIni), fimISO = toISO(rangeFim);
-    const mapa = new Map(); // emp -> lista de registros no período
-
-    dados.forEach(row=>{
-      const emp = row.Empresa || '';
-      if(empresaSel && emp !== empresaSel) return;
-      const d = row.DataISO;
-      if(!d || d < iniISO || d > fimISO) return;
-      if(!mapa.has(emp)) mapa.set(emp, []);
-      mapa.get(emp).push(row);
+async function carregarMetas(){
+  const painel=document.getElementById("painelMetas"); painel.innerHTML="Carregando...";
+  const dataInicio=document.getElementById("dataInicio").value; const dataFim=document.getElementById("dataFim").value; const empresa=document.getElementById("empresaFiltro").value;
+  try{
+    const r=await fetch(`${urlBase}?dataInicio=${dataInicio}&dataFim=${dataFim}&empresa=${empresa}`); const metas=await r.json();
+    const empresas=[...new Set(metas.map(m=>m.Empresa))]; const sel=document.getElementById("empresaFiltro"); if(sel.options.length<=1){empresas.forEach(e=>{const o=document.createElement("option"); o.value=e; o.textContent=e; sel.appendChild(o);});}
+    painel.innerHTML=""; if(!metas.length){painel.innerHTML="<p>Nenhum dado.</p>"; return;}
+    metas.forEach(linha=>{
+      const previsto=+linha.Previsto; const realizado=parseFloat(linha.Realizado.toString().replace(",",".")); const atingido=previsto?(realizado/previsto*100):0;
+      const box=document.createElement("div"); box.className="metas-box"; box.innerHTML=`<h2>${linha.Empresa}</h2><p>💰 Previsto: ${BRL(previsto)}</p><p>✅ Realizado: ${BRL(realizado)}</p><p>📊 Atingido: ${atingido.toFixed(2)}%</p>`; painel.appendChild(box);
     });
+  }catch(e){painel.innerHTML="Erro ao carregar";}
+}
+document.getElementById("btnWhats").addEventListener("click",()=>{const blocos=document.querySelectorAll(".metas-box"); if(!blocos.length) return alert("Nada."); let msg="📊 Metas:\n\n"; blocos.forEach(b=>{msg+=b.innerText+"\n\n"}); window.open("https://wa.me/5577999761436?text="+encodeURIComponent(msg),"_blank");});
 
-    const itens = [];
-    mapa.forEach((lista, emp)=>{
-      lista.sort((a,b)=> a.DataISO.localeCompare(b.DataISO));
-      const first = lista[0], last = lista[lista.length-1];
-
-      const previsto = (last?.PrevistoNum || first?.PrevistoNum || 0);
-      const rFirst = (first?.RealizadoNum || 0);
-      const rLast  = (last?.RealizadoNum  || 0);
-
-      const resultado = (lista.length===1) ? rLast : (rLast - rFirst); // regra para 1 dia
-      const diasPeriodo = Math.max(1, diffDaysInc(rangeIni, rangeFim));
-      const mediaDia = resultado / diasPeriodo;
-
-      const y = rangeFim.getFullYear(), m = rangeFim.getMonth();
-      const previsaoMes = mediaDia * daysInMonth(y,m);
-      const percMeta = previsto > 0 ? (resultado/previsto)*100 : 0;
-
-      itens.push({
-        emp, previsto, resultado, mediaDia, previsaoMes, percMeta,
-        regInicio: rFirst, regFim: rLast
-      });
-    });
-
-    // ordena por maior resultado
-    itens.sort((a,b)=> b.resultado - a.resultado);
-
-    const cards = $('#cards');
-    if(itens.length === 0){
-      cards.innerHTML = `<div class="meta-card" style="grid-column:1/-1"><h2>Nenhum dado no período.</h2></div>`;
-      return;
-    }
-
-    cards.innerHTML = itens.map(item => `
-      <div class="meta-card" data-emp="${item.emp}">
-        <h2>${item.emp}</h2>
-
-        <div class="row"><div class="label">Resultado do período</div><div class="kpi">${BRL(item.resultado)}</div></div>
-        <div class="row"><div class="label">% da meta</div><div class="kpi">${(item.percMeta||0).toLocaleString('pt-BR',{maximumFractionDigits:2})}%</div></div>
-        <div class="row"><div class="label">Média por dia</div><div class="kpi">${BRL(item.mediaDia)}</div></div>
-        <div class="row"><div class="label">Previsão do mês</div><div class="kpi">${BRL(item.previsaoMes)}</div></div>
-        <div class="row"><div class="label">Meta mensal (Previsto)</div><div class="kpi">${BRL(item.previsto)}</div></div>
-        <div class="small">Registros na planilha: início ${BRL(item.regInicio)} → fim ${BRL(item.regFim)}</div>
-      </div>
-    `).join('');
-
-    // click -> modal evolução mensal (mês da data final do período / ou do dia)
-    cards.querySelectorAll('.meta-card').forEach(card=>{
-      card.addEventListener('click', ()=> abrirEvolucao(card.getAttribute('data-emp')));
-    });
-  }
-
-  /* ===== Botões rápidos fora do popover ===== */
-  $('#btnOntem').addEventListener('click', ()=>{
-    const hoje = new Date();
-    const d = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate()-1);
-    $('#dataInicio').value = toISO(d);
-    $('#dataFim').value = toISO(d);
-    $('#diaBusca').value = toISO(d);
-    aplicar();
-  });
-  $('#btnUlt7').addEventListener('click', ()=>{
-    const hoje = new Date();
-    const fim = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate()-1);
-    const ini = new Date(fim.getFullYear(), fim.getMonth(), fim.getDate()-6);
-    $('#dataInicio').value = toISO(ini);
-    $('#dataFim').value = toISO(fim);
-    $('#diaBusca').value = '';
-    aplicar();
-  });
-  $('#btnAplicar').addEventListener('click', aplicar);
-  $('#diaBusca').addEventListener('change', ()=>{
-    const d = $('#diaBusca').value;
-    if(d){ $('#dataInicio').value = d; $('#dataFim').value = d; periodoTexto.textContent = fmtRange(parseISO(d), parseISO(d)); }
-  });
-
-  /* ===== Modal: evolução mensal ===== */
-  const modal = $('#modal'), fecharModal = $('#fecharModal');
-  fecharModal.addEventListener('click', ()=> closeModal());
-  modal.addEventListener('click', (e)=>{ if(e.target===modal) closeModal(); });
-
-  function closeModal(){
-    modal.classList.remove('open');
-    if(chartMes){ chartMes.destroy(); chartMes=null; }
-  }
-
-  function abrirEvolucao(empresa){
-    const y = rangeFim.getFullYear(), m = rangeFim.getMonth();
-    const mesIni = new Date(y, m, 1);
-    const mesFim = new Date(y, m, daysInMonth(y,m));
-    const iniISO = toISO(mesIni), fimISO = toISO(mesFim);
-
-    const linhas = dados
-      .filter(r => r.Empresa===empresa && r.DataISO>=iniISO && r.DataISO<=fimISO)
-      .sort((a,b)=> a.DataISO.localeCompare(b.DataISO));
-
-    const labels = linhas.map(l => {
-      const iso = l.DataISO; // YYYY-MM-DD
-      const [yy,mm,dd] = iso.split('-'); return `${dd}/${mm}`;
-    });
-    const valores = linhas.map(l => l.RealizadoNum || 0);
-
-    const nomeMes = mesIni.toLocaleString('pt-BR',{month:'long',year:'numeric'});
-    $('#modalTitulo').textContent = `Evolução mensal — ${empresa} (${nomeMes})`;
-
-    const ctx = document.getElementById('graficoMes').getContext('2d');
-    if(chartMes) chartMes.destroy();
-    chartMes = new Chart(ctx, {
-      type:'line',
-      data:{
-        labels,
-        datasets: [{
-          label: 'Realizado (R$)',
-          data: valores,
-          borderColor: '#2563eb',
-          backgroundColor: 'rgba(37,99,235,.15)',
-          fill:true,
-          tension:.25,
-          pointRadius: POINT_RADIUS,
-          pointHoverRadius: HOVER_RADIUS,
-          pointHitRadius: HIT_RADIUS
-        }]
-      },
-      options:{
-        responsive:true, maintainAspectRatio:false,
-        interaction:{ mode:'nearest', intersect:false },
-        plugins:{
-          legend:{ display:true },
-          tooltip:{ callbacks:{ label:c => 'R$ ' + (Number(c.parsed.y)||0).toLocaleString('pt-BR') } }
-        },
-        scales:{
-          y:{ beginAtZero:true, ticks:{ callback:v=>'R$ '+Number(v).toLocaleString('pt-BR') } }
-        }
-      }
-    });
-
-    modal.classList.add('open');
-  }
-
-  /* ===== Empresa select: aplicar ao mudar ===== */
-  $('#empresaFiltro').addEventListener('change', aplicar);
-  </script>
+/* Calendário popover */
+const btnPeriodo=document.getElementById('btnPeriodo'); const pop=document.getElementById('popoverPeriodo');
+btnPeriodo.onclick=()=>pop.classList.toggle('open'); document.addEventListener('click',e=>{if(!pop.contains(e.target)&&!btnPeriodo.contains(e.target)) pop.classList.remove('open');});
+document.getElementById('ontem').onclick=()=>{preencherOntem();};
+document.getElementById('ult7').onclick=()=>{const hoje=new Date(); const fim=new Date(hoje.getFullYear(),hoje.getMonth(),hoje.getDate()-1); const ini=new Date(fim); ini.setDate(fim.getDate()-6); document.getElementById("dataInicio").value=ini.toISOString().split('T')[0]; document.getElementById("dataFim").value=fim.toISOString().split('T')[0];};
+document.getElementById('mes').onclick=()=>{const d=new Date(); const ini=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-01`; const fim=new Date(d.getFullYear(),d.getMonth()+1,0).toISOString().split('T')[0]; document.getElementById("dataInicio").value=ini; document.getElementById("dataFim").value=fim;};
+document.getElementById('aplicar').onclick=()=>{carregarMetas(); pop.classList.remove('open');};
+</script>
 </body>
 </html>
