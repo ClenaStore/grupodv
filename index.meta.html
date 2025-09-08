@@ -8,10 +8,12 @@
 
   <style>
     :root{
-      /* tema escuro (igual ao index) */
+      /* tema escuro (igual index) */
       --bg:#0b1020; --surface:#10172a; --card:#0f172a; --text:#e5e7eb; --muted:#94a3b8;
-      --line:rgba(148,163,184,.25); --icon-bg:rgba(255,255,255,.06); --shadow:0 20px 60px rgba(2,6,23,.35);
-      --brand:#60a5fa; --brand2:#22d3ee; --ok:#16a34a; --bad:#dc2626;
+      --line:rgba(148,163,184,.25); --icon-bg:rgba(255,255,255,.06);
+      --shadow:0 20px 60px rgba(2,6,23,.35); --brand:#60a5fa; --brand2:#22d3ee;
+      --grad:linear-gradient(135deg,var(--brand),var(--brand2));
+      --ok:#16a34a; --bad:#dc2626;
     }
     [data-theme="light"]{
       --bg:#f6f7fb; --surface:#fff; --card:#fff; --text:#0f172a; --muted:#475569;
@@ -19,11 +21,14 @@
     }
     *{box-sizing:border-box}
     html,body{height:100%}
-    body{margin:0; font-family:ui-sans-serif,-apple-system,Segoe UI,Roboto,Arial; background:var(--bg); color:var(--text)}
+    body{
+      margin:0; font-family:ui-sans-serif,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+      background:var(--bg); color:var(--text);
+    }
 
     /* Header unificado */
     header{position:sticky; top:0; z-index:40; backdrop-filter:saturate(160%) blur(8px);
-      background:color-mix(in srgb, var(--surface) 80%, transparent); border-bottom:1px solid var(--line)}
+      background:color-mix(in srgb, var(--surface) 80%, transparent); border-bottom:1px solid var(--line);}
     .head{max-width:1200px; margin:0 auto; padding:14px 18px; display:flex; align-items:center; gap:12px}
     .brand{display:flex; align-items:center; gap:10px; text-decoration:none; color:inherit}
     .brand img{height:42px}
@@ -50,20 +55,66 @@
     .container{max-width:100%; margin:0 auto; padding:20px 18px}
 
     /* Filtros */
-    .filters{display:grid; grid-template-columns: 520px 220px 160px 200px; gap:12px; align-items:end}
+    .filters{display:grid; grid-template-columns: 420px 220px 160px 200px; gap:12px; align-items:end}
     @media (max-width:1100px){ .filters{grid-template-columns: 1fr 1fr} }
-    @media (max-width:640px){ .filters{grid-template-columns: 1fr} }
+    @media (max-width:700px){ .filters{grid-template-columns: 1fr} }
 
     .field label{display:block; margin:0 0 6px; color:var(--muted); font-weight:800; font-size:.95rem}
-    .picker-btn, select{width:100%; border:1px solid var(--line); background:var(--surface); color:var(--text);
-      border-radius:12px; padding:12px 14px; font-weight:700}
+    .picker-btn, select{
+      width:100%; border:1px solid var(--line); background:var(--surface); color:var(--text);
+      border-radius:12px; padding:12px 14px; font-weight:700;
+    }
     .action{width:100%}
-    .period-wrap{position:relative; display:flex; align-items:center; gap:10px}
+
+    .period-wrap{position:relative; display:flex; align-items:center; gap:8px}
     .period-display{font-weight:800; color:var(--muted)}
 
-    /* Popover calendário (1 calendário, só fecha ao aplicar/cancelar) */
+    /* GRID de cards (3 por linha) */
+    #painelMetas{
+      display:grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap:16px;
+      margin-top:16px;
+    }
+    @media (max-width:1200px){ #painelMetas{grid-template-columns: repeat(2, minmax(0,1fr));} }
+    @media (max-width:700px){ #painelMetas{grid-template-columns: 1fr;} }
+
+    /* Card compacto/quadrado */
+    .metas-box{
+      background:var(--card); border:1px solid var(--line); border-radius:14px;
+      padding:16px; box-shadow:var(--shadow); cursor:pointer; text-align:center;
+      min-height:160px; display:flex; flex-direction:column; align-items:center; justify-content:center;
+      transition:.18s transform, .18s box-shadow;
+    }
+    .metas-box:hover{transform:translateY(-3px); box-shadow:0 8px 24px rgba(0,0,0,.28)}
+    .metas-box h2{margin:0 0 4px; font-size:1rem; text-transform:uppercase}
+    .valorzao{font-size:1.35rem; font-weight:800; margin:6px 0 2px}
+    .sub{margin:2px 0; color:var(--muted); font-size:.9rem}
+
+    /* Estados quando mês fechado */
+    .metas-box.ok{
+      border-color: color-mix(in srgb, var(--ok) 65%, var(--line));
+      box-shadow: var(--shadow), 0 0 0 2px color-mix(in srgb, var(--ok) 28%, transparent) inset;
+      background: linear-gradient(180deg, color-mix(in srgb, var(--ok) 12%, var(--card)) 0%, var(--card) 100%);
+    }
+    .metas-box.bad{
+      border-color: color-mix(in srgb, var(--bad) 65%, var(--line));
+      box-shadow: var(--shadow), 0 0 0 2px color-mix(in srgb, var(--bad) 22%, transparent) inset;
+      background: linear-gradient(180deg, color-mix(in srgb, var(--bad) 12%, var(--card)) 0%, var(--card) 100%);
+    }
+
+    /* Tooltip simples no hover */
+    .tooltip{position:relative}
+    .tooltip:hover::after{
+      content:attr(data-tip);
+      position:absolute; bottom:110%; left:50%; transform:translateX(-50%);
+      background:#111; color:#fff; padding:6px 10px; border-radius:8px;
+      font-size:.8rem; white-space:nowrap; box-shadow:0 6px 18px rgba(0,0,0,.25);
+    }
+
+    /* Popover calendário (1 mês) */
     .popover{position:absolute; z-index:50; background:var(--surface); color:var(--text); border:1px solid var(--line);
-      border-radius:14px; box-shadow:var(--shadow); padding:14px; width:min(380px,94vw); display:none; top:110%}
+      border-radius:14px; box-shadow:var(--shadow); padding:14px; width:min(380px,94vw); display:none; top:108%; left:0}
     .popover.open{display:block}
     .cal-head{display:flex; align-items:center; justify-content:space-between; padding:0 4px 8px}
     .cal-nav{border:1px solid var(--line); background:var(--surface); border-radius:10px; width:34px; height:34px; display:grid; place-items:center; cursor:pointer}
@@ -75,28 +126,6 @@
     .day.in{background:color-mix(in srgb, #2563eb 18%, var(--surface))}
     .cal-actions{display:flex; gap:8px; justify-content:flex-end; padding-top:6px}
     .btn-sm{border:1px solid var(--line); background:var(--surface); color:var(--text); padding:8px 12px; border-radius:10px; font-weight:800; cursor:pointer}
-
-    /* GRID cards 3 por linha */
-    #painelMetas{display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:16px; margin-top:16px}
-    @media (max-width:1200px){#painelMetas{grid-template-columns:repeat(2,1fr)}}
-    @media (max-width:700px){#painelMetas{grid-template-columns:1fr}}
-
-    /* Card compacto */
-    .metas-box{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:16px; box-shadow:var(--shadow);
-      cursor:pointer; text-align:center; min-height:170px; display:flex; flex-direction:column; align-items:center; justify-content:center; transition:.18s}
-    .metas-box:hover{transform:translateY(-3px); box-shadow:0 8px 24px rgba(0,0,0,.28)}
-    .metas-box h2{margin:0 0 6px; font-size:1.05rem; text-transform:uppercase}
-    .metas-box p{margin:4px 0; color:var(--muted); font-size:.92rem}
-    .metas-box.ok{border-color:var(--ok)}
-    .metas-box.bad{border-color:var(--bad)}
-
-    /* Tooltip */
-    .tooltip{position:relative}
-    .tooltip:hover::after{
-      content:attr(data-tip);
-      position:absolute; bottom:110%; left:50%; transform:translateX(-50%);
-      background:#111; color:#fff; padding:6px 10px; border-radius:8px; font-size:.8rem; white-space:nowrap; box-shadow:0 6px 18px rgba(0,0,0,.25);
-    }
 
     /* Loading overlay */
     .loading{position:fixed; inset:0; background:rgba(0,0,0,.55); display:none; align-items:center; justify-content:center; z-index:60}
@@ -115,44 +144,44 @@
     #graficoEmpresa{width:100%!important; height:360px!important}
   </style>
 
-  <!-- senha + tema sincronizado + fetch x-api-key -->
+  <!-- Proteção por senha + tema sincronizado + fetch com x-api-key -->
   <script>
-  (function(){
-    const KEY = 'dv_pwd';
-    const t = localStorage.getItem('dv_theme'); if(t) document.documentElement.setAttribute('data-theme', t);
+    (function(){
+      const KEY = 'dv_pwd';
+      const t = localStorage.getItem('dv_theme'); if(t) document.documentElement.setAttribute('data-theme', t);
 
-    window.__toggleTheme = function(){
-      const cur = document.documentElement.getAttribute('data-theme')||'light';
-      const next = (cur==='light')?'dark':'light';
-      document.documentElement.setAttribute('data-theme', next);
-      localStorage.setItem('dv_theme', next);
-    };
+      window.__toggleTheme = function(){
+        const cur = document.documentElement.getAttribute('data-theme')||'light';
+        const next = (cur==='light')?'dark':'light';
+        document.documentElement.setAttribute('data-theme', next);
+        localStorage.setItem('dv_theme', next);
+      };
 
-    async function ensurePwd(){
-      let pwd = localStorage.getItem(KEY)||'';
-      while(!pwd){
-        pwd = prompt('Digite a senha de acesso:')||'';
-        if(!pwd) continue;
-        try{
-          const r = await fetch('/api/ping', {headers:{'x-api-key':pwd}});
-          if(r.ok){ localStorage.setItem(KEY, pwd); break; }
-          alert('Senha incorreta.'); pwd='';
-        }catch{ localStorage.setItem(KEY, pwd); break; }
+      async function ensurePwd(){
+        let pwd = localStorage.getItem(KEY)||'';
+        while(!pwd){
+          pwd = prompt('Digite a senha de acesso:')||'';
+          if(!pwd) continue;
+          try{
+            const r = await fetch('/api/ping', {headers:{'x-api-key':pwd}});
+            if(r.ok){ localStorage.setItem(KEY, pwd); break; }
+            alert('Senha incorreta.'); pwd='';
+          }catch{ localStorage.setItem(KEY, pwd); break; }
+        }
       }
-    }
 
-    const _f = window.fetch.bind(window);
-    window.fetch = (input, init={})=>{
-      const url = (typeof input==='string')?input:(input&&input.url)||'';
-      const headers = new Headers(init.headers||((typeof input!=='string'&&input.headers)||{}));
-      const pwd = localStorage.getItem(KEY)||'';
-      if(url.startsWith('/api/') && pwd) headers.set('x-api-key', pwd);
-      return _f(input, Object.assign({}, init, {headers}));
-    };
+      const _f = window.fetch.bind(window);
+      window.fetch = (input, init={})=>{
+        const url = (typeof input==='string')?input:(input&&input.url)||'';
+        const headers = new Headers(init.headers||((typeof input!=='string'&&input.headers)||{}));
+        const pwd = localStorage.getItem(KEY)||'';
+        if(url.startsWith('/api/') && pwd) headers.set('x-api-key', pwd);
+        return _f(input, Object.assign({}, init, {headers}));
+      };
 
-    if(!localStorage.getItem(KEY)) ensurePwd();
-    window.handleLogout = ()=>{ localStorage.removeItem(KEY); location.reload(); }
-  })();
+      if(!localStorage.getItem(KEY)) ensurePwd();
+      window.handleLogout = ()=>{ localStorage.removeItem(KEY); location.reload(); }
+    })();
   </script>
 </head>
 <body>
@@ -160,18 +189,12 @@
   <!-- Header -->
   <header>
     <div class="head">
-      <a class="brand" href="index.html" aria-label="Início">
-        <img src="https://github.com/ClenaStore/painel-principal/blob/main/img/GRUPO%20DV%20(1).png?raw=true" alt="Logo">
-        <span class="title">Metas de Receita</span>
-      </a>
+      <a class="brand" href="index.html"><img src="https://github.com/ClenaStore/painel-principal/blob/main/img/GRUPO%20DV%20(1).png?raw=true" alt="Logo"><span class="title">Metas de Receita</span></a>
       <div class="grow"></div>
       <a class="btn only-desktop" href="index.relatorios.html">📄 Relatórios</a>
-      <button id="themeToggle" class="btn" type="button">🌓 Tema</button>
+      <button id="themeToggle" class="btn">🌓 Tema</button>
       <div class="user" id="userMenu">
-        <button class="user-btn" type="button">
-          <img src="https://github.com/ClenaStore/grupodv/blob/main/paste/Imagem%20do%20WhatsApp%20de%202025-09-08%20%C3%A0(s)%2011.54.12_884bebc9.jpg?raw=true" alt="Usuário">
-          <strong style="font-size:13px">Leonardo</strong>
-        </button>
+        <button class="user-btn"><img src="https://github.com/ClenaStore/grupodv/blob/main/paste/Imagem%20do%20WhatsApp%20de%202025-09-08%20%C3%A0(s)%2011.54.12_884bebc9.jpg?raw=true" alt=""><strong style="font-size:13px">Leonardo</strong></button>
         <div class="user-menu">
           <a href="perfil.html">👤 Meu Perfil</a>
           <button onclick="handleLogout()">🚪 Sair</button>
@@ -180,9 +203,9 @@
     </div>
   </header>
 
-  <!-- Loading -->
+  <!-- Loading overlay -->
   <div id="loading" class="loading" aria-hidden="true">
-    <div style="display:flex;flex-direction:column;align-items:center">
+    <div style="display:flex; flex-direction:column; align-items:center;">
       <div class="spinner"></div>
       <p>Carregando dados...</p>
     </div>
@@ -194,21 +217,20 @@
       <div class="field">
         <label>Período</label>
         <div class="period-wrap">
-          <button id="rangeBtn" class="picker-btn" type="button">🗓️ Selecionar</button>
+          <button id="rangeBtn" class="picker-btn">🗓️ Selecionar</button>
           <span id="rangeHint" class="period-display"></span>
-
           <!-- Popover calendário -->
           <div id="rangePop" class="popover">
             <div class="cal-head">
-              <button id="prevM" class="cal-nav" type="button">‹</button>
+              <button id="prevM" class="cal-nav">‹</button>
               <strong id="monthLabel"></strong>
-              <button id="nextM" class="cal-nav" type="button">›</button>
+              <button id="nextM" class="cal-nav">›</button>
             </div>
             <div class="dow"><span>D</span><span>S</span><span>T</span><span>Q</span><span>Q</span><span>S</span><span>S</span></div>
             <div id="daysGrid" class="grid"></div>
             <div class="cal-actions">
-              <button id="cancelRange" class="btn-sm" type="button">Cancelar</button>
-              <button id="applyRange" class="btn-sm" type="button">Aplicar</button>
+              <button id="cancelRange" class="btn-sm">Cancelar</button>
+              <button id="applyRange" class="btn-sm">Aplicar</button>
             </div>
           </div>
         </div>
@@ -221,12 +243,12 @@
 
       <div class="field">
         <label>&nbsp;</label>
-        <button id="btnFiltrar" class="btn action" type="button">Filtrar</button>
+        <button id="btnFiltrar" class="btn action">Filtrar</button>
       </div>
 
       <div class="field">
         <label>&nbsp;</label>
-        <button id="btnWhats" class="btn action" type="button" style="background:#25d366; color:#fff; border-color:#21b75a">📲 WhatsApp</button>
+        <button id="btnWhats" class="btn action" style="background:#25d366; color:#fff; border-color:#21b75a">📲 WhatsApp</button>
       </div>
     </div>
 
@@ -234,7 +256,7 @@
     <div id="painelMetas"></div>
   </div>
 
-  <!-- Modal evolução -->
+  <!-- Modal evolução por empresa -->
   <div id="modal" class="modal" aria-hidden="true">
     <div class="modal-card">
       <div class="modal-h">
@@ -255,16 +277,15 @@ window.addEventListener('click', e=>{ if(!user.contains(e.target)) user.classLis
 /* ---------- Helpers ---------- */
 const urlBase = '/api/meta';
 let chartEmpresa=null;
-const $$ = s => document.querySelector(s);
+const $$ = sel => document.querySelector(sel);
 const BRL = n => (Number(n)||0).toLocaleString('pt-BR',{minimumFractionDigits:2, maximumFractionDigits:2});
 const DMY = d => `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
 const ISO = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 function showLoading(v){ $$('#loading').classList.toggle('show', !!v); }
 
-/* ---------- Calendário range (1 calendário) ---------- */
+/* ---------- Calendário (1 mês, range; não fecha até aplicar/cancelar) ---------- */
 const range = { start:null, end:null, view:new Date(new Date().getFullYear(), new Date().getMonth(), 1) };
 const rangeBtn = $$('#rangeBtn'), pop = $$('#rangePop'), grid=$$('#daysGrid'), label=$$('#monthLabel'), hint=$$('#rangeHint');
-
 function setYesterdayDefault(){
   const today = new Date(); const y = new Date(today); y.setDate(today.getDate()-1);
   range.start = new Date(y.getFullYear(), y.getMonth(), y.getDate());
@@ -306,18 +327,31 @@ $('#nextM').addEventListener('click', ()=>{ range.view = new Date(range.view.get
 $('#cancelRange').addEventListener('click', ()=>closePop());
 $('#applyRange').addEventListener('click', ()=>{ updateHint(); closePop(); carregarMetas(); });
 rangeBtn.addEventListener('click', (e)=>{ e.stopPropagation(); openPop(); });
-document.addEventListener('click', e=>{ if(!pop.contains(e.target) && !rangeBtn.contains(e.target)) closePop(); });
+document.addEventListener('click', e=>{ if(!pop.contains(e.target) && e.target!==rangeBtn) closePop(); });
 
-/* ---------- Lógica “mês fechado” (só colore verde/vermelho quando filtro cobre o mês todo) ---------- */
+/* ---------- Lógica de “mês fechado” ---------- */
 function isMonthClosed(){
   if(!range.start || !range.end) return false;
-  const sameMy = (range.start.getFullYear()===range.end.getFullYear()) && (range.start.getMonth()===range.end.getMonth());
+  const sameMy = (range.start.getFullYear()===range.end.getFullYear()) &&
+                 (range.start.getMonth()===range.end.getMonth());
   if(!sameMy) return false;
-  const lastDay = new Date(range.end.getFullYear(), range.end.getMonth()+1, 0).getDate();
-  return range.start.getDate()===1 && range.end.getDate()===lastDay;
+  const y = range.end.getFullYear(), m = range.end.getMonth();
+  const lastDay = new Date(y, m+1, 0).getDate();
+  return range.end.getDate() === lastDay;
 }
 
-/* ---------- Carregar cards ---------- */
+/* ---------- Cálculos ---------- */
+function diasNoMes(refDate){
+  const y = refDate.getFullYear(), m = refDate.getMonth();
+  return new Date(y, m+1, 0).getDate();
+}
+function diffDiasIncl(a,b){
+  const ms = strip(b) - strip(a);
+  return Math.floor(ms/86400000)+1;
+}
+function parseNum(v){ return parseFloat(String(v).replace(',','.')) || 0; }
+
+/* ---------- Página ---------- */
 async function carregarMetas(){
   showLoading(true);
   const painel = $('#painelMetas'); painel.innerHTML = '';
@@ -331,7 +365,7 @@ async function carregarMetas(){
     const rsp = await fetch(`${urlBase}?${params.toString()}`);
     const metas = await rsp.json();
 
-    // empresas no select (uma vez)
+    // popular empresas uma única vez
     const select = $('#empresaFiltro');
     if(select.options.length<=1){
       [...new Set(metas.map(m=>m.Empresa))].forEach(e=>{
@@ -344,36 +378,61 @@ async function carregarMetas(){
       return;
     }
 
-    const monthClosed = isMonthClosed();
-
-    metas.forEach(linha=>{
-      const previsto = parseFloat(linha["Previsto"]);
-      const realizado = parseFloat(String(linha["Realizado"]).replace(',','.'));
-      const atingido = previsto>0 ? (realizado/previsto)*100 : 0;
-
-      // previsão no ritmo atual
-      const y=range.end.getFullYear(), m=range.end.getMonth();
-      const diasNoMes = new Date(y, m+1, 0).getDate();
-      const diasPassados = Math.max(1, (range.end - range.start)/(1000*60*60*24) + 1);
-      const mediaDia = realizado / diasPassados;
-      const previsaoFinal = mediaDia * diasNoMes;
-      const previsaoPct = previsto>0 ? (previsaoFinal/previsto)*100 : 0;
-
-      const ok = realizado >= previsto;
-
-      const div = document.createElement('div');
-      div.className = `metas-box tooltip ${monthClosed ? (ok ? 'ok' : 'bad') : ''}`;
-      div.setAttribute('data-tip', `Realizado: R$ ${BRL(realizado)}`);
-      div.innerHTML = `
-        <h2>${linha["Empresa"]}</h2>
-        <p>💰 Previsto: R$ ${BRL(previsto)}</p>
-        <p>✅ Realizado: R$ ${BRL(realizado)}</p>
-        <p>📊 Atingido: ${atingido.toFixed(2)}%</p>
-        <p>📈 Previsão: R$ ${BRL(previsaoFinal)} (${previsaoPct.toFixed(2)}%)</p>
-      `;
-      div.addEventListener('click', ()=>abrirEvolucaoEmpresa(linha["Empresa"]));
-      painel.appendChild(div);
+    // agrupa por empresa
+    const byEmp = {};
+    metas.forEach(r=>{
+      (byEmp[r.Empresa] ||= []).push(r);
     });
+
+    const monthClosed = isMonthClosed();
+    const daysSel = diffDiasIncl(range.start, range.end);
+    const diasMes = diasNoMes(range.end);
+
+    Object.entries(byEmp).forEach(([empresa, rows])=>{
+      rows.sort((a,b)=> new Date(a.Data) - new Date(b.Data));
+      const previstoMes = parseNum(rows[rows.length-1].Previsto);
+
+      // Detecta se Realizado é acumulado (monótono não-decrescente)
+      let nonDec = 0;
+      for(let i=1;i<rows.length;i++){ if(parseNum(rows[i].Realizado) >= parseNum(rows[i-1].Realizado)) nonDec++; }
+      const acumulado = (rows.length<=2) ? true : (nonDec >= (rows.length-1)*0.8);
+
+      let realizadoPeriodo = 0;
+      if(acumulado){
+        if(rows.length>1){
+          realizadoPeriodo = parseNum(rows[rows.length-1].Realizado) - parseNum(rows[0].Realizado);
+        }else{
+          // range de 1 dia: usa o valor do dia
+          realizadoPeriodo = parseNum(rows[0].Realizado);
+        }
+      }else{
+        realizadoPeriodo = rows.reduce((s,r)=> s + parseNum(r.Realizado), 0);
+      }
+
+      const mediaDia = daysSel>0 ? (realizadoPeriodo / daysSel) : 0;
+      const previsaoMes = mediaDia * diasMes;
+      const percAtingidoPeriodo = previstoMes>0 ? (realizadoPeriodo/previstoMes)*100 : 0;
+      const percNoRitmo = previstoMes>0 ? (previsaoMes/previstoMes)*100 : 0;
+
+      const card = document.createElement('div');
+      card.className = `metas-box tooltip`;
+      if(monthClosed){
+        card.classList.add( (realizadoPeriodo >= previstoMes) ? 'ok' : 'bad' );
+      }
+      card.setAttribute('data-tip', `Realizado no período: R$ ${BRL(realizadoPeriodo)}`);
+      card.title = `Realizado no período: R$ ${BRL(realizadoPeriodo)}`;
+
+      card.innerHTML = `
+        <h2>${empresa}</h2>
+        <div class="valorzao">R$ ${BRL(realizadoPeriodo)}</div>
+        <div class="sub">💰 Previsto do mês: R$ ${BRL(previstoMes)}</div>
+        <div class="sub">📊 Atingido (período): ${BRL(percAtingidoPeriodo)}%</div>
+        <div class="sub">📈 Previsão p/ mês: R$ ${BRL(previsaoMes)} (${BRL(percNoRitmo)}%)</div>
+      `;
+      card.addEventListener('click', ()=>abrirEvolucaoEmpresa(empresa));
+      painel.appendChild(card);
+    });
+
   }catch(e){
     console.error(e);
     $('#painelMetas').innerHTML = `<p style="text-align:center; color:var(--muted)">Erro ao carregar dados.</p>`;
@@ -382,17 +441,17 @@ async function carregarMetas(){
   }
 }
 
-/* ---------- Modal: evolução mensal da empresa ---------- */
+/* ---------- Modal evolução por empresa (mês da data final selecionada) ---------- */
 async function abrirEvolucaoEmpresa(empresa){
   const ctx = $('#graficoEmpresa').getContext('2d');
   $('#modalTitle').textContent = `Evolução — ${empresa}`;
   $('#modal').classList.add('open');
 
-  // mês inteiro da data final selecionada
+  // mês/ano da data final do filtro
   const end = range.end || new Date();
-  const y = end.getFullYear(), mo = end.getMonth()+1;
-  const di = `${y}-${String(mo).padStart(2,'0')}-01`;
-  const df = `${y}-${String(mo).padStart(2,'0')}-${String(new Date(y,mo,0).getDate()).padStart(2,'0')}`;
+  const y = end.getFullYear(), m = end.getMonth()+1;
+  const di = `${y}-${String(m).padStart(2,'0')}-01`;
+  const df = `${y}-${String(m).padStart(2,'0')}-${String(new Date(y,m,0).getDate()).padStart(2,'0')}`;
 
   showLoading(true);
   try{
@@ -401,7 +460,7 @@ async function abrirEvolucaoEmpresa(empresa){
     const metas = await rsp.json();
     metas.sort((a,b)=> new Date(a.Data)-new Date(b.Data));
     const labels = metas.map(m=> m["Data"]?.split('-').reverse().join('/'));
-    const vals = metas.map(m=> parseFloat(String(m["Realizado"]).replace(',','.')));
+    const vals = metas.map(m=> parseNum(m["Realizado"]));
 
     if(chartEmpresa) chartEmpresa.destroy();
     chartEmpresa = new Chart(ctx,{
@@ -410,10 +469,10 @@ async function abrirEvolucaoEmpresa(empresa){
         backgroundColor:'rgba(37,99,235,.12)', fill:true, tension:.25, pointRadius:5, pointHoverRadius:8, pointHitRadius:28}]},
       options:{
         responsive:true,
-        interaction:{mode:'nearest', intersect:true}, /* mostra o valor no ponto sob o mouse */
+        interaction:{mode:'nearest', intersect:true},  /* valor exatamente no ponto do mouse */
         events:['mousemove','mouseout','click','touchstart','touchmove','touchend'],
         plugins:{
-          tooltip:{intersect:true, callbacks:{label:c=> 'R$ '+(Number(c.parsed.y)||0).toLocaleString('pt-BR',{minimumFractionDigits:2})}}
+          tooltip:{ intersect:true, callbacks:{ label:c=> 'R$ '+(Number(c.parsed.y)||0).toLocaleString('pt-BR',{minimumFractionDigits:2}) } }
         },
         scales:{ y:{ beginAtZero:true, ticks:{ callback:v=>'R$ '+v.toLocaleString('pt-BR') } } }
       }
@@ -426,13 +485,13 @@ $('#modal').addEventListener('click', e=>{ if(e.target.id==='modal') $('#modal')
 
 /* ---------- WhatsApp ---------- */
 $('#btnWhats').addEventListener('click', ()=>{
-  if(!range.start || !range.end) return;
-  const periodo = `${DMY(range.start)} - ${DMY(range.end)}`;
+  const di = range.start? ISO(range.start):''; const df = range.end? ISO(range.end):'';
+  const periodo = (di&&df)? `${DMY(range.start)} - ${DMY(range.end)}` : 'Período não informado';
   const blocos = document.querySelectorAll('.metas-box'); if(!blocos.length) return alert('Nenhum dado para enviar.');
   let msg = `📆 Resumo da meta de receitas ${periodo}\n\n`;
   blocos.forEach(b=>{
     const t=b.querySelector('h2').innerText;
-    const linhas=[...b.querySelectorAll('p')].map(p=>p.innerText).join('\n');
+    const linhas=[...b.querySelectorAll('.valorzao, .sub')].map(p=>p.innerText).join('\n');
     msg += `*${t}*\n${linhas}\n\n`;
   });
   const numero='5577999761436';
@@ -440,10 +499,10 @@ $('#btnWhats').addEventListener('click', ()=>{
 });
 
 /* ---------- Ações ---------- */
-$('#btnFiltrar').addEventListener('click', carregarMetas);
+$('#btnFiltrar').addEventListener('click', ()=>carregarMetas());
 
 /* ---------- Inicialização ---------- */
-setYesterdayDefault();  // padrão = dia anterior ao atual
+setYesterdayDefault();          // padrão = dia anterior ao atual
 carregarMetas();
 </script>
 </body>
