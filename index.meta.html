@@ -1,161 +1,116 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-BR" data-theme="light">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Metas de Receita - Grupo DV</title>
+  <script>try{var t=localStorage.getItem('dv_theme'); if(t){document.documentElement.setAttribute('data-theme', t);}}catch(e){}</script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f7f7f7;
-      margin: 0;
-      padding: 0;
+    :root{
+      /* tema escuro (padrão visual unificado) */
+      --bg:#0b1020; --surface:#10172a; --card:#0f172a; --text:#e5e7eb;
+      --muted:#94a3b8; --line:rgba(148,163,184,.25); --shadow:0 20px 60px rgba(2,6,23,.35);
     }
-    header {
-      background-color: white;
-      padding: 10px 20px;
-      display: flex;
-      align-items: center;
-      border-bottom: 1px solid #ccc;
+    [data-theme="light"]{
+      --bg:#f6f7fb; --surface:#ffffff; --card:#ffffff; --text:#0f172a;
+      --muted:#475569; --line:#e5e7eb; --shadow:0 16px 36px rgba(15,23,42,.08);
     }
-    header img {
-      height: 50px;
-      margin-right: 20px;
+
+    body{
+      font-family: ui-sans-serif, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: var(--bg); color: var(--text); margin:0;
     }
-    header h1 {
-      margin: 0 auto;
-      font-size: 1.6em;
-      font-weight: bold;
-      text-align: center;
-      flex: 1;
+
+    header{
+      background: var(--surface); border-bottom:1px solid var(--line);
+      padding: 14px 20px; display:flex; align-items:center; gap:12px;
+      position: sticky; top: 0; z-index: 50;
     }
-    .container {
-      padding: 20px;
-      max-width: 1200px;
-      margin: auto;
+    header img{ height:46px }
+    header h1{ flex:1; margin:0; text-align:center; font-size:1.4em; font-weight:800 }
+
+    .container{ padding:20px; max-width:1200px; margin:auto }
+
+    .filters{
+      display:grid; grid-template-columns: repeat(6, minmax(0,1fr));
+      gap:12px; margin-bottom:20px; align-items:end;
     }
-    .filters {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-bottom: 20px;
-      align-items: end;
+    .filters > div{ min-width: 180px }
+    .filters label{ display:block; font-weight:700; color:var(--muted); margin-bottom:6px; font-size:.95em }
+    .filters select, .filters input[type="date"]{
+      width:100%; padding:10px; border-radius:8px; border:1px solid var(--line);
+      background: var(--surface); color: var(--text);
     }
-    .filters label {
-      font-weight: bold;
+    .filters button, #btnWhats{
+      padding:10px 16px; border:1px solid var(--line); border-radius:8px;
+      font-weight:700; cursor:pointer; background: var(--surface); color: var(--text);
     }
-    .filters select,
-    .filters input[type="date"] {
-      padding: 10px;
-      border-radius: 8px;
-      border: 1px solid #ccc;
-      width: 100%;
+    #btnWhats{ background:#25d366; color:#fff; margin:10px 0; border-color:#25d366 }
+
+    .metas-box{
+      background: var(--card); border:1px solid var(--line);
+      border-radius:10px; padding:20px; margin-bottom:16px; box-shadow: var(--shadow);
     }
-    .filters > div {
-      flex: 1 1 200px;
+    .metas-box h2{ margin:0 0 10px; font-size:1.1em; font-weight:800 }
+    .metas-box p{ margin:4px 0; font-size:.95em; color: var(--text) }
+
+    .chart-box{
+      background: var(--card); border:1px solid var(--line);
+      border-radius:10px; box-shadow: var(--shadow); padding:20px;
     }
-    .filters button,
-    #btnWhats {
-      padding: 10px 20px;
-      border: none;
-      border-radius: 8px;
-      font-weight: bold;
-      cursor: pointer;
+    .chart-box h3{ margin-top:0 }
+
+    /* Overlay de carregamento */
+    #loading{
+      position: fixed; inset:0; display:none; align-items:center; justify-content:center; flex-direction:column;
+      background: rgba(2,6,23,.60); color:#fff; font-weight:800; z-index:2000;
     }
-    .filters button {
-      background-color: #1e1e2f;
-      color: white;
-    }
-    #btnWhats {
-      background-color: #25d366;
-      color: white;
-      margin: 10px 0;
-    }
-    .metas-box {
-      background: white;
-      border-radius: 10px;
-      padding: 20px;
-      margin-bottom: 20px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.05);
-    }
-    .metas-box h2 {
-      margin: 0 0 10px;
-      font-size: 1.2em;
-      color: #2c3e50;
-    }
-    .metas-box p {
-      margin: 5px 0;
-      font-size: 1em;
-    }
-    .chart-box {
-      background: white;
-      border-radius: 10px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.05);
-      padding: 20px;
-      margin-bottom: 20px;
-    }
-    .chart-box h3 {
-      margin-top: 0;
-    }
-    .chart-box canvas {
-      max-width: 100%;
-      height: 300px;
-    }
-    @media (max-width: 600px) {
-      header {
-        flex-direction: column;
-        text-align: center;
-      }
-      header img {
-        margin: 0 0 10px;
-      }
+    #loading.show{ display:flex }
+    .spinner{ width:44px; height:44px; border:4px solid rgba(255,255,255,.25); border-top-color:#fff; border-radius:50%;
+      animation:spin 1s linear infinite; margin-bottom:10px }
+    @keyframes spin{ to{ transform: rotate(360deg) } }
+
+    @media (max-width: 768px){
+      .filters{ grid-template-columns: 1fr }
     }
   </style>
-<script>
-(function(){
-  const KEY_NAME = 'dv_pwd';
-  async function ensurePassword(){
-    let pwd = localStorage.getItem(KEY_NAME) || '';
-    while(!pwd){
-      pwd = prompt('Digite a senha de acesso:') || '';
-      if(!pwd) continue;
-      try{
-        const r = await fetch('/api/ping', {headers:{'x-api-key': pwd }});
-        if(r.ok){
-          localStorage.setItem(KEY_NAME, pwd);
-          break;
-        }else{
-          alert('Senha incorreta.');
-          pwd = '';
+
+  <!-- Proteção por senha + interceptador de fetch (mantidos) -->
+  <script>
+  (function(){
+    const KEY_NAME = 'dv_pwd';
+
+    async function ensurePassword(){
+      let pwd = localStorage.getItem(KEY_NAME) || '';
+      while(!pwd){
+        pwd = prompt('Digite a senha de acesso:') || '';
+        if(!pwd) continue;
+        try{
+          const r = await fetch('/api/ping', {headers:{'x-api-key': pwd }});
+          if(r.ok){ localStorage.setItem(KEY_NAME, pwd); break; }
+          else { alert('Senha incorreta.'); pwd=''; }
+        }catch(e){
+          localStorage.setItem(KEY_NAME, pwd); break;
         }
-      }catch(e){
-        // se não der pra validar agora, ainda assim salva e segue
-        localStorage.setItem(KEY_NAME, pwd);
-        break;
       }
     }
-  }
 
-  // intercepta fetch para anexar a senha automaticamente
-  const _fetch = window.fetch.bind(window);
-  window.fetch = (input, init={})=>{
-    let url = (typeof input === 'string') ? input : (input && input.url) || '';
-    init = init || {};
-    const headers = new Headers(init.headers || ((typeof input !== 'string' && input.headers) || {}));
-    const pwd = localStorage.getItem(KEY_NAME) || '';
-    if(url.startsWith('/api/')){
-      if(pwd) headers.set('x-api-key', pwd);
-    }
-    return _fetch(input, Object.assign({}, init, { headers }));
-  };
+    // intercepta fetch para anexar senha automaticamente
+    const _fetch = window.fetch.bind(window);
+    window.fetch = (input, init={})=>{
+      let url = (typeof input === 'string') ? input : (input && input.url) || '';
+      init = init || {};
+      const headers = new Headers(init.headers || ((typeof input !== 'string' && input.headers) || {}));
+      const pwd = localStorage.getItem(KEY_NAME) || '';
+      if(url.startsWith('/api/') && pwd){ headers.set('x-api-key', pwd); }
+      return _fetch(input, Object.assign({}, init, { headers }));
+    };
 
-  // pede a senha apenas se ainda não houver
-  if(!localStorage.getItem(KEY_NAME)){
-    ensurePassword();
-  }
-})();
-</script>
+    if(!localStorage.getItem(KEY_NAME)){ ensurePassword(); }
+  })();
+  </script>
 </head>
 <body>
 
@@ -195,7 +150,22 @@
   </div>
 </div>
 
+<!-- Loading -->
+<div id="loading">
+  <div class="spinner"></div>
+  <div id="loadingText">Carregando…</div>
+</div>
+
 <script>
+/* ====== MELHORIAS NO CHART.JS (mantendo suas funções) ====== */
+Chart.defaults.elements.point.radius = 6;
+Chart.defaults.elements.point.hoverRadius = 10;
+Chart.defaults.elements.point.hitRadius = 28;
+Chart.defaults.interaction.mode = 'nearest';
+Chart.defaults.interaction.intersect = false;
+Chart.defaults.events = ['mousemove','mouseout','click','touchstart','touchmove','touchend'];
+
+/* ====== SEU JS ORIGINAL (mantido) + overlay de carregamento ====== */
 const urlBase = '/api/meta';
 let chart;
 
@@ -222,9 +192,13 @@ window.onload = () => {
   carregarMetas();
 };
 
+function showLoading(msg){ const el=document.getElementById('loading'); document.getElementById('loadingText').textContent = msg||'Carregando…'; el.classList.add('show'); }
+function hideLoading(){ document.getElementById('loading').classList.remove('show'); }
+
 async function carregarMetas() {
+  showLoading('Carregando metas…');
   const painel = document.getElementById("painelMetas");
-  painel.innerHTML = "Carregando...";
+  painel.innerHTML = "";
 
   const dataInicio = document.getElementById("dataInicio").value;
   const dataFim = document.getElementById("dataFim").value;
@@ -271,8 +245,9 @@ async function carregarMetas() {
 
     painel.innerHTML = "";
     if (metas.length === 0) {
-      painel.innerHTML = "<p style='text-align:center'>Nenhum dado encontrado.</p>";
+      painel.innerHTML = "<p style='text-align:center; color:var(--muted)'>Nenhum dado encontrado.</p>";
       esconderGrafico();
+      hideLoading();
       return;
     }
 
@@ -287,13 +262,13 @@ async function carregarMetas() {
       const div = document.createElement("div");
       div.className = "metas-box";
       div.innerHTML = `
-  <h2>${linha["Empresa"]}</h2>
-  <p>💰 Previsto: R$ ${formatarNumero(previsto)}</p>
-  <p>✅ Realizado: R$ ${formatarNumero(realizado)}</p>
-  <p>📊 Atingido: ${formatarNumero(atingido)}%</p>
-  <p>📅 Média por dia: R$ ${formatarNumero(mediaDiaria)}</p>
-  <p>📈 Previsão: R$ ${formatarNumero(previsaoFinal)} (${formatarNumero(previsaoPercentual)}%)</p>
-`;
+        <h2>${linha["Empresa"]}</h2>
+        <p>💰 Previsto: R$ ${formatarNumero(previsto)}</p>
+        <p>✅ Realizado: R$ ${formatarNumero(realizado)}</p>
+        <p>📊 Atingido: ${formatarNumero(atingido)}%</p>
+        <p>📅 Média por dia: R$ ${formatarNumero(mediaDiaria)}</p>
+        <p>📈 Previsão: R$ ${formatarNumero(previsaoFinal)} (${formatarNumero(previsaoPercentual)}%)</p>
+      `;
       painel.appendChild(div);
     });
 
@@ -304,6 +279,7 @@ async function carregarMetas() {
     painel.innerHTML = "Erro ao carregar dados.";
     console.error(e);
   }
+  hideLoading();
 }
 
 function mostrarGrafico(metas) {
@@ -325,22 +301,20 @@ function mostrarGrafico(metas) {
         borderColor: '#388e3c',
         backgroundColor: 'rgba(56, 142, 60, 0.1)',
         tension: 0.3,
-        pointRadius: 4
+        pointRadius: 6,
+        pointHoverRadius: 10,
+        pointHitRadius: 28
       }]
     },
     options: {
       responsive: true,
-      plugins: {
-        legend: { display: true },
-        title: { display: false }
-      },
+      interaction: { mode: 'nearest', intersect: false },
+      plugins: { legend: { display: true }, title: { display: false } },
       scales: {
         y: {
           beginAtZero: true,
           ticks: {
-            callback: function(value) {
-              return 'R$ ' + value.toLocaleString('pt-BR');
-            }
+            callback: function(value) { return 'R$ ' + value.toLocaleString('pt-BR'); }
           }
         }
       }
@@ -349,12 +323,13 @@ function mostrarGrafico(metas) {
 }
 
 function esconderGrafico() {
-  if (chart) {
-    chart.destroy();
-    chart = null;
-  }
+  if (chart) { chart.destroy(); chart = null; }
+  document.getElementById('graficoContainer').style.display = 'none';
 }
+</script>
 
+<script>
+// WhatsApp (mantido)
 document.getElementById("btnWhats").addEventListener("click", () => {
   const dataInicio = document.getElementById("dataInicio").value;
   const dataFim = document.getElementById("dataFim").value;
