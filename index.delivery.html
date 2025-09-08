@@ -50,7 +50,18 @@
     .user-menu a:hover,.user-menu button:hover{background:var(--icon-bg)}
 
     /* Página */
-    .container{max-width:1200px; margin:0 auto; padding:20px 18px}
+   .container {
+  padding: 20px;      /* padrão no desktop */
+  max-width: 100%;
+  margin: 0;
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 10px;    /* no celular mantém um respiro */
+  }
+}
+
 
     /* Filtros */
     .filters{display:grid; grid-template-columns: 1fr 220px 220px 200px; gap:12px; align-items:end}
