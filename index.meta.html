@@ -7,10 +7,9 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     :root{
-      --bg: #0b1020; --surface:#10172a; --card:#0f172a;
+      --bg:#0b1020; --surface:#10172a; --card:#0f172a;
       --text:#e5e7eb; --muted:#94a3b8; --line:rgba(148,163,184,.25);
-      --brand:#60a5fa; --brand-2:#22d3ee;
-      --shadow:0 20px 60px rgba(2,6,23,.35);
+      --brand:#60a5fa; --brand-2:#22d3ee; --shadow:0 20px 60px rgba(2,6,23,.35);
     }
     [data-theme="light"]{
       --bg:#f6f7fb; --surface:#fff; --card:#fff;
@@ -18,92 +17,61 @@
       --shadow:0 16px 36px rgba(15,23,42,.08);
     }
     *{box-sizing:border-box}
-    body{margin:0; font-family:ui-sans-serif,Segoe UI,Roboto,Arial; background:var(--bg); color:var(--text)}
+    body{margin:0;font-family:ui-sans-serif,Segoe UI,Roboto,Arial;background:var(--bg);color:var(--text)}
 
     /* Header */
     header{
-      position:sticky; top:0; z-index:10;
+      position:sticky;top:0;z-index:10;
       backdrop-filter:saturate(160%) blur(8px);
       background:color-mix(in srgb,var(--surface) 80%,transparent);
       border-bottom:1px solid var(--line);
     }
-    .head-wrap{
-      max-width:1200px; margin:0 auto; padding:14px 18px;
-      display:flex; align-items:center; gap:12px;
-    }
-    .brand{display:flex; align-items:center; gap:10px; text-decoration:none; color:inherit}
+    .head-wrap{max-width:100%;margin:0 auto;padding:14px 18px;display:flex;align-items:center;gap:12px}
+    .brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit}
     .brand img{height:42px}
-    .title{font-weight:800; font-size:clamp(18px,1.6vw,22px)}
+    .title{font-weight:800;font-size:clamp(18px,1.6vw,22px)}
     .head-spacer{flex:1}
-    .icon-btn{
-      border:1px solid var(--line); background:var(--surface);
-      color:var(--text); padding:10px 12px; border-radius:12px;
-      font-weight:800; cursor:pointer; display:inline-flex; gap:6px;
-    }
+    .icon-btn{border:1px solid var(--line);background:var(--surface);color:var(--text);padding:10px 12px;border-radius:12px;font-weight:800;cursor:pointer}
     .user{position:relative}
-    .user-btn{
-      display:flex; align-items:center; gap:10px; cursor:pointer;
-      border:1px solid var(--line); background:var(--surface);
-      padding:6px 8px; border-radius:999px;
-    }
-    .user-btn img{width:34px; height:34px; border-radius:50%}
-    .user-menu{
-      position:absolute; right:0; top:110%; background:var(--surface);
-      border:1px solid var(--line); border-radius:12px; box-shadow:var(--shadow);
-      min-width:200px; padding:6px; display:none;
-    }
+    .user-btn{display:flex;align-items:center;gap:10px;cursor:pointer;border:1px solid var(--line);background:var(--surface);padding:6px 8px;border-radius:999px}
+    .user-btn img{width:34px;height:34px;border-radius:50%}
+    .user-menu{position:absolute;right:0;top:110%;background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);min-width:200px;padding:6px;display:none}
     .user.open .user-menu{display:block}
-    .user-menu a, .user-menu button{
-      display:block; padding:10px 12px; border:none; background:transparent;
-      text-align:left; width:100%; border-radius:10px; cursor:pointer; color:var(--text);
-    }
-    .user-menu a:hover, .user-menu button:hover{background:rgba(0,0,0,.06)}
+    .user-menu a,.user-menu button{display:block;padding:10px 12px;border:none;background:transparent;text-align:left;width:100%;border-radius:10px;cursor:pointer;color:var(--text)}
+    .user-menu a:hover,.user-menu button:hover{background:rgba(0,0,0,.06)}
 
-    /* Container */
-    .container{padding:20px; max-width:1200px; margin:auto}
+    /* Container tela cheia */
+    .container{padding:20px;max-width:100%;margin:auto}
 
     /* Filtros */
-    .filters{display:flex; flex-wrap:wrap; gap:12px; margin-bottom:20px; align-items:end}
-    .filters label{font-weight:800; font-size:.95em; color:var(--muted); display:block; margin-bottom:6px}
-    .filters select,.filters input{padding:10px; border-radius:8px; border:1px solid var(--line); background:var(--surface); color:var(--text); width:100%}
-    .filters button{padding:10px 16px; border:1px solid var(--line); border-radius:8px; background:var(--surface); color:var(--text); font-weight:800; cursor:pointer}
+    .filters{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:20px;align-items:end}
+    .filters label{font-weight:800;font-size:.95em;color:var(--muted);display:block;margin-bottom:6px}
+    .filters select{padding:10px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--text);width:100%}
+    .filters button{padding:10px 16px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--text);font-weight:800;cursor:pointer}
 
-    /* Calendário popover */
+    /* Calendário único */
     .periodo-wrap{position:relative}
-    .periodo-btn{background:var(--surface); border:1px solid var(--line); border-radius:8px; padding:10px 12px; width:100%; text-align:left; cursor:pointer}
-    .popover{position:absolute; top:100%; left:0; margin-top:8px; z-index:50; background:var(--surface); border:1px solid var(--line); border-radius:12px; box-shadow:var(--shadow); width:300px; padding:12px; display:none}
-    .popover.open{display:block}
-    .popover .row{display:flex; gap:8px; flex-wrap:wrap; margin-top:8px}
-    .popover input{width:100%; padding:8px; margin-bottom:6px; border-radius:8px; border:1px solid var(--line); background:var(--surface); color:var(--text)}
+    .periodo-btn{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:10px 12px;width:100%;text-align:left;cursor:pointer}
+    .calendario{position:absolute;top:100%;left:0;margin-top:8px;z-index:50;background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);width:320px;padding:12px;display:none}
+    .calendario.open{display:block}
+    .calendario table{width:100%;border-collapse:collapse;text-align:center}
+    .calendario th{padding:6px;color:var(--muted)}
+    .calendario td{padding:6px;cursor:pointer;border-radius:6px}
+    .calendario td:hover{background:var(--brand);color:#fff}
+    .calendario td.selected{background:var(--brand-2);color:#fff}
+    .calendario .footer{margin-top:8px;display:flex;justify-content:space-between}
 
     /* Cards */
-    .metas-box{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:20px; margin-bottom:20px; box-shadow:var(--shadow)}
-    .metas-box h2{margin:0 0 10px; font-size:1.2em; color:var(--text)}
-    .metas-box p{margin:5px 0; font-size:.95em}
+    .metas-box{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:20px;margin-bottom:20px;box-shadow:var(--shadow)}
+    .metas-box h2{margin:0 0 10px;font-size:1.2em;color:var(--text)}
+    .metas-box p{margin:5px 0;font-size:.95em}
 
     /* Chart */
-    .chart-box{background:var(--card); border-radius:12px; box-shadow:var(--shadow); padding:20px; margin-bottom:20px}
-    .chart-box canvas{width:100% !important; height:300px !important}
+    .chart-box{background:var(--card);border-radius:12px;box-shadow:var(--shadow);padding:20px;margin-bottom:20px}
+    .chart-box canvas{width:100% !important;height:300px !important}
   </style>
-
-  <!-- Senha + Tema -->
-  <script>
-  (function(){
-    const KEY_NAME='dv_pwd';
-    const savedTheme=localStorage.getItem('dv_theme');
-    if(savedTheme){document.documentElement.setAttribute('data-theme',savedTheme);}
-    window.__toggleTheme=()=>{const cur=document.documentElement.getAttribute('data-theme')||'light';const next=(cur==='light')?'dark':'light';document.documentElement.setAttribute('data-theme',next);localStorage.setItem('dv_theme',next);}
-    async function ensurePassword(){
-      let pwd=localStorage.getItem(KEY_NAME)||''; while(!pwd){pwd=prompt('Digite a senha de acesso:')||''; if(!pwd) continue; try{const r=await fetch('/api/ping',{headers:{'x-api-key':pwd}}); if(r.ok){localStorage.setItem(KEY_NAME,pwd); break;} else{alert('Senha incorreta.'); pwd='';}}catch(e){localStorage.setItem(KEY_NAME,pwd); break;}}
-    }
-    const _fetch=window.fetch.bind(window);
-    window.fetch=(input,init={})=>{let url=(typeof input==='string')?input:(input&&input.url)||''; init=init||{}; const headers=new Headers(init.headers||(typeof input!=='string'&&input.headers)||{}); const pwd=localStorage.getItem(KEY_NAME)||''; if(url.startsWith('/api/')&&pwd){headers.set('x-api-key',pwd);} return _fetch(input,Object.assign({},init,{headers}));};
-    if(!localStorage.getItem(KEY_NAME)){ensurePassword();}
-  })();
-  </script>
 </head>
 <body>
-
   <!-- Header -->
   <header>
     <div class="head-wrap">
@@ -114,7 +82,7 @@
       <div class="head-spacer"></div>
       <button id="themeToggle" class="icon-btn">🌓 Tema</button>
       <div class="user" id="userMenu">
-        <button class="user-btn"><img src="https://github.com/ClenaStore/grupodv/blob/main/paste/Imagem%20do%20WhatsApp%20de%202025-09-08%20%C3%A0(s)%2011.54.12_884bebc9.jpg?raw=true" alt=""><strong style="font-size:13px">Leonardo</strong></button>
+        <button class="user-btn"><img src="https://github.com/ClenaStore/grupodv/blob/main/paste/Imagem%20do%20WhatsApp%20de%202025-09-08%20%C3%A0(s)%2011.54.12_884bebc9.jpg?raw=true"><strong style="font-size:13px">Leonardo</strong></button>
         <div class="user-menu">
           <a href="perfil.html">👤 Meu Perfil</a>
           <button onclick="logout()">🚪 Sair</button>
@@ -128,16 +96,14 @@
     <div class="filters">
       <div class="periodo-wrap">
         <label>Período:</label>
-        <button id="btnPeriodo" type="button" class="periodo-btn">📅 <span id="periodoTexto">Selecionar</span></button>
-        <div id="popoverPeriodo" class="popover">
-          <label>Início</label><input type="date" id="dataInicio">
-          <label>Fim</label><input type="date" id="dataFim">
-          <div class="row">
-            <button id="ontem">Ontem</button>
-            <button id="ult7">Últimos 7</button>
-            <button id="mes">Este mês</button>
+        <button id="btnPeriodo" class="periodo-btn">📅 <span id="periodoTexto">Selecionar</span></button>
+        <div id="calendario" class="calendario">
+          <div id="mesAno" style="text-align:center;font-weight:bold;margin-bottom:8px"></div>
+          <table id="tabelaCal"></table>
+          <div class="footer">
+            <button id="cancelar">Cancelar</button>
+            <button id="aplicar">Aplicar</button>
           </div>
-          <div class="row" style="justify-content:flex-end"><button id="aplicar">Aplicar</button></div>
         </div>
       </div>
       <div>
@@ -149,7 +115,7 @@
 
     <div id="painelMetas"></div>
 
-    <div class="chart-box" id="graficoContainer">
+    <div class="chart-box">
       <h3>📈 Evolução do Faturamento</h3>
       <canvas id="graficoFaturamento"></canvas>
     </div>
@@ -157,37 +123,40 @@
 
 <script>
 const urlBase='/api/meta'; let chart;
+let inicio=null,fim=null,dataAtual=new Date();
 const BRL=v=>(+v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
 
-document.getElementById('themeToggle').addEventListener('click',()=>window.__toggleTheme&&window.__toggleTheme());
-const user=document.getElementById('userMenu');user.querySelector('.user-btn').addEventListener('click',()=>user.classList.toggle('open'));window.addEventListener('click',e=>{if(!user.contains(e.target)) user.classList.remove('open')});
-function logout(){localStorage.removeItem('dv_pwd'); location.reload();}
-
-function preencherOntem(){const hoje=new Date(); hoje.setDate(hoje.getDate()-1); const d=hoje.toISOString().split('T')[0]; document.getElementById("dataInicio").value=d; document.getElementById("dataFim").value=d; document.getElementById("periodoTexto").textContent=`${d}`;}
-window.onload=()=>{preencherOntem(); carregarMetas();};
+function renderCalendario(mes=dataAtual.getMonth(),ano=dataAtual.getFullYear()){
+  const tabela=document.getElementById("tabelaCal"); tabela.innerHTML="";
+  document.getElementById("mesAno").textContent=new Date(ano,mes).toLocaleDateString('pt-BR',{month:'long',year:'numeric'});
+  const primeiroDia=new Date(ano,mes,1).getDay(); const dias=new Date(ano,mes+1,0).getDate();
+  let row=document.createElement("tr");
+  ["D","S","T","Q","Q","S","S"].forEach(d=>{let th=document.createElement("th");th.textContent=d;row.appendChild(th);});
+  tabela.appendChild(row);
+  row=document.createElement("tr"); for(let i=0;i<primeiroDia;i++){row.appendChild(document.createElement("td"));}
+  for(let d=1;d<=dias;d++){if(row.children.length===7){tabela.appendChild(row);row=document.createElement("tr");}
+    const td=document.createElement("td"); td.textContent=d; td.onclick=()=>selecionarDia(new Date(ano,mes,d)); 
+    if(inicio&&d===inicio.getDate()&&mes===inicio.getMonth()) td.classList.add("selected");
+    if(fim&&d===fim.getDate()&&mes===fim.getMonth()) td.classList.add("selected");
+    row.appendChild(td);}
+  tabela.appendChild(row);
+}
+function selecionarDia(data){if(!inicio||fim){inicio=data;fim=null;}else{if(data<inicio){fim=inicio;inicio=data;}else{fim=data;}} renderCalendario(data.getMonth(),data.getFullYear());}
+document.getElementById("btnPeriodo").onclick=()=>{document.getElementById("calendario").classList.toggle("open");renderCalendario();}
+document.getElementById("cancelar").onclick=()=>document.getElementById("calendario").classList.remove("open");
+document.getElementById("aplicar").onclick=()=>{if(inicio&&fim){document.getElementById("periodoTexto").textContent=`${inicio.toLocaleDateString()} → ${fim.toLocaleDateString()}`; carregarMetas();}document.getElementById("calendario").classList.remove("open");}
 
 async function carregarMetas(){
   const painel=document.getElementById("painelMetas"); painel.innerHTML="Carregando...";
-  const dataInicio=document.getElementById("dataInicio").value; const dataFim=document.getElementById("dataFim").value; const empresa=document.getElementById("empresaFiltro").value;
+  const params=new URLSearchParams();
+  if(inicio) params.append("dataInicio",inicio.toISOString().split('T')[0]);
+  if(fim) params.append("dataFim",fim.toISOString().split('T')[0]);
   try{
-    const r=await fetch(`${urlBase}?dataInicio=${dataInicio}&dataFim=${dataFim}&empresa=${empresa}`); const metas=await r.json();
-    const empresas=[...new Set(metas.map(m=>m.Empresa))]; const sel=document.getElementById("empresaFiltro"); if(sel.options.length<=1){empresas.forEach(e=>{const o=document.createElement("option"); o.value=e; o.textContent=e; sel.appendChild(o);});}
-    painel.innerHTML=""; if(!metas.length){painel.innerHTML="<p>Nenhum dado.</p>"; return;}
-    metas.forEach(linha=>{
-      const previsto=+linha.Previsto; const realizado=parseFloat(linha.Realizado.toString().replace(",",".")); const atingido=previsto?(realizado/previsto*100):0;
-      const box=document.createElement("div"); box.className="metas-box"; box.innerHTML=`<h2>${linha.Empresa}</h2><p>💰 Previsto: ${BRL(previsto)}</p><p>✅ Realizado: ${BRL(realizado)}</p><p>📊 Atingido: ${atingido.toFixed(2)}%</p>`; painel.appendChild(box);
-    });
-  }catch(e){painel.innerHTML="Erro ao carregar";}
+    const r=await fetch(`${urlBase}?${params.toString()}`); const metas=await r.json();
+    painel.innerHTML=""; metas.forEach(linha=>{const div=document.createElement("div"); div.className="metas-box"; div.innerHTML=`<h2>${linha.Empresa}</h2><p>💰 Previsto: ${BRL(linha.Previsto)}</p><p>✅ Realizado: ${BRL(linha.Realizado)}</p>`; painel.appendChild(div);});
+  }catch(e){painel.innerHTML="Erro.";}
 }
-document.getElementById("btnWhats").addEventListener("click",()=>{const blocos=document.querySelectorAll(".metas-box"); if(!blocos.length) return alert("Nada."); let msg="📊 Metas:\n\n"; blocos.forEach(b=>{msg+=b.innerText+"\n\n"}); window.open("https://wa.me/5577999761436?text="+encodeURIComponent(msg),"_blank");});
-
-/* Calendário popover */
-const btnPeriodo=document.getElementById('btnPeriodo'); const pop=document.getElementById('popoverPeriodo');
-btnPeriodo.onclick=()=>pop.classList.toggle('open'); document.addEventListener('click',e=>{if(!pop.contains(e.target)&&!btnPeriodo.contains(e.target)) pop.classList.remove('open');});
-document.getElementById('ontem').onclick=()=>{preencherOntem();};
-document.getElementById('ult7').onclick=()=>{const hoje=new Date(); const fim=new Date(hoje.getFullYear(),hoje.getMonth(),hoje.getDate()-1); const ini=new Date(fim); ini.setDate(fim.getDate()-6); document.getElementById("dataInicio").value=ini.toISOString().split('T')[0]; document.getElementById("dataFim").value=fim.toISOString().split('T')[0];};
-document.getElementById('mes').onclick=()=>{const d=new Date(); const ini=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-01`; const fim=new Date(d.getFullYear(),d.getMonth()+1,0).toISOString().split('T')[0]; document.getElementById("dataInicio").value=ini; document.getElementById("dataFim").value=fim;};
-document.getElementById('aplicar').onclick=()=>{carregarMetas(); pop.classList.remove('open');};
+function logout(){localStorage.removeItem('dv_pwd');location.reload();}
 </script>
 </body>
 </html>
