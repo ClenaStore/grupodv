@@ -27,23 +27,23 @@
     .grow{flex:1}
 
     .container{max-width:100%;padding:20px 18px}
-    .filters{display:grid;grid-template-columns:320px 220px 160px 140px 200px;gap:12px;align-items:end}
-    @media(max-width:1100px){.filters{grid-template-columns:1fr 1fr}}
+    .filters{display:grid;grid-template-columns:320px 220px 160px;gap:12px;align-items:end}
+    @media(max-width:900px){.filters{grid-template-columns:1fr 1fr}}
     @media(max-width:600px){.filters{grid-template-columns:1fr}}
 
-    .field label{display:block;margin:0 0 6px;color:var(--muted);font-weight:800}
+    .field{display:flex;align-items:center;gap:6px}
     .picker-btn, select{width:100%;border:1px solid var(--line);background:var(--surface);color:var(--text);border-radius:12px;padding:12px 14px;font-weight:700}
     .btn{border:1px solid var(--line);background:var(--surface);color:var(--text);padding:10px 12px;border-radius:12px;font-weight:800;cursor:pointer}
     .btn.action{width:100%}
 
-    .period-display{margin-left:8px;font-weight:800;color:var(--muted)}
+    .period-display{font-weight:800;color:var(--muted)}
 
     #painelMetas{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:16px}
     @media(max-width:1200px){#painelMetas{grid-template-columns:repeat(2,1fr)}}
     @media(max-width:700px){#painelMetas{grid-template-columns:1fr}}
 
     .metas-box{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;box-shadow:var(--shadow);
-      text-align:center;cursor:pointer;min-height:170px;display:flex;flex-direction:column;justify-content:center;transition:.18s}
+      text-align:center;cursor:pointer;min-height:180px;display:flex;flex-direction:column;justify-content:center;transition:.18s}
     .metas-box:hover{transform:translateY(-3px)}
     .metas-box h2{margin:0 0 6px;font-size:1.05rem;text-transform:uppercase}
     .metas-box p{margin:4px 0;font-size:.9rem}
@@ -64,12 +64,13 @@
   <header>
     <div class="head">
       <a class="brand" href="#"><img src="https://github.com/ClenaStore/painel-principal/blob/main/img/GRUPO%20DV%20(1).png?raw=true"/><span class="title">Metas de Receita</span></a>
+      <div class="grow"></div>
     </div>
   </header>
 
   <div class="container">
     <div class="filters">
-      <div class="field" style="display:flex;align-items:center;gap:6px">
+      <div class="field">
         <button id="rangeBtn" class="picker-btn">🗓️ Selecionar</button>
         <span id="rangeHint" class="period-display"></span>
       </div>
@@ -79,7 +80,12 @@
     <div id="painelMetas"></div>
   </div>
 
-  <div id="modal" class="modal"><div class="modal-card"><h3 id="modalTitle"></h3><canvas id="graficoEmpresa"></canvas></div></div>
+  <div id="modal" class="modal">
+    <div class="modal-card">
+      <h3 id="modalTitle"></h3>
+      <canvas id="graficoEmpresa"></canvas>
+    </div>
+  </div>
 
 <script>
 const urlBase='/api/meta';
@@ -90,7 +96,8 @@ let range={start:null,end:null},chartEmpresa=null;
 
 function setYesterdayDefault(){
   const hoje=new Date();const y=new Date(hoje);y.setDate(hoje.getDate()-1);
-  range.start=y;range.end=y;document.getElementById('rangeHint').textContent=`${DMY(y)} → ${DMY(y)}`;
+  range.start=y;range.end=y;
+  document.getElementById('rangeHint').textContent=`${DMY(y)} → ${DMY(y)}`;
 }
 
 function isMonthClosed(){
@@ -130,8 +137,8 @@ async function carregarMetas(){
       <h2>${linha.Empresa}</h2>
       <p>💰 Previsto: R$ ${BRL(previsto)}</p>
       <p>✅ Realizado: R$ ${BRL(realizado)}</p>
-      <p>📊 Atingido: ${BRL(atingido)}%</p>
-      <p>📈 Previsão: R$ ${BRL(previsaoFinal)} (${BRL(previsaoPct)}%)</p>
+      <p>📊 Atingido: ${atingido.toFixed(2)}%</p>
+      <p>📈 Previsão: R$ ${BRL(previsaoFinal)} (${previsaoPct.toFixed(2)}%)</p>
     `;
     div.addEventListener('click',()=>abrirEvolucaoEmpresa(linha.Empresa));
     painel.appendChild(div);
