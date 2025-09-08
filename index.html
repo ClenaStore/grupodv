@@ -47,24 +47,40 @@
       color: var(--text);
     }
 
-    /* Splash */
-    #splash{
-      position: fixed; inset:0; z-index: 9998;
+    /* ===== Tela de senha (única coisa visível até liberar) ===== */
+    #gate{
+      position:fixed; inset:0; z-index:9999;
       display:flex; align-items:center; justify-content:center;
       background: var(--bg);
-      transition: opacity .5s ease;
     }
-    #splash .logo{
-      width: 120px; height: 120px; border-radius: 24px;
-      background: var(--grad);
-      display:grid; place-items:center;
+    #gate .box{
+      width:min(92vw, 380px);
+      background: var(--surface);
+      border:1px solid var(--line);
+      border-radius:16px;
+      padding:22px 18px;
       box-shadow: var(--shadow);
-      animation: pop 1.2s ease infinite alternate;
+      text-align:center;
+      animation: fadeIn .25s ease;
     }
-    #splash img{ width: 68px; filter: drop-shadow(0 2px 10px rgba(0,0,0,.3)); }
-    @keyframes pop{ to{ transform: translateY(-6px) scale(1.02); } }
+    #gate img{ width:84px; height:84px; object-fit:contain; margin-bottom:10px }
+    #gate h1{ margin:8px 0 4px; font-size:20px }
+    #gate p{ margin:0 0 14px; color:var(--muted); font-size:13px }
+    #gate input{
+      width:100%; padding:12px;
+      border:1px solid var(--line); border-radius:12px;
+      background: var(--card); color: var(--text);
+      font-size:15px;
+    }
+    #gate button{
+      margin-top:10px; width:100%; padding:12px; border:none;
+      border-radius:12px; font-weight:800; cursor:pointer;
+      background: var(--brand); color:#fff;
+    }
+    #gate .err{color:#dc2626; font-size:13px; margin-top:8px; display:none}
+    @keyframes fadeIn{from{opacity:0; transform:translateY(6px)}to{opacity:1; transform:none}}
 
-    /* Header */
+    /* ===== Header e layout do app (só aparece após login) ===== */
     header{
       position: sticky; top:0; z-index: 50;
       backdrop-filter: saturate(160%) blur(8px);
@@ -84,8 +100,6 @@
       font-size: clamp(18px, 1.6vw, 22px);
     }
     .head-spacer{ flex:1 }
-    .head-actions{ display:flex; align-items:center; gap:10px }
-
     .icon-btn{
       border:1px solid var(--line); background: var(--surface);
       color: var(--text); padding:10px 12px; border-radius: 12px;
@@ -93,13 +107,9 @@
       text-decoration:none; display:inline-flex; align-items:center; gap:8px;
     }
     .icon-btn:hover{ transform: translateY(-2px); box-shadow: var(--shadow) }
-    /* Visibilidade utilitária */
     .only-desktop { display: inline-flex; }
-    @media (max-width: 900px) {
-      .only-desktop { display: none !important; }
-    }
+    @media (max-width: 900px) { .only-desktop { display: none !important; } }
 
-    /* User menu */
     .user{ position: relative; }
     .user-btn{
       display:flex; align-items:center; gap:10px; cursor:pointer;
@@ -124,23 +134,18 @@
     }
     .user-menu a:hover, .user-menu button:hover{ background: var(--icon-bg) }
 
-    /* Hero / filtros */
     .hero{
       max-width:1200px; margin:16px auto 0; padding: 0 18px 18px;
     }
     .hero h2{ margin:8px 0 12px; font-size: clamp(18px,1.4vw,20px); color: var(--muted) }
-    .tools{
-      display:flex; gap:10px; flex-wrap:wrap; align-items:center;
-    }
+    .tools{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
     .search{ flex:1; position:relative; }
     .search input{
       width:100%; border:1px solid var(--line); background: var(--surface);
       color: var(--text); border-radius:12px; padding:12px 14px 12px 40px; outline:none;
       box-shadow: inset 0 1px 0 rgba(255,255,255,.04);
     }
-    .search .magnify{
-      position:absolute; left:12px; top:50%; transform: translateY(-50%); opacity:.6;
-    }
+    .search .magnify{ position:absolute; left:12px; top:50%; transform: translateY(-50%); opacity:.6; }
     .chips{ display:flex; gap:8px; flex-wrap:wrap }
     .chip{
       border:1px solid var(--line); background: var(--chip-bg); color: var(--chip-text);
@@ -148,7 +153,6 @@
     }
     .chip.active{ background: var(--grad); color:#fff; border-color:transparent }
 
-    /* Grid de cards */
     .grid{
       max-width:1200px; margin: 6px auto 28px; padding: 0 18px;
       display:grid; gap:14px;
@@ -172,7 +176,6 @@
     }
     @media (max-width: 1160px){ .card{ grid-column: span 4 / span 4; } }
     @media (max-width: 760px){ .card{ grid-column: span 4 / span 4; } }
-
     .card::before{
       content:""; position:absolute; inset:0 0 auto 0; height:4px;
       background: var(--grad); opacity:.9;
@@ -190,294 +193,291 @@
       background: color-mix(in srgb, var(--surface) 90%, transparent);
     }
 
-    /* Footer */
     footer{
       max-width:1200px; margin: 10px auto 30px; padding: 0 18px;
       color: var(--muted); font-size:12px; display:flex; justify-content:space-between; gap:12px;
       border-top:1px dashed var(--line); padding-top:12px;
     }
-
-    /* ===== Modal de Senha (Popup) ===== */
-    #pwdModal{
-      position:fixed; inset:0; display:none; z-index:9999;
-      background: rgba(0,0,0,.65);
-      align-items:center; justify-content:center;
-    }
-    #pwdModal .box{
-      width:min(92vw, 360px);
-      background: var(--surface);
-      border:1px solid var(--line);
-      border-radius:16px;
-      padding:22px 18px;
-      box-shadow: var(--shadow);
-      text-align:center;
-      animation: fadeIn .25s ease;
-    }
-    #pwdModal img{ width:80px; height:80px; object-fit:contain; margin-bottom:10px }
-    #pwdModal h3{ margin:6px 0 14px; font-size:18px }
-    #pwdModal input{
-      width:100%; padding:12px;
-      border:1px solid var(--line); border-radius:12px;
-      background: var(--card); color: var(--text);
-      font-size:15px;
-    }
-    #pwdModal button{
-      margin-top:10px; width:100%; padding:12px; border:none;
-      border-radius:12px; font-weight:800; cursor:pointer;
-      background: var(--brand); color:#fff;
-    }
-    #pwdModal .err{color:#dc2626; font-size:13px; margin-top:8px; display:none}
-    @keyframes fadeIn{from{opacity:0; transform:translateY(6px)}to{opacity:1; transform:none}}
   </style>
 
-  <!-- Proteção por senha + interceptador de fetch (com POPUP) -->
+  <!-- Interceptador + Gate de senha -->
   <script>
   (function(){
-    const KEY_NAME = 'dv_pwd';
+    const KEY = 'dv_pwd';
 
-    // tema salvo
-    const savedTheme = localStorage.getItem('dv_theme');
-    if(savedTheme){ document.documentElement.setAttribute('data-theme', savedTheme); }
+    // aplica tema salvo antes de pintar
+    const t = localStorage.getItem('dv_theme');
+    if(t) document.documentElement.setAttribute('data-theme', t);
 
-    // intercepta fetch para anexar a senha
-    const _fetch = window.fetch.bind(window);
+    // intercepta fetch para anexar x-api-key
+    const _f = window.fetch.bind(window);
     window.fetch = (input, init={})=>{
       const url = (typeof input === 'string') ? input : (input && input.url) || '';
       const headers = new Headers(init.headers || ((typeof input !== 'string' && input.headers) || {}));
-      const pwd = localStorage.getItem(KEY_NAME) || '';
-      if(url.startsWith('/api/') && pwd){ headers.set('x-api-key', pwd); }
-      return _fetch(input, Object.assign({}, init, { headers }));
+      const pwd = localStorage.getItem(KEY) || '';
+      if(url.startsWith('/api/') && pwd) headers.set('x-api-key', pwd);
+      return _f(input, Object.assign({}, init, {headers}));
     };
 
-    // exibe modal se não houver senha salva
-    window.addEventListener('DOMContentLoaded', ()=>{
-      if(!localStorage.getItem(KEY_NAME)){
-        document.getElementById('pwdModal').style.display = 'flex';
-        setTimeout(()=>document.getElementById('pwdInput').focus(), 50);
-      }
-    });
-
-    // valida a senha no /api/ping e guarda
-    async function handlePwdSubmit(){
-      const input = document.getElementById('pwdInput');
-      const err   = document.getElementById('pwdErr');
-      const pwd = (input.value||'').trim();
-      if(!pwd) return;
-
+    // gate logic
+    async function tryUnlockWith(pwd){
+      if(!pwd) return false;
       try{
-        const r = await fetch('/api/ping', { headers:{ 'x-api-key': pwd } });
+        const r = await fetch('/api/ping', {headers:{'x-api-key':pwd}});
         if(r.ok){
-          localStorage.setItem(KEY_NAME, pwd);
-          document.getElementById('pwdModal').style.display='none';
-        }else{
-          err.textContent = 'Senha incorreta.'; err.style.display='block';
+          localStorage.setItem(KEY, pwd);
+          return true;
         }
-      }catch(e){
-        // offline/erro de rede: salva e segue
-        localStorage.setItem(KEY_NAME, pwd);
-        document.getElementById('pwdModal').style.display='none';
+        return false;
+      }catch{
+        // offline: permite seguir mesmo assim (mesmo comportamento anterior)
+        localStorage.setItem(KEY, pwd);
+        return true;
       }
     }
-    window.handlePwdSubmit = handlePwdSubmit;
 
-    // submit com Enter
-    window.addEventListener('keydown', (e)=>{
-      if(e.key==='Enter' && document.getElementById('pwdModal').style.display==='flex'){
-        e.preventDefault(); handlePwdSubmit();
+    async function ensureGate(){
+      const app = document.getElementById('app');
+      const gate = document.getElementById('gate');
+      const err = document.getElementById('pwdErr');
+      const input = document.getElementById('pwdInput');
+
+      async function submit(){
+        err.style.display='none';
+        const ok = await tryUnlockWith((input.value||'').trim());
+        if(ok){
+          gate.style.display='none';
+          app.hidden = false; // revela TODO o app
+          hydrateUserFromStorage(); // preenche avatar/nome se houver perfil salvo
+        }else{
+          err.textContent='Senha incorreta.';
+          err.style.display='block';
+          input.select();
+        }
       }
-    });
+
+      document.getElementById('pwdBtn').addEventListener('click', submit);
+      input.addEventListener('keydown', (e)=>{ if(e.key==='Enter'){ e.preventDefault(); submit(); } });
+
+      // se já tem senha salva, tenta liberar sem mostrar nada além do gate
+      const saved = localStorage.getItem(KEY);
+      if(saved){
+        const ok = await tryUnlockWith(saved);
+        if(ok){
+          gate.style.display='none';
+          app.hidden = false;
+          hydrateUserFromStorage();
+        }else{
+          // limpa senha inválida e pede novamente
+          localStorage.removeItem(KEY);
+          gate.style.display='flex';
+          setTimeout(()=>input.focus(), 50);
+        }
+      }else{
+        gate.style.display='flex';
+        setTimeout(()=>input.focus(), 50);
+      }
+    }
+
+    window.addEventListener('DOMContentLoaded', ensureGate);
+
+    // Expor logout
+    window.handleLogout = function(){
+      try{ localStorage.removeItem(KEY); }catch{}
+      location.reload(); // volta para o gate
+    };
+
+    // Função usada após liberar para preencher avatar/nome se houver perfil salvo
+    window.hydrateUserFromStorage = function(){
+      try{
+        const p = JSON.parse(localStorage.getItem('dv_profile')||'{}');
+        if(p && (p.nome || p.foto)){
+          if(p.foto) document.getElementById('userAvatar').src = p.foto;
+          if(p.nome) document.getElementById('userName').textContent = p.nome;
+        }
+      }catch(e){}
+    };
   })();
   </script>
 </head>
 <body>
 
-  <!-- Splash -->
-  <div id="splash" aria-hidden="true">
-    <div class="logo">
-      <img src="https://github.com/ClenaStore/painel-principal/blob/main/img/GRUPO%20DV%20(1).png?raw=true" alt="Logo">
-    </div>
-  </div>
-
-  <!-- Modal de Senha -->
-  <div id="pwdModal" role="dialog" aria-modal="true" aria-labelledby="pwdTitle">
+  <!-- ===== Gate de senha (único visível até autenticar) ===== -->
+  <div id="gate" role="dialog" aria-modal="true" aria-labelledby="pwdTitle" style="display:none">
     <div class="box">
       <img src="https://github.com/ClenaStore/painel-principal/blob/main/img/GRUPO%20DV%20(1).png?raw=true" alt="Grupo DV">
-      <h3 id="pwdTitle">Grupo DV</h3>
-      <input id="pwdInput" type="password" placeholder="Digite a senha de acesso" autocomplete="current-password">
-      <button onclick="handlePwdSubmit()">Entrar</button>
+      <h1 id="pwdTitle">Grupo DV</h1>
+      <p>Digite a senha de acesso para entrar</p>
+      <input id="pwdInput" type="password" placeholder="Senha" autocomplete="current-password">
+      <button id="pwdBtn" type="button">Entrar</button>
       <div id="pwdErr" class="err"></div>
     </div>
   </div>
 
-  <!-- Header -->
-  <header>
-    <div class="head-wrap">
-      <a class="brand" href="index.html" aria-label="Início">
-        <img src="https://github.com/ClenaStore/painel-principal/blob/main/img/GRUPO%20DV%20(1).png?raw=true" alt="Logo">
-        <div class="title">Análise Financeira</div>
-      </a>
-      <div class="head-spacer"></div>
+  <!-- ===== App inteiro (escondido até autenticar) ===== -->
+  <div id="app" hidden>
+    <!-- Header -->
+    <header>
+      <div class="head-wrap">
+        <a class="brand" href="index.html" aria-label="Início">
+          <img src="https://github.com/ClenaStore/painel-principal/blob/main/img/GRUPO%20DV%20(1).png?raw=true" alt="Logo">
+          <div class="title">Análise Financeira</div>
+        </a>
+        <div class="head-spacer"></div>
 
-      <a class="icon-btn only-desktop" href="index.relatorios.html" title="Relatório Consolidado">📄 Relatórios</a>
+        <a class="icon-btn only-desktop" href="index.relatorios.html" title="Relatório Consolidado">📄 Relatórios</a>
+        <button id="themeToggle" class="icon-btn" type="button" title="Alternar tema">🌓 Tema</button>
 
-      <button id="themeToggle" class="icon-btn" type="button" title="Alternar tema">🌓 Tema</button>
-
-      <div class="user" id="userMenu">
-        <button class="user-btn" type="button" title="Perfil">
-          <img id="userAvatar" src="https://github.com/ClenaStore/grupodv/blob/main/paste/Imagem%20do%20WhatsApp%20de%202025-09-08%20%C3%A0(s)%2011.54.12_884bebc9.jpg?raw=true" alt="Usuário">
-          <strong id="userName" style="font-size:13px">Leonardo</strong>
-        </button>
-        <div class="user-menu">
-          <a href="perfil.html">👤 Meu Perfil</a>
-          <button onclick="handleLogout()">🚪 Sair</button>
+        <div class="user" id="userMenu">
+          <button class="user-btn" type="button" title="Perfil">
+            <img id="userAvatar" src="https://github.com/ClenaStore/grupodv/blob/main/paste/Imagem%20do%20WhatsApp%20de%202025-09-08%20%C3%A0(s)%2011.54.12_884bebc9.jpg?raw=true" alt="Usuário">
+            <strong id="userName" style="font-size:13px">Leonardo</strong>
+          </button>
+          <div class="user-menu">
+            <a href="perfil.html">👤 Meu Perfil</a>
+            <button onclick="handleLogout()">🚪 Sair</button>
+          </div>
         </div>
       </div>
-    </div>
-  </header>
+    </header>
 
-  <!-- Hero / Filtros -->
-  <section class="hero">
-    <h2>Selecione um painel ou filtre pelo nome</h2>
-    <div class="tools">
-      <div class="search" style="min-width:240px">
-        <span class="magnify">🔎</span>
-        <input id="searchInput" type="search" placeholder="Buscar (atalho: / )" autocomplete="off" />
+    <!-- Hero / Filtros -->
+    <section class="hero">
+      <h2>Selecione um painel ou filtre pelo nome</h2>
+      <div class="tools">
+        <div class="search" style="min-width:240px">
+          <span class="magnify">🔎</span>
+          <input id="searchInput" type="search" placeholder="Buscar (atalho: / )" autocomplete="off" />
+        </div>
+        <div class="chips" id="chips">
+          <span class="chip active" data-cat="all">Todos</span>
+          <span class="chip" data-cat="financeiro">Financeiro</span>
+          <span class="chip" data-cat="vendas">Vendas</span>
+          <span class="chip" data-cat="operacoes">Operações</span>
+          <span class="chip" data-cat="qualidade">Qualidade</span>
+        </div>
       </div>
-      <div class="chips" id="chips">
-        <span class="chip active" data-cat="all">Todos</span>
-        <span class="chip" data-cat="financeiro">Financeiro</span>
-        <span class="chip" data-cat="vendas">Vendas</span>
-        <span class="chip" data-cat="operacoes">Operações</span>
-        <span class="chip" data-cat="qualidade">Qualidade</span>
-      </div>
-    </div>
-  </section>
+    </section>
 
-  <!-- Grid -->
-  <main class="grid" id="grid">
+    <!-- Grid -->
+    <main class="grid" id="grid">
 
-    <!-- Financeiro -->
-    <div class="section-title">Financeiro</div>
-    <a class="card" data-cat="financeiro" data-title="resumo financeiro" href="index.resumofinanceiro.html" aria-label="Resumo Financeiro">
-      <div class="icon">📈</div>
-      <div>
-        <h3>Resumo Financeiro</h3>
-        <p>Entradas por categoria, consolidação diária e WhatsApp</p>
-      </div>
-      <span class="badge">Financeiro</span>
-    </a>
+      <!-- Financeiro -->
+      <div class="section-title">Financeiro</div>
+      <a class="card" data-cat="financeiro" data-title="resumo financeiro" href="index.resumofinanceiro.html" aria-label="Resumo Financeiro">
+        <div class="icon">📈</div>
+        <div>
+          <h3>Resumo Financeiro</h3>
+          <p>Entradas por categoria, consolidação diária e WhatsApp</p>
+        </div>
+        <span class="badge">Financeiro</span>
+      </a>
 
-    <a class="card" data-cat="financeiro" data-title="conciliações cartões conciliaçao conciliacao" href="index.conciliacao.html" aria-label="Conciliações">
-      <div class="icon">💳</div>
-      <div>
-        <h3>Conciliações</h3>
-        <p>Comparativo de recebíveis e bandeiras</p>
-      </div>
-      <span class="badge">Financeiro</span>
-    </a>
+      <a class="card" data-cat="financeiro" data-title="conciliações cartões conciliaçao conciliacao" href="index.conciliacao.html" aria-label="Conciliações">
+        <div class="icon">💳</div>
+        <div>
+          <h3>Conciliações</h3>
+          <p>Comparativo de recebíveis e bandeiras</p>
+        </div>
+        <span class="badge">Financeiro</span>
+      </a>
 
-    <a class="card" data-cat="financeiro" data-title="meta faturamento metas" href="index.meta.html" aria-label="Meta de Faturamento">
-      <div class="icon">🎯</div>
-      <div>
-        <h3>Meta de Faturamento</h3>
-        <p>Acompanhamento mensal por loja</p>
-      </div>
-      <span class="badge">Financeiro</span>
-    </a>
+      <a class="card" data-cat="financeiro" data-title="meta faturamento metas" href="index.meta.html" aria-label="Meta de Faturamento">
+        <div class="icon">🎯</div>
+        <div>
+          <h3>Meta de Faturamento</h3>
+          <p>Acompanhamento mensal por loja</p>
+        </div>
+        <span class="badge">Financeiro</span>
+      </a>
 
-    <!-- Vendas -->
-    <div class="section-title">Vendas</div>
-    <a class="card" data-cat="vendas" data-title="delivery vendas ifood much" href="index.delivery.html" aria-label="Vendas Delivery">
-      <div class="icon">🚚</div>
-      <div>
-        <h3>Vendas Delivery</h3>
-        <p>Performance por canal e período</p>
-      </div>
-      <span class="badge">Vendas</span>
-    </a>
+      <!-- Vendas -->
+      <div class="section-title">Vendas</div>
+      <a class="card" data-cat="vendas" data-title="delivery vendas ifood much" href="index.delivery.html" aria-label="Vendas Delivery">
+        <div class="icon">🚚</div>
+        <div>
+          <h3>Vendas Delivery</h3>
+          <p>Performance por canal e período</p>
+        </div>
+        <span class="badge">Vendas</span>
+      </a>
 
-    <a class="card" data-cat="vendas" data-title="abc vendas pareto" href="index.abc.html" aria-label="ABC de Vendas">
-      <div class="icon">abc</div>
-      <div>
-        <h3>ABC de Vendas</h3>
-        <p>Itens classe A/B/C e evolução</p>
-      </div>
-      <span class="badge">Vendas</span>
-    </a>
+      <a class="card" data-cat="vendas" data-title="abc vendas pareto" href="index.abc.html" aria-label="ABC de Vendas">
+        <div class="icon">abc</div>
+        <div>
+          <h3>ABC de Vendas</h3>
+          <p>Itens classe A/B/C e evolução</p>
+        </div>
+        <span class="badge">Vendas</span>
+      </a>
 
-    <!-- Operações -->
-    <div class="section-title">Operações</div>
-    <a class="card" data-cat="operacoes" data-title="travas bloqueios comparações" href="index.travas.html" aria-label="Travas">
-      <div class="icon">🔒</div>
-      <div>
-        <h3>Travas</h3>
-        <p>Regras e bloqueios operacionais</p>
-      </div>
-      <span class="badge">Operações</span>
-    </a>
+      <!-- Operações -->
+      <div class="section-title">Operações</div>
+      <a class="card" data-cat="operacoes" data-title="travas bloqueios comparações" href="index.travas.html" aria-label="Travas">
+        <div class="icon">🔒</div>
+        <div>
+          <h3>Travas</h3>
+          <p>Regras e bloqueios operacionais</p>
+        </div>
+        <span class="badge">Operações</span>
+      </a>
 
-    <a class="card" data-cat="operacoes" data-title="couvert arrecadação pagamentos" href="index.couvert.html" aria-label="Couvert">
-      <div class="icon">🎤</div>
-      <div>
-        <h3>Couvert</h3>
-        <p>Arrecadação x pagamentos, histórico e a pagar</p>
-      </div>
-      <span class="badge">Operações</span>
-    </a>
+      <a class="card" data-cat="operacoes" data-title="couvert arrecadação pagamentos" href="index.couvert.html" aria-label="Couvert">
+        <div class="icon">🎤</div>
+        <div>
+          <h3>Couvert</h3>
+          <p>Arrecadação x pagamentos, histórico e a pagar</p>
+        </div>
+        <span class="badge">Operações</span>
+      </a>
 
-    <a class="card" data-cat="operacoes" data-title="reservas mercatto" href="index.reservas.html" aria-label="Reservas Mercatto">
-      <div class="icon">🗓️</div>
-      <div>
-        <h3>Reservas Mercatto</h3>
-        <p>Agenda e capacidade</p>
-      </div>
-      <span class="badge">Operações</span>
-    </a>
+      <a class="card" data-cat="operacoes" data-title="reservas mercatto" href="index.reservas.html" aria-label="Reservas Mercatto">
+        <div class="icon">🗓️</div>
+        <div>
+          <h3>Reservas Mercatto</h3>
+          <p>Agenda e capacidade</p>
+        </div>
+        <span class="badge">Operações</span>
+      </a>
 
-    <!-- Qualidade -->
-    <div class="section-title">Qualidade</div>
-    <a class="card" data-cat="qualidade" data-title="cancelamentos" href="index.cancelamentos.html" aria-label="Cancelamentos">
-      <div class="icon">❌</div>
-      <div>
-        <h3>Cancelamentos</h3>
-        <p>Motivos e impacto no período</p>
-      </div>
-      <span class="badge">Qualidade</span>
-    </a>
+      <!-- Qualidade -->
+      <div class="section-title">Qualidade</div>
+      <a class="card" data-cat="qualidade" data-title="cancelamentos" href="index.cancelamentos.html" aria-label="Cancelamentos">
+        <div class="icon">❌</div>
+        <div>
+          <h3>Cancelamentos</h3>
+          <p>Motivos e impacto no período</p>
+        </div>
+        <span class="badge">Qualidade</span>
+      </a>
 
-    <a class="card" data-cat="qualidade" data-title="pesquisa satisfação avaliações" href="index.avaliacoes.html" aria-label="Pesquisa de satisfação">
-      <div class="icon">🔎</div>
-      <div>
-        <h3>Pesquisa de satisfação</h3>
-        <p>Notas, comentários e tendências</p>
-      </div>
-      <span class="badge">Qualidade</span>
-    </a>
-  </main>
+      <a class="card" data-cat="qualidade" data-title="pesquisa satisfação avaliações" href="index.avaliacoes.html" aria-label="Pesquisa de satisfação">
+        <div class="icon">🔎</div>
+        <div>
+          <h3>Pesquisa de satisfação</h3>
+          <p>Notas, comentários e tendências</p>
+        </div>
+        <span class="badge">Qualidade</span>
+      </a>
+    </main>
 
-  <footer>
-    <div>© Grupo DV • Painel</div>
-    <div>Atalho: pressione <strong>/</strong> para buscar</div>
-  </footer>
+    <footer>
+      <div>© Grupo DV • Painel</div>
+      <div>Atalho: pressione <strong>/</strong> para buscar</div>
+    </footer>
+  </div>
 
+  <!-- Scripts do app (executam mesmo escondido; só mostram ao liberar) -->
   <script>
-    // Splash
-    window.addEventListener('load', () => {
-      const splash = document.getElementById('splash');
-      setTimeout(() => {
-        splash.style.opacity = '0';
-        setTimeout(() => splash.style.display = 'none', 500);
-      }, 900);
-    });
-
-    // Busca e filtros
+    // Busca & filtros
     const searchInput = document.getElementById('searchInput');
     const chips = document.getElementById('chips');
     const cards = Array.from(document.querySelectorAll('.card'));
     let activeCat = 'all';
 
     function applyFilters(){
-      const q = (searchInput.value || '').toLowerCase().trim();
+      if(!cards.length) return;
+      const q = (searchInput?.value || '').toLowerCase().trim();
       cards.forEach(card=>{
         const cat = card.getAttribute('data-cat');
         const text = (card.getAttribute('data-title') || '').toLowerCase();
@@ -487,7 +487,7 @@
       });
     }
 
-    chips.addEventListener('click', (e)=>{
+    chips?.addEventListener('click', (e)=>{
       const chip = e.target.closest('.chip');
       if(!chip) return;
       chips.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));
@@ -496,56 +496,30 @@
       applyFilters();
     });
 
-    searchInput.addEventListener('input', applyFilters);
+    searchInput?.addEventListener('input', applyFilters);
 
-    // Atalho: "/" foca na busca
+    // Atalho "/" = foco na busca
     window.addEventListener('keydown', (e)=>{
-      if(e.key === '/' && document.activeElement !== searchInput){
-        e.preventDefault(); searchInput.focus();
+      if(e.key === '/' && document.activeElement !== searchInput && !document.getElementById('app').hidden){
+        e.preventDefault(); searchInput?.focus();
       }
     });
 
-    // Tema (toggle)
+    // Tema
     const themeBtn = document.getElementById('themeToggle');
     function toggleTheme(){
       const cur = document.documentElement.getAttribute('data-theme') || 'light';
       const next = (cur==='light') ? 'dark' : 'light';
       document.documentElement.setAttribute('data-theme', next);
       localStorage.setItem('dv_theme', next);
-      themeBtn.textContent = '🌓 Tema';
+      if(themeBtn) themeBtn.textContent = '🌓 Tema';
     }
-    themeBtn.addEventListener('click', toggleTheme);
+    themeBtn?.addEventListener('click', toggleTheme);
 
     // Menu usuário
     const user = document.getElementById('userMenu');
-    user.querySelector('.user-btn').addEventListener('click', ()=>{
-      user.classList.toggle('open');
-    });
-    window.addEventListener('click', (e)=>{
-      if(!user.contains(e.target)) user.classList.remove('open');
-    });
-
-    // Preencher avatar/nome se existir perfil salvo (opcional)
-    (function hydrateUserFromStorage(){
-      try{
-        const p = JSON.parse(localStorage.getItem('dv_profile')||'{}');
-        if(p && (p.nome || p.foto)){
-          if(p.foto) document.getElementById('userAvatar').src = p.foto;
-          if(p.nome) document.getElementById('userName').textContent = p.nome;
-        }
-      }catch(e){}
-    })();
-
-    // Logout limpa a senha e recarrega
-    function handleLogout(){
-      try{
-        localStorage.removeItem('dv_pwd');
-        // se quiser limpar tudo do app que começa com dv_:
-        // Object.keys(localStorage).forEach(k=>/^dv_/i.test(k)&&localStorage.removeItem(k));
-      }catch(e){}
-      location.reload();
-    }
-    window.handleLogout = handleLogout;
+    user?.querySelector('.user-btn')?.addEventListener('click', ()=> user.classList.toggle('open'));
+    window.addEventListener('click', (e)=>{ if(user && !user.contains(e.target)) user.classList.remove('open'); });
   </script>
 </body>
 </html>
