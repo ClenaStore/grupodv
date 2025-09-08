@@ -371,8 +371,6 @@ async function carregarMetas(){
     const params = new URLSearchParams();
     if(range.start) params.append('dataInicio', ISO(range.start));
     if(range.end)   params.append('dataFim', ISO(range.end));
-    const empresaSel = $$('#empresaFiltro').value;
-    if(empresaSel) params.append('empresa', empresaSel);
 
     const rsp = await fetch(`${urlBase}?${params.toString()}`);
     const metas = await rsp.json();
