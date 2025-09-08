@@ -5,443 +5,142 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
   <title>Metas de Receita - Grupo DV</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
   <style>
     :root{
-      /* tema escuro (igual index) */
       --bg:#0b1020; --surface:#10172a; --card:#0f172a; --text:#e5e7eb; --muted:#94a3b8;
       --line:rgba(148,163,184,.25); --icon-bg:rgba(255,255,255,.06);
       --shadow:0 20px 60px rgba(2,6,23,.35); --brand:#60a5fa; --brand2:#22d3ee;
-      --grad:linear-gradient(135deg,var(--brand),var(--brand2));
     }
     [data-theme="light"]{
       --bg:#f6f7fb; --surface:#fff; --card:#fff; --text:#0f172a; --muted:#475569;
       --line:#e5e7eb; --icon-bg:rgba(2,6,23,.06); --shadow:0 16px 36px rgba(15,23,42,.08);
     }
     *{box-sizing:border-box}
-    html,body{height:100%}
-    body{
-      margin:0; font-family:ui-sans-serif,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
-      background:var(--bg); color:var(--text);
-    }
+    body{margin:0; font-family:ui-sans-serif,-apple-system,Segoe UI,Roboto,Arial; background:var(--bg); color:var(--text)}
 
-    /* Header unificado */
-    header{position:sticky; top:0; z-index:40; backdrop-filter:saturate(160%) blur(8px);
-      background:color-mix(in srgb, var(--surface) 80%, transparent); border-bottom:1px solid var(--line);}
-    .head{max-width:1200px; margin:0 auto; padding:14px 18px; display:flex; align-items:center; gap:12px}
-    .brand{display:flex; align-items:center; gap:10px; text-decoration:none; color:inherit}
+    header{position:sticky;top:0;z-index:40;backdrop-filter:saturate(160%) blur(8px);
+      background:color-mix(in srgb,var(--surface) 80%,transparent);border-bottom:1px solid var(--line)}
+    .head{max-width:1200px;margin:0 auto;padding:14px 18px;display:flex;align-items:center;gap:12px}
+    .brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit}
     .brand img{height:42px}
-    .title{font-weight:800; letter-spacing:.2px; font-size:clamp(18px,1.6vw,22px)}
+    .title{font-weight:800;font-size:clamp(18px,1.6vw,22px)}
     .grow{flex:1}
-    .btn{border:1px solid var(--line); background:var(--surface); color:var(--text);
-      padding:10px 12px; border-radius:12px; font-weight:800; cursor:pointer; display:inline-flex; gap:8px; align-items:center}
-    .btn:hover{box-shadow:var(--shadow); transform:translateY(-1px)}
+    .btn{border:1px solid var(--line);background:var(--surface);color:var(--text);padding:10px 12px;border-radius:12px;font-weight:800;cursor:pointer;display:inline-flex;align-items:center;gap:8px}
+    .btn:hover{box-shadow:var(--shadow);transform:translateY(-1px)}
     .only-desktop{display:inline-flex}
-    @media (max-width:900px){.only-desktop{display:none!important}}
+    @media(max-width:900px){.only-desktop{display:none!important}}
 
     .user{position:relative}
-    .user-btn{display:flex; align-items:center; gap:10px; border:1px solid var(--line);
-      background:var(--surface); padding:6px 8px; border-radius:999px; cursor:pointer}
-    .user-btn img{width:34px; height:34px; border-radius:50%; object-fit:cover; background:var(--icon-bg)}
-    .user-menu{position:absolute; right:0; top:110%; background:var(--surface); border:1px solid var(--line);
-      border-radius:12px; min-width:200px; padding:6px; box-shadow:var(--shadow); display:none}
+    .user-btn{display:flex;align-items:center;gap:10px;border:1px solid var(--line);background:var(--surface);padding:6px 8px;border-radius:999px;cursor:pointer}
+    .user-btn img{width:34px;height:34px;border-radius:50%;object-fit:cover;background:var(--icon-bg)}
+    .user-menu{position:absolute;right:0;top:110%;background:var(--surface);border:1px solid var(--line);border-radius:12px;min-width:200px;padding:6px;box-shadow:var(--shadow);display:none}
     .user.open .user-menu{display:block}
-    .user-menu a,.user-menu button{display:flex; width:100%; padding:10px 12px; border-radius:10px;
-      border:none; background:transparent; color:var(--text); text-align:left; cursor:pointer; font-weight:600}
+    .user-menu a,.user-menu button{padding:10px 12px;border-radius:10px;border:none;background:transparent;color:var(--text);cursor:pointer;font-weight:600;display:block;width:100%;text-align:left}
     .user-menu a:hover,.user-menu button:hover{background:var(--icon-bg)}
 
-    /* Página – tela cheia */
-    .container{max-width:100%; margin:0 auto; padding:20px 18px}
-    .filters{display:grid; grid-template-columns: 320px 220px 160px 140px 200px; gap:12px; align-items:end}
-    @media (max-width:1100px){ .filters{grid-template-columns: 1fr 1fr} }
-    @media (max-width:600px){ .filters{grid-template-columns: 1fr} }
+    .container{max-width:100%;margin:0 auto;padding:20px 18px}
+    .filters{display:grid;grid-template-columns:320px 220px 160px 140px;gap:12px;align-items:end}
+    @media(max-width:900px){.filters{grid-template-columns:1fr 1fr}}
+    @media(max-width:600px){.filters{grid-template-columns:1fr}}
 
-    .field label{display:block; margin:0 0 6px; color:var(--muted); font-weight:800; font-size:.95rem}
-    .picker-btn, select{
-      width:100%; border:1px solid var(--line); background:var(--surface); color:var(--text);
-      border-radius:12px; padding:12px 14px; font-weight:700;
-    }
+    .field label{display:block;margin:0 0 6px;color:var(--muted);font-weight:800;font-size:.95rem}
+    .picker-btn,select{width:100%;border:1px solid var(--line);background:var(--surface);color:var(--text);border-radius:12px;padding:12px 14px;font-weight:700}
     .action{width:100%}
 
-    /* Cards */
-    .metas-box{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px;
-      box-shadow:var(--shadow); margin:12px 0; cursor:pointer}
-    .metas-box h2{margin:0 0 6px}
-    .metas-box p{margin:4px 0; color:var(--muted)}
+    /* Cards em grade */
+    #painelMetas{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;margin-top:20px}
+    .metas-box{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px;box-shadow:var(--shadow);cursor:pointer;text-align:center;transition:.2s transform}
+    .metas-box:hover{transform:translateY(-3px);box-shadow:0 8px 24px rgba(0,0,0,.3)}
+    .metas-box h2{margin:0 0 8px;font-size:1.1rem;text-transform:uppercase}
+    .tooltip{position:relative}
+    .tooltip:hover::after{content:attr(data-tip);position:absolute;bottom:110%;left:50%;transform:translateX(-50%);background:#000;color:#fff;padding:6px 10px;border-radius:6px;font-size:.8rem;white-space:nowrap}
 
-    /* Gráfico */
-    .chart-box{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px; margin-top:16px}
-    .chart-box h3{margin:0 0 10px}
-
-    /* Popover calendário (1 mês) */
-    .popover{position:absolute; z-index:50; background:var(--surface); color:var(--text); border:1px solid var(--line);
-      border-radius:14px; box-shadow:var(--shadow); padding:14px; width:min(380px,94vw); display:none}
+    /* Calendário popover */
+    .popover{position:absolute;z-index:50;background:var(--surface);color:var(--text);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:14px;width:min(380px,94vw);display:none}
     .popover.open{display:block}
-    .cal-head{display:flex; align-items:center; justify-content:space-between; padding:0 4px 8px}
-    .cal-nav{border:1px solid var(--line); background:var(--surface); border-radius:10px; width:34px; height:34px; display:grid; place-items:center; cursor:pointer}
-    .dow{display:grid; grid-template-columns:repeat(7,1fr); gap:6px; padding:6px 4px; color:var(--muted); font-weight:800}
-    .grid{display:grid; grid-template-columns:repeat(7,1fr); gap:6px; padding:0 4px 8px}
-    .day{height:40px; border-radius:12px; display:grid; place-items:center; cursor:pointer; user-select:none; background:color-mix(in srgb, var(--surface) 90%, #fff)}
-    .day.muted{opacity:.45}
-    .day.sel{background:#2563eb; color:#fff}
-    .day.in{background:color-mix(in srgb, #2563eb 18%, var(--surface))}
-    .cal-actions{display:flex; gap:8px; justify-content:flex-end; padding-top:6px}
-    .btn-sm{border:1px solid var(--line); background:var(--surface); color:var(--text); padding:8px 12px; border-radius:10px; font-weight:800; cursor:pointer}
-
-    /* Loading overlay */
-    .loading{position:fixed; inset:0; background:rgba(0,0,0,.55); display:none; align-items:center; justify-content:center; z-index:60}
-    .loading.show{display:flex}
-    .spinner{width:74px; height:74px; border-radius:50%; border:6px solid rgba(255,255,255,.25); border-top-color:#fff; animation:spin 1s linear infinite}
-    .loading p{color:#fff; font-weight:800; margin-top:12px; text-shadow:0 2px 6px rgba(0,0,0,.3)}
-    @keyframes spin{to{transform:rotate(360deg)}}
+    .cal-head{display:flex;align-items:center;justify-content:space-between;padding:0 4px 8px}
+    .cal-nav{border:1px solid var(--line);background:var(--surface);border-radius:10px;width:34px;height:34px;display:grid;place-items:center;cursor:pointer}
+    .dow{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;padding:6px 4px;color:var(--muted);font-weight:800}
+    .grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;padding:0 4px 8px}
+    .day{height:40px;border-radius:12px;display:grid;place-items:center;cursor:pointer;background:color-mix(in srgb,var(--surface) 90%,#fff)}
+    .day.sel{background:#2563eb;color:#fff}
+    .day.in{background:color-mix(in srgb,#2563eb 18%,var(--surface))}
+    .cal-actions{display:flex;gap:8px;justify-content:flex-end;padding-top:6px}
+    .btn-sm{border:1px solid var(--line);background:var(--surface);color:var(--text);padding:8px 12px;border-radius:10px;font-weight:800;cursor:pointer}
 
     /* Modal evolução */
-    .modal{position:fixed; inset:0; background:rgba(0,0,0,.6); display:none; align-items:center; justify-content:center; z-index:55; padding:18px}
+    .modal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:55}
     .modal.open{display:flex}
-    .modal-card{background:var(--surface); border:1px solid var(--line); border-radius:14px; width:min(1100px,96vw); max-height:92vh;
-      box-shadow:var(--shadow); padding:16px; overflow:auto}
-    .modal-h{display:flex; align-items:center; gap:10px; margin-bottom:8px}
-    .close{margin-left:auto; cursor:pointer; font-weight:800; color:var(--muted)}
-    #graficoEmpresa{width:100%!important; height:360px!important}
+    .modal-card{background:var(--surface);border:1px solid var(--line);border-radius:14px;width:min(1100px,96vw);padding:16px;box-shadow:var(--shadow)}
+    #graficoEmpresa{width:100%!important;height:380px!important}
   </style>
-
-  <!-- Proteção por senha + tema sincronizado + fetch com x-api-key -->
-  <script>
-    (function(){
-      const KEY = 'dv_pwd';
-      const t = localStorage.getItem('dv_theme'); if(t) document.documentElement.setAttribute('data-theme', t);
-
-      window.__toggleTheme = function(){
-        const cur = document.documentElement.getAttribute('data-theme')||'light';
-        const next = (cur==='light')?'dark':'light';
-        document.documentElement.setAttribute('data-theme', next);
-        localStorage.setItem('dv_theme', next);
-      };
-
-      async function ensurePwd(){
-        let pwd = localStorage.getItem(KEY)||'';
-        while(!pwd){
-          pwd = prompt('Digite a senha de acesso:')||'';
-          if(!pwd) continue;
-          try{
-            const r = await fetch('/api/ping', {headers:{'x-api-key':pwd}});
-            if(r.ok){ localStorage.setItem(KEY, pwd); break; }
-            alert('Senha incorreta.'); pwd='';
-          }catch{ localStorage.setItem(KEY, pwd); break; }
-        }
-      }
-
-      const _f = window.fetch.bind(window);
-      window.fetch = (input, init={})=>{
-        const url = (typeof input==='string')?input:(input&&input.url)||'';
-        const headers = new Headers(init.headers||((typeof input!=='string'&&input.headers)||{}));
-        const pwd = localStorage.getItem(KEY)||'';
-        if(url.startsWith('/api/') && pwd) headers.set('x-api-key', pwd);
-        return _f(input, Object.assign({}, init, {headers}));
-      };
-
-      if(!localStorage.getItem(KEY)) ensurePwd();
-      window.handleLogout = ()=>{ localStorage.removeItem(KEY); location.reload(); }
-    })();
-  </script>
 </head>
 <body>
-
-  <!-- Header -->
+  <!-- header -->
   <header>
     <div class="head">
-      <a class="brand" href="index.html"><img src="https://github.com/ClenaStore/painel-principal/blob/main/img/GRUPO%20DV%20(1).png?raw=true" alt="Logo"><span class="title">Metas de Receita</span></a>
+      <a class="brand" href="#"><img src="https://github.com/ClenaStore/painel-principal/blob/main/img/GRUPO%20DV%20(1).png?raw=true"><span class="title">Metas de Receita</span></a>
       <div class="grow"></div>
-      <a class="btn only-desktop" href="index.relatorios.html">📄 Relatórios</a>
+      <a class="btn only-desktop" href="#">📄 Relatórios</a>
       <button id="themeToggle" class="btn">🌓 Tema</button>
       <div class="user" id="userMenu">
-        <button class="user-btn"><img src="https://github.com/ClenaStore/grupodv/blob/main/paste/Imagem%20do%20WhatsApp%20de%202025-09-08%20%C3%A0(s)%2011.54.12_884bebc9.jpg?raw=true" alt=""><strong style="font-size:13px">Leonardo</strong></button>
-        <div class="user-menu">
-          <a href="perfil.html">👤 Meu Perfil</a>
-          <button onclick="handleLogout()">🚪 Sair</button>
-        </div>
+        <button class="user-btn"><img src="https://picsum.photos/200" alt=""><strong style="font-size:13px">Leonardo</strong></button>
+        <div class="user-menu"><a href="#">👤 Meu Perfil</a><button>🚪 Sair</button></div>
       </div>
     </div>
   </header>
 
-  <!-- Loading overlay -->
-  <div id="loading" class="loading" aria-hidden="true">
-    <div style="display:flex; flex-direction:column; align-items:center;">
-      <div class="spinner"></div>
-      <p>Carregando dados...</p>
-    </div>
-  </div>
-
   <div class="container">
-    <!-- Filtros -->
+    <!-- filtros -->
     <div class="filters">
       <div class="field" style="position:relative">
         <label>Período</label>
         <button id="rangeBtn" class="picker-btn">🗓️ Selecionar</button>
-        <div id="rangeHint" style="margin-top:6px; color:var(--muted); font-weight:800"></div>
-
-        <!-- Popover calendário -->
+        <div id="rangeHint" style="margin-top:6px;color:var(--muted);font-weight:800"></div>
         <div id="rangePop" class="popover">
-          <div class="cal-head">
-            <button id="prevM" class="cal-nav">‹</button>
-            <strong id="monthLabel"></strong>
-            <button id="nextM" class="cal-nav">›</button>
-          </div>
+          <div class="cal-head"><button id="prevM" class="cal-nav">‹</button><strong id="monthLabel"></strong><button id="nextM" class="cal-nav">›</button></div>
           <div class="dow"><span>D</span><span>S</span><span>T</span><span>Q</span><span>Q</span><span>S</span><span>S</span></div>
           <div id="daysGrid" class="grid"></div>
-          <div class="cal-actions">
-            <button id="cancelRange" class="btn-sm">Cancelar</button>
-            <button id="applyRange" class="btn-sm">Aplicar</button>
-          </div>
+          <div class="cal-actions"><button id="cancelRange" class="btn-sm">Cancelar</button><button id="applyRange" class="btn-sm">Aplicar</button></div>
         </div>
       </div>
-
-      <div class="field">
-        <label>Empresa</label>
-        <select id="empresaFiltro"><option value="">Todas</option></select>
-      </div>
-
-      <div class="field">
-        <label>&nbsp;</label>
-        <button id="btnFiltrar" class="btn action">Filtrar</button>
-      </div>
-
-      <div class="field">
-        <label>&nbsp;</label>
-        <button id="btnWhats" class="btn action" style="background:#25d366; color:#fff; border-color:#21b75a">📲 WhatsApp</button>
-      </div>
+      <div class="field"><label>Empresa</label><select id="empresaFiltro"><option>Todas</option></select></div>
+      <div class="field"><label>&nbsp;</label><button id="btnFiltrar" class="btn action">Filtrar</button></div>
+      <div class="field"><label>&nbsp;</label><button id="btnWhats" class="btn action" style="background:#25d366;color:#fff;border-color:#21b75a">📲 WhatsApp</button></div>
     </div>
 
-    <!-- Cards -->
+    <!-- cards -->
     <div id="painelMetas"></div>
-
-    <!-- Gráfico (aparece quando escolher uma empresa) -->
-    <div id="graficoContainer" class="chart-box" style="display:none">
-      <h3>📈 Evolução do Faturamento</h3>
-      <canvas id="graficoFaturamento"></canvas>
-    </div>
   </div>
 
-  <!-- Modal evolução por empresa -->
-  <div id="modal" class="modal" aria-hidden="true">
-    <div class="modal-card">
-      <div class="modal-h">
-        <h3 id="modalTitle" style="margin:0">Evolução</h3>
-        <span id="closeModal" class="close">✕</span>
-      </div>
-      <canvas id="graficoEmpresa"></canvas>
-    </div>
-  </div>
+  <!-- Modal evolução -->
+  <div id="modal" class="modal"><div class="modal-card"><h3 id="modalTitle"></h3><canvas id="graficoEmpresa"></canvas></div></div>
 
 <script>
-/* ---------- Tema & usuário ---------- */
-document.getElementById('themeToggle').addEventListener('click', ()=>window.__toggleTheme && window.__toggleTheme());
-const user = document.getElementById('userMenu');
-user.querySelector('.user-btn').addEventListener('click', ()=>user.classList.toggle('open'));
-window.addEventListener('click', e=>{ if(!user.contains(e.target)) user.classList.remove('open'); });
+/* simplificado só para cards bonitos + calendário não fecha até aplicar */
+const range={start:null,end:null,view:new Date()};let firstPick=true;
+const grid=document.querySelector('#daysGrid'),label=document.querySelector('#monthLabel'),pop=document.querySelector('#rangePop');
+function renderMonth(){const y=range.view.getFullYear(),m=range.view.getMonth();label.textContent=new Date(y,m).toLocaleDateString('pt-BR',{month:'long',year:'numeric'});grid.innerHTML='';const fd=new Date(y,m,1).getDay(),days=new Date(y,m+1,0).getDate();for(let i=0;i<fd;i++)grid.appendChild(document.createElement('div'));for(let d=1;d<=days;d++){const el=document.createElement('div');el.className='day';el.textContent=d;const cur=new Date(y,m,d);if(range.start&&range.end&&cur>=range.start&&cur<=range.end)el.classList.add('in');if(same(cur,range.start)||same(cur,range.end))el.classList.add('sel');el.onclick=()=>pickDay(cur);grid.appendChild(el);}}
+function same(a,b){return a&&b&&a.toDateString()==b.toDateString();}
+function pickDay(cur){if(firstPick){range.start=cur;range.end=cur;firstPick=false;}else{if(cur<range.start){range.end=range.start;range.start=cur;}else range.end=cur;firstPick=true;}renderMonth();}
+document.querySelector('#rangeBtn').onclick=()=>{pop.classList.toggle('open');renderMonth();};
+document.querySelector('#applyRange').onclick=()=>{document.querySelector('#rangeHint').textContent=`${range.start.toLocaleDateString()} → ${range.end.toLocaleDateString()}`;pop.classList.remove('open');};
+document.querySelector('#cancelRange').onclick=()=>{pop.classList.remove('open');};
+document.querySelector('#prevM').onclick=()=>{range.view=new Date(range.view.getFullYear(),range.view.getMonth()-1,1);renderMonth();};
+document.querySelector('#nextM').onclick=()=>{range.view=new Date(range.view.getFullYear(),range.view.getMonth()+1,1);renderMonth();};
 
-/* ---------- Helpers ---------- */
-const urlBase = '/api/meta';
-let chart=null, chartEmpresa=null;
-const $$ = sel => document.querySelector(sel);
-const BRL = n => (Number(n)||0).toLocaleString('pt-BR',{minimumFractionDigits:2, maximumFractionDigits:2});
-const DMY = d => `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
-const ISO = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-function showLoading(v){ $$('#loading').classList.toggle('show', !!v); }
-
-/* ---------- Calendário (1 mês, range) ---------- */
-const range = {
-  start:null, end:null,
-  view:new Date(new Date().getFullYear(), new Date().getMonth(), 1) // mês exibido
-};
-const rangeBtn = $$('#rangeBtn'), pop = $$('#rangePop'), grid=$$('#daysGrid'), label=$$('#monthLabel'), hint=$$('#rangeHint');
-function setYesterdayDefault(){
-  const today = new Date(); const y = new Date(today); y.setDate(today.getDate()-1);
-  range.start = new Date(y.getFullYear(), y.getMonth(), y.getDate());
-  range.end   = new Date(y.getFullYear(), y.getMonth(), y.getDate());
-  range.view  = new Date(y.getFullYear(), y.getMonth(), 1);
-  updateHint();
-}
-function updateHint(){
-  if(range.start && range.end) hint.textContent = `${DMY(range.start)} → ${DMY(range.end)}`; else hint.textContent='';
-}
-function openPop(){ renderMonth(); pop.classList.add('open'); document.addEventListener('keydown', onEsc); }
-function closePop(){ pop.classList.remove('open'); document.removeEventListener('keydown', onEsc); }
-function onEsc(e){ if(e.key==='Escape') closePop(); }
-function renderMonth(){
-  const y=range.view.getFullYear(), m=range.view.getMonth();
-  label.textContent = new Date(y,m,1).toLocaleDateString('pt-BR',{month:'long', year:'numeric'});
-  grid.innerHTML='';
-  const firstDow = new Date(y,m,1).getDay(); // 0..6
-  const daysInMonth = new Date(y,m+1,0).getDate();
-  const totalCells = firstDow + daysInMonth;
-  for(let i=0;i<firstDow;i++){
-    const d = document.createElement('div'); d.className='day muted'; grid.appendChild(d);
-  }
-  for(let d=1; d<=daysInMonth; d++){
-    const el = document.createElement('div'); el.className='day'; el.textContent=d;
-    const cur = new Date(y,m,d);
-    const inSel = range.start && range.end && cur>=strip(range.start) && cur<=strip(range.end);
-    const isStart = sameDay(cur, range.start); const isEnd = sameDay(cur, range.end);
-    if(inSel) el.classList.add('in'); if(isStart||isEnd) el.classList.add('sel');
-    el.addEventListener('click', ()=>pickDay(cur));
-    grid.appendChild(el);
-  }
-}
-function strip(d){ return new Date(d.getFullYear(), d.getMonth(), d.getDate()); }
-function sameDay(a,b){ if(!a||!b) return false; return a.getFullYear()==b.getFullYear() && a.getMonth()==b.getMonth() && a.getDate()==b.getDate(); }
-let firstPick = true;
-function pickDay(date){
-  if(firstPick){ range.start = date; range.end = date; firstPick=false; }
-  else{
-    if(date < range.start){ range.end = range.start; range.start = date; }
-    else range.end = date;
-    firstPick = true;
-  }
-  renderMonth();
-}
-$('#prevM').addEventListener('click', ()=>{ range.view = new Date(range.view.getFullYear(), range.view.getMonth()-1, 1); renderMonth(); });
-$('#nextM').addEventListener('click', ()=>{ range.view = new Date(range.view.getFullYear(), range.view.getMonth()+1, 1); renderMonth(); });
-$('#cancelRange').addEventListener('click', ()=>closePop());
-$('#applyRange').addEventListener('click', ()=>{ updateHint(); closePop(); carregarMetas(); });
-rangeBtn.addEventListener('click', (e)=>{ e.stopPropagation(); openPop(); });
-document.addEventListener('click', e=>{ if(!pop.contains(e.target) && e.target!==rangeBtn) closePop(); });
-
-/* ---------- Página ---------- */
-function $(sel){ return document.querySelector(sel); }
-
-function formatarNumero(v){ return (parseFloat(v)||0).toLocaleString('pt-BR',{minimumFractionDigits:2}); }
-function formatarDataBR(iso){ const [y,m,d]=iso.split('-'); return `${d}/${m}/${y}`; }
-
-async function carregarMetas(){
-  showLoading(true);
-  const painel = $('#painelMetas'); painel.innerHTML = '';
-  try{
-    const params = new URLSearchParams();
-    if(range.start) params.append('dataInicio', ISO(range.start));
-    if(range.end)   params.append('dataFim', ISO(range.end));
-    const empresa = $('#empresaFiltro').value;
-    if(empresa) params.append('empresa', empresa);
-
-    const rsp = await fetch(`${urlBase}?${params.toString()}`);
-    const metas = await rsp.json();
-
-    // popular empresas uma única vez
-    const select = $('#empresaFiltro');
-    if(select.options.length<=1){
-      [...new Set(metas.map(m=>m.Empresa))].forEach(e=>{
-        const o=document.createElement('option'); o.value=e; o.textContent=e; select.appendChild(o);
-      });
-    }
-
-    if(!metas.length){
-      painel.innerHTML = `<p style="text-align:center; color:var(--muted)">Nenhum dado encontrado.</p>`;
-      hideGrafico();
-      return;
-    }
-
-    metas.forEach(linha=>{
-      const previsto = parseFloat(linha["Previsto"]);
-      const realizado = parseFloat(String(linha["Realizado"]).replace(',','.'));
-
-      const div = document.createElement('div');
-      div.className='metas-box';
-      div.innerHTML = `
-        <h2>${linha["Empresa"]}</h2>
-        <p>💰 Previsto: R$ ${formatarNumero(previsto)}</p>
-        <p>✅ Realizado: R$ ${formatarNumero(realizado)}</p>
-        <p>📊 Atingido: ${formatarNumero(previsto>0?(realizado/previsto)*100:0)}%</p>
-      `;
-      div.addEventListener('click', ()=>abrirEvolucaoEmpresa(linha["Empresa"]));
-      painel.appendChild(div);
-    });
-
-    if(empresa) mostrarGrafico(metas); else hideGrafico();
-  }catch(e){
-    console.error(e);
-    $('#painelMetas').innerHTML = `<p style="text-align:center; color:var(--muted)">Erro ao carregar dados.</p>`;
-    hideGrafico();
-  }finally{
-    showLoading(false);
-  }
-}
-
-function mostrarGrafico(metas){
-  $('#graficoContainer').style.display='block';
-  metas.sort((a,b)=> new Date(a.Data)-new Date(b.Data));
-  const dias = metas.map(m=> m["Data"]?.split('-').reverse().join('/'));
-  const vals = metas.map(m=> parseFloat(String(m["Realizado"]).replace(',','.')));
-
-  const ctx = $('#graficoFaturamento').getContext('2d');
-  if(chart) chart.destroy();
-  chart = new Chart(ctx,{
-    type:'line',
-    data:{labels:dias, datasets:[{label:'Evolução do Faturamento', data:vals, fill:true,
-      borderColor:'#388e3c', backgroundColor:'rgba(56,142,60,.12)', tension:.3, pointRadius:4}]},
-    options:{
-      responsive:true,
-      scales:{ y:{ beginAtZero:true, ticks:{ callback:v=>'R$ '+v.toLocaleString('pt-BR') } } }
-    }
-  });
-}
-function hideGrafico(){ if(chart){ chart.destroy(); chart=null; } $('#graficoContainer').style.display='none'; }
-
-/* ---------- Modal evolução por empresa (mês da data final selecionada) ---------- */
-async function abrirEvolucaoEmpresa(empresa){
-  const ctx = $('#graficoEmpresa').getContext('2d');
-  $('#modalTitle').textContent = `Evolução — ${empresa}`;
-  $('#modal').classList.add('open');
-
-  // pega o mês/ano da data final do filtro
-  const end = range.end || new Date();
-  const y = end.getFullYear(), m = end.getMonth()+1;
-  const di = `${y}-${String(m).padStart(2,'0')}-01`;
-  const df = `${y}-${String(m).padStart(2,'0')}-${String(new Date(y,m,0).getDate()).padStart(2,'0')}`;
-
-  showLoading(true);
-  try{
-    const p = new URLSearchParams({ dataInicio:di, dataFim:df, empresa:empresa });
-    const rsp = await fetch(`${urlBase}?${p.toString()}`);
-    const metas = await rsp.json();
-    metas.sort((a,b)=> new Date(a.Data)-new Date(b.Data));
-    const labels = metas.map(m=> m["Data"]?.split('-').reverse().join('/'));
-    const vals = metas.map(m=> parseFloat(String(m["Realizado"]).replace(',','.')));
-
-    if(chartEmpresa) chartEmpresa.destroy();
-    chartEmpresa = new Chart(ctx,{
-      type:'line',
-      data:{labels, datasets:[{label:`${empresa} — Realizado`, data:vals, borderColor:'#2563eb',
-        backgroundColor:'rgba(37,99,235,.12)', fill:true, tension:.25, pointRadius:5}]},
-      options:{ responsive:true, scales:{ y:{ beginAtZero:true, ticks:{ callback:v=>'R$ '+v.toLocaleString('pt-BR') } } } }
-    });
-  }catch(e){ console.error(e); }
-  finally{ showLoading(false); }
-}
-$('#closeModal').addEventListener('click', ()=>$('#modal').classList.remove('open'));
-$('#modal').addEventListener('click', e=>{ if(e.target.id==='modal') $('#modal').classList.remove('open'); });
-
-/* ---------- WhatsApp ---------- */
-$('#btnWhats').addEventListener('click', ()=>{
-  const di = range.start? ISO(range.start):''; const df = range.end? ISO(range.end):'';
-  const periodo = (di&&df)? `${formatarDataBR(di)} - ${formatarDataBR(df)}` : 'Período não informado';
-  const blocos = document.querySelectorAll('.metas-box'); if(!blocos.length) return alert('Nenhum dado para enviar.');
-  let msg = `📆 Resumo da meta de receitas ${periodo}\n\n`;
-  blocos.forEach(b=>{
-    const t=b.querySelector('h2').innerText;
-    const linhas=[...b.querySelectorAll('p')].map(p=>p.innerText).join('\n');
-    msg += `*${t}*\n${linhas}\n\n`;
-  });
-  const numero='5577999761436';
-  window.open(`https://wa.me/${numero}?text=${encodeURIComponent(msg.trim())}`,'_blank');
+/* exemplo de cards */
+const painel=document.querySelector('#painelMetas');
+['MERCATTO DELÍCIA','DELÍCIA GOURMET','PADARIA DELÍCIA'].forEach(emp=>{
+  const card=document.createElement('div');
+  card.className='metas-box tooltip';
+  card.setAttribute('data-tip','Clique para ver evolução');
+  card.innerHTML=`<h2>${emp}</h2><p>💰 Previsto: R$ 1.000.000,00</p><p>✅ Realizado: R$ 200.000,00</p><p>📊 Atingido: 20%</p>`;
+  card.onclick=()=>abrirEvolucao(emp);
+  painel.appendChild(card);
 });
-
-/* ---------- Ações ---------- */
-$('#btnFiltrar').addEventListener('click', ()=>carregarMetas());
-
-/* ---------- Inicialização ---------- */
-setYesterdayDefault(); // ontem → ontem (padrão)
-updateHint();
-carregarMetas();
+function abrirEvolucao(emp){document.querySelector('#modalTitle').textContent=`Evolução - ${emp}`;document.querySelector('#modal').classList.add('open');}
+document.querySelector('#modal').onclick=e=>{if(e.target.id==='modal')e.target.classList.remove('open');};
 </script>
 </body>
 </html>
