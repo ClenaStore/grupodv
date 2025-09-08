@@ -49,7 +49,7 @@
 
     /* Splash */
     #splash{
-      position: fixed; inset:0; z-index: 9999;
+      position: fixed; inset:0; z-index: 9998;
       display:flex; align-items:center; justify-content:center;
       background: var(--bg);
       transition: opacity .5s ease;
@@ -93,16 +93,14 @@
       text-decoration:none; display:inline-flex; align-items:center; gap:8px;
     }
     .icon-btn:hover{ transform: translateY(-2px); box-shadow: var(--shadow) }
-/* Visibilidade utilitária */
-.only-desktop { display: inline-flex; }
-@media (max-width: 900px) {
-  .only-desktop { display: none !important; }
-}
+    /* Visibilidade utilitária */
+    .only-desktop { display: inline-flex; }
+    @media (max-width: 900px) {
+      .only-desktop { display: none !important; }
+    }
 
     /* User menu */
-    .user{
-      position: relative;
-    }
+    .user{ position: relative; }
     .user-btn{
       display:flex; align-items:center; gap:10px; cursor:pointer;
       border:1px solid var(--line); background: var(--surface);
@@ -134,9 +132,7 @@
     .tools{
       display:flex; gap:10px; flex-wrap:wrap; align-items:center;
     }
-    .search{
-      flex:1; position:relative;
-    }
+    .search{ flex:1; position:relative; }
     .search input{
       width:100%; border:1px solid var(--line); background: var(--surface);
       color: var(--text); border-radius:12px; padding:12px 14px 12px 40px; outline:none;
@@ -158,7 +154,6 @@
       display:grid; gap:14px;
       grid-template-columns: repeat(12, minmax(0,1fr));
     }
-    /* responsivo */
     @media (max-width: 1160px){ .grid{ grid-template-columns: repeat(8, 1fr); } }
     @media (max-width: 760px){ .grid{ grid-template-columns: repeat(4, 1fr); } }
 
@@ -201,9 +196,41 @@
       color: var(--muted); font-size:12px; display:flex; justify-content:space-between; gap:12px;
       border-top:1px dashed var(--line); padding-top:12px;
     }
+
+    /* ===== Modal de Senha (Popup) ===== */
+    #pwdModal{
+      position:fixed; inset:0; display:none; z-index:9999;
+      background: rgba(0,0,0,.65);
+      align-items:center; justify-content:center;
+    }
+    #pwdModal .box{
+      width:min(92vw, 360px);
+      background: var(--surface);
+      border:1px solid var(--line);
+      border-radius:16px;
+      padding:22px 18px;
+      box-shadow: var(--shadow);
+      text-align:center;
+      animation: fadeIn .25s ease;
+    }
+    #pwdModal img{ width:80px; height:80px; object-fit:contain; margin-bottom:10px }
+    #pwdModal h3{ margin:6px 0 14px; font-size:18px }
+    #pwdModal input{
+      width:100%; padding:12px;
+      border:1px solid var(--line); border-radius:12px;
+      background: var(--card); color: var(--text);
+      font-size:15px;
+    }
+    #pwdModal button{
+      margin-top:10px; width:100%; padding:12px; border:none;
+      border-radius:12px; font-weight:800; cursor:pointer;
+      background: var(--brand); color:#fff;
+    }
+    #pwdModal .err{color:#dc2626; font-size:13px; margin-top:8px; display:none}
+    @keyframes fadeIn{from{opacity:0; transform:translateY(6px)}to{opacity:1; transform:none}}
   </style>
 
-  <!-- Proteção por senha + interceptador de fetch -->
+  <!-- Proteção por senha + interceptador de fetch (com POPUP) -->
   <script>
   (function(){
     const KEY_NAME = 'dv_pwd';
@@ -212,41 +239,53 @@
     const savedTheme = localStorage.getItem('dv_theme');
     if(savedTheme){ document.documentElement.setAttribute('data-theme', savedTheme); }
 
-    async function ensurePassword(){
-      let pwd = localStorage.getItem(KEY_NAME) || '';
-      while(!pwd){
-        pwd = prompt('Digite a senha de acesso:') || '';
-        if(!pwd) continue;
-        try{
-          const r = await fetch('/api/ping', { headers:{ 'x-api-key': pwd } });
-          if(r.ok){
-            localStorage.setItem(KEY_NAME, pwd);
-            break;
-          }else{
-            alert('Senha incorreta.');
-            pwd = '';
-          }
-        }catch(e){
-          // se não deu pra validar agora, ainda salva e segue
-          localStorage.setItem(KEY_NAME, pwd);
-          break;
-        }
-      }
-    }
-
     // intercepta fetch para anexar a senha
     const _fetch = window.fetch.bind(window);
     window.fetch = (input, init={})=>{
-      let url = (typeof input === 'string') ? input : (input && input.url) || '';
-      init = init || {};
+      const url = (typeof input === 'string') ? input : (input && input.url) || '';
       const headers = new Headers(init.headers || ((typeof input !== 'string' && input.headers) || {}));
       const pwd = localStorage.getItem(KEY_NAME) || '';
       if(url.startsWith('/api/') && pwd){ headers.set('x-api-key', pwd); }
       return _fetch(input, Object.assign({}, init, { headers }));
     };
 
-    if(!localStorage.getItem(KEY_NAME)){ ensurePassword(); }
-    window.__DV_PWD_KEY__ = KEY_NAME;
+    // exibe modal se não houver senha salva
+    window.addEventListener('DOMContentLoaded', ()=>{
+      if(!localStorage.getItem(KEY_NAME)){
+        document.getElementById('pwdModal').style.display = 'flex';
+        setTimeout(()=>document.getElementById('pwdInput').focus(), 50);
+      }
+    });
+
+    // valida a senha no /api/ping e guarda
+    async function handlePwdSubmit(){
+      const input = document.getElementById('pwdInput');
+      const err   = document.getElementById('pwdErr');
+      const pwd = (input.value||'').trim();
+      if(!pwd) return;
+
+      try{
+        const r = await fetch('/api/ping', { headers:{ 'x-api-key': pwd } });
+        if(r.ok){
+          localStorage.setItem(KEY_NAME, pwd);
+          document.getElementById('pwdModal').style.display='none';
+        }else{
+          err.textContent = 'Senha incorreta.'; err.style.display='block';
+        }
+      }catch(e){
+        // offline/erro de rede: salva e segue
+        localStorage.setItem(KEY_NAME, pwd);
+        document.getElementById('pwdModal').style.display='none';
+      }
+    }
+    window.handlePwdSubmit = handlePwdSubmit;
+
+    // submit com Enter
+    window.addEventListener('keydown', (e)=>{
+      if(e.key==='Enter' && document.getElementById('pwdModal').style.display==='flex'){
+        e.preventDefault(); handlePwdSubmit();
+      }
+    });
   })();
   </script>
 </head>
@@ -259,6 +298,17 @@
     </div>
   </div>
 
+  <!-- Modal de Senha -->
+  <div id="pwdModal" role="dialog" aria-modal="true" aria-labelledby="pwdTitle">
+    <div class="box">
+      <img src="https://github.com/ClenaStore/painel-principal/blob/main/img/GRUPO%20DV%20(1).png?raw=true" alt="Grupo DV">
+      <h3 id="pwdTitle">Grupo DV</h3>
+      <input id="pwdInput" type="password" placeholder="Digite a senha de acesso" autocomplete="current-password">
+      <button onclick="handlePwdSubmit()">Entrar</button>
+      <div id="pwdErr" class="err"></div>
+    </div>
+  </div>
+
   <!-- Header -->
   <header>
     <div class="head-wrap">
@@ -268,16 +318,14 @@
       </a>
       <div class="head-spacer"></div>
 
-   <a class="icon-btn only-desktop" href="index.relatorios.html" title="Relatório Consolidado">
-  📄 Relatórios
-</a>
+      <a class="icon-btn only-desktop" href="index.relatorios.html" title="Relatório Consolidado">📄 Relatórios</a>
 
       <button id="themeToggle" class="icon-btn" type="button" title="Alternar tema">🌓 Tema</button>
 
       <div class="user" id="userMenu">
         <button class="user-btn" type="button" title="Perfil">
-          <img src="https://github.com/ClenaStore/grupodv/blob/main/paste/Imagem%20do%20WhatsApp%20de%202025-09-08%20%C3%A0(s)%2011.54.12_884bebc9.jpg?raw=true" alt="Usuário">
-          <strong style="font-size:13px">Leonardo</strong>
+          <img id="userAvatar" src="https://github.com/ClenaStore/grupodv/blob/main/paste/Imagem%20do%20WhatsApp%20de%202025-09-08%20%C3%A0(s)%2011.54.12_884bebc9.jpg?raw=true" alt="Usuário">
+          <strong id="userName" style="font-size:13px">Leonardo</strong>
         </button>
         <div class="user-menu">
           <a href="perfil.html">👤 Meu Perfil</a>
@@ -477,11 +525,22 @@
       if(!user.contains(e.target)) user.classList.remove('open');
     });
 
+    // Preencher avatar/nome se existir perfil salvo (opcional)
+    (function hydrateUserFromStorage(){
+      try{
+        const p = JSON.parse(localStorage.getItem('dv_profile')||'{}');
+        if(p && (p.nome || p.foto)){
+          if(p.foto) document.getElementById('userAvatar').src = p.foto;
+          if(p.nome) document.getElementById('userName').textContent = p.nome;
+        }
+      }catch(e){}
+    })();
+
     // Logout limpa a senha e recarrega
     function handleLogout(){
       try{
         localStorage.removeItem('dv_pwd');
-        // opcional: limpar demais chaves do app
+        // se quiser limpar tudo do app que começa com dv_:
         // Object.keys(localStorage).forEach(k=>/^dv_/i.test(k)&&localStorage.removeItem(k));
       }catch(e){}
       location.reload();
