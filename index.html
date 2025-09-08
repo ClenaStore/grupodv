@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Análise Financeira</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background-color: white;
+    }
+
+    #splash {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      transition: opacity 0.5s ease;
+    }
+
+    #splash img {
+      width: 150px;
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.05); opacity: 0.9; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    header {
+      background-color: white;
+      color: #2c3e50;
+      padding: 20px 40px;
+      display: flex;
+      align-items: center;
+      border-bottom: 1px solid #ccc;
+    }
+
+    .logo-left {
+      flex: 1;
+      display: flex;
+      align-items: center;
+    }
+
+    .logo-left img {
+      height: 60px;
+    }
+.user-profile {
+  display: inline-block;
+  margin-left: 15px;
+}
+
+.user-profile img {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #ccc;
+  transition: transform 0.2s ease;
+}
+
+.user-profile img:hover {
+  transform: scale(1.1);
+  border-color: #2980b9;
+}
+
+    .title-left {
+  flex: 2;
+  text-align: left;
+}
+
+.title-left h1 {
+  font-size: 24px;
+  margin: 0;
+  font-weight: bold;
+}
+
+
+    .spacer {
+      flex: 1;
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    .relatorio-link {
+      text-decoration: none;
+      font-size: 22px;
+      opacity: 0.5;
+      cursor: pointer;
+      transition: opacity 0.3s;
+    }
+
+    .relatorio-link:hover {
+      opacity: 1;
+    }
+
+    .container {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+      padding: 30px;
+      max-width: 1200px;
+      margin: auto;
+    }
+
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 30px 20px;
+      text-align: center;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      transition: transform 0.2s ease;
+      text-decoration: none;
+      color: inherit;
+    }
+
+    .card:hover {
+      transform: translateY(-5px);
+      background-color: #f0f8ff;
+    }
+
+    .card h2 {
+      margin: 0;
+      font-size: 20px;
+      color: #2c3e50;
+    }
+
+    .icon {
+      font-size: 40px;
+      color: #2980b9;
+      margin-bottom: 10px;
+    }
+
+    @media (max-width: 500px) {
+  header {
+    flex-direction: column;
+    text-align: center;
+    position: relative;
+  }
+
+  .logo-left {
+    display: none;
+  }
+
+  .title-center {
+    flex: none;
+    width: 100%;
+  }
+
+  .spacer {
+    position: absolute;
+    top: 10px;
+    right: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .card h2 {
+    font-size: 18px;
+  }
+
+  .icon {
+    font-size: 32px;
+  }
+
+      .card h2 {
+        font-size: 18px;
+      }
+
+      .icon {
+        font-size: 32px;
+      }
+    }
+  </style>
+<script>
+(function(){
+  const KEY_NAME = 'dv_pwd';
+  async function ensurePassword(){
+    let pwd = localStorage.getItem(KEY_NAME) || '';
+    while(!pwd){
+      pwd = prompt('Digite a senha de acesso:') || '';
+      if(!pwd) continue;
+      try{
+        const r = await fetch('/api/ping', {headers:{'x-api-key': pwd }});
+        if(r.ok){
+          localStorage.setItem(KEY_NAME, pwd);
+          break;
+        }else{
+          alert('Senha incorreta.');
+          pwd = '';
+        }
+      }catch(e){
+        // se não der pra validar agora, ainda assim salva e segue
+        localStorage.setItem(KEY_NAME, pwd);
+        break;
+      }
+    }
+  }
+
+  // intercepta fetch para anexar a senha automaticamente
+  const _fetch = window.fetch.bind(window);
+  window.fetch = (input, init={})=>{
+    let url = (typeof input === 'string') ? input : (input && input.url) || '';
+    init = init || {};
+    const headers = new Headers(init.headers || ((typeof input !== 'string' && input.headers) || {}));
+    const pwd = localStorage.getItem(KEY_NAME) || '';
+    if(url.startsWith('/api/')){
+      if(pwd) headers.set('x-api-key', pwd);
+    }
+    return _fetch(input, Object.assign({}, init, { headers }));
+  };
+
+  // pede a senha apenas se ainda não houver
+  if(!localStorage.getItem(KEY_NAME)){
+    ensurePassword();
+  }
+})();
+</script>
+</head>
+<body>
+
+  <!-- Splash -->
+  <div id="splash">
+    <img src="https://github.com/ClenaStore/painel-principal/blob/main/img/GRUPO%20DV%20(1).png?raw=true" alt="Logo CB Systems">
+  </div>
+
+  <!-- Cabeçalho -->
+  <header>
+    <div class="logo-left">
+      <img src="https://github.com/ClenaStore/painel-principal/blob/main/img/GRUPO%20DV%20(1).png?raw=true" alt="Logo">
+    </div>
+    <div class="title-center">
+      <h1>Análise Financeira</h1>
+    </div>
+    <div class="spacer">
+  <a href="index.relatorios.html" class="relatorio-link" title="Relatório Consolidado">📄</a>
+  <a href="perfil.html" title="Perfil do Usuário" class="user-profile">
+    <img src="https://www.w3schools.com/howto/img_avatar.png" alt="Usuário" />
+  </a>
+</div>
+
+  </header>
+
+  <!-- Cards -->
+  <div class="container">
+    <a class="card" href="index.resumofinanceiro.html">
+      <div class="icon">📈</div>
+      <h2>Resumo Financeiro</h2>
+    </a>
+
+    <a class="card" href="index.cancelamentos.html">
+      <div class="icon">❌</div>
+      <h2>Cancelamentos</h2>
+    </a>
+
+    <a class="card" href="index.delivery.html">
+      <div class="icon">🚚</div>
+      <h2>Vendas Delivery</h2>
+    </a>
+
+    <a class="card" href="index.meta.html">
+      <div class="icon">📊</div>
+      <h2>Meta de Faturamento</h2>
+    </a>
+   <a class="card" href="index.travas.html">
+      <div class="icon">🔒</div>
+      <h2>Travas</h2>
+    </a>
+    <a class="card" href="index.conciliacao.html">
+      <div class="icon">💳</div>
+      <h2>Conciliações</h2>
+    </a>
+
+   <a class="card" href="index.couvert.html">
+      <div class="icon">🎤</div>
+      <h2>Couvert</h2>
+    </a>
+  <a class="card" href="index.abc.html">
+      <div class="icon">ABC</div>
+      <h2>ABC de Vendas</h2>
+    </a>
+  <a class="card" href="index.avaliacoes.html">
+      <div class="icon">🔎</div>
+      <h2>Pesquisa de satisfação</h2>
+    </a>
+  <a class="card" href="index.reservas.html">
+      <div class="icon">🗓️</div>
+      <h2>Reservas Mercatto</h2>
+    </a>
+  </div>
+
+  <!-- Script splash -->
+  <script>
+    window.addEventListener('load', () => {
+      const splash = document.getElementById('splash');
+      setTimeout(() => {
+        splash.style.opacity = '0';
+        setTimeout(() => splash.style.display = 'none', 500);
+      }, 1000);
+    });
+  </script>
+
+</body>
+</html>
