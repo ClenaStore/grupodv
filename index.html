@@ -93,6 +93,11 @@
       text-decoration:none; display:inline-flex; align-items:center; gap:8px;
     }
     .icon-btn:hover{ transform: translateY(-2px); box-shadow: var(--shadow) }
+/* Visibilidade utilitária */
+.only-desktop { display: inline-flex; }
+@media (max-width: 900px) {
+  .only-desktop { display: none !important; }
+}
 
     /* User menu */
     .user{
@@ -263,7 +268,9 @@
       </a>
       <div class="head-spacer"></div>
 
-      <a class="icon-btn" href="index.relatorios.html" title="Relatório Consolidado">📄 Relatórios</a>
+   <a class="icon-btn only-desktop" href="index.relatorios.html" title="Relatório Consolidado">
+  📄 Relatórios
+</a>
 
       <button id="themeToggle" class="icon-btn" type="button" title="Alternar tema">🌓 Tema</button>
 
