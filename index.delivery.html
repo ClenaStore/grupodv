@@ -50,18 +50,14 @@
     .user-menu a:hover,.user-menu button:hover{background:var(--icon-bg)}
 
     /* Página */
-   .container {
-  padding: 20px;      /* padrão no desktop */
-  max-width: 100%;
-  margin: 0;
-}
-
-@media (max-width: 768px) {
-  .container {
-    padding: 10px;    /* no celular mantém um respiro */
-  }
-}
-
+    .container {
+      padding: 20px;      /* desktop */
+      max-width: 100%;
+      margin: 0;
+    }
+    @media (max-width: 768px) {
+      .container { padding: 10px; }  /* celular */
+    }
 
     /* Filtros */
     .filters{display:grid; grid-template-columns: 1fr 220px 220px 200px; gap:12px; align-items:end}
@@ -78,14 +74,22 @@
     .total-line{display:flex; justify-content:space-between; padding:6px 0; font-weight:800}
 
     /* Tabelas */
-    table{width:100%; border-collapse:collapse; font-size:.95rem}
-    th,td{padding:10px; border-bottom:1px solid var(--line)}
+    table{width:100%; border-collapse:separate; border-spacing:0; font-size:.95rem}
+    th,td{padding:10px; border-bottom:1px solid var(--line); white-space:nowrap}
     th{color:var(--muted); text-align:left}
     td:last-child, th:last-child{text-align:right}
 
-    /* Tabela rolável no ranking */
+    /* Tabela rolável no ranking + coluna "Mês" fixa */
     .table-scroll{overflow-x:auto; -webkit-overflow-scrolling:touch}
-    .ranking-table{white-space:nowrap; min-width:720px}
+    .ranking-table{min-width:720px}
+    .ranking-table thead th{
+      position: sticky; top: 0; z-index: 3; background: var(--surface);
+    }
+    .ranking-table .sticky-col{
+      position: sticky; left: 0; z-index: 2; background: var(--surface);
+      box-shadow: 4px 0 8px rgba(0,0,0,.06); /* suave separador na rolagem */
+    }
+    .ranking-table thead th.sticky-col{ z-index: 4; } /* acima dos demais */
 
     /* Resumo por empresa (cards clicáveis) */
     .resumo-linha{background:var(--card); border:2px solid var(--line); border-radius:12px; padding:14px; margin-bottom:12px; box-shadow:var(--shadow);
@@ -239,7 +243,7 @@
       </table>
     </div>
 
-    <!-- Ranking (rolável) -->
+    <!-- Ranking (rolável com Mês travado) -->
     <div class="card">
       <h3>🏆 Ranking de Empresas</h3>
       <div class="table-scroll">
@@ -409,12 +413,12 @@ function atualizarRankingEmpresas() {
 
   const tbody = $('#tabela-ranking');
   const thead = tbody.parentElement.parentElement.querySelector('thead');
-  thead.innerHTML = `<tr><th>Mês</th>${empresas.map(e=>`<th>${e}</th>`).join('')}</tr>`;
+  thead.innerHTML = `<tr><th class="sticky-col">Mês</th>${empresas.map(e=>`<th>${e}</th>`).join('')}</tr>`;
   tbody.innerHTML='';
 
   meses.forEach(m=>{
     const [ano,mm]=m.split('-');
-    const linha=[`<td>${nomesMes[+mm-1]}/${ano}</td>`];
+    const linha=[`<td class="sticky-col">${nomesMes[+mm-1]}/${ano}</td>`];
     const vals = empresas.map(e=>dadosMesEmpresa[m][e]||0);
     const max = Math.max(...vals);
     empresas.forEach((e,i)=>{
