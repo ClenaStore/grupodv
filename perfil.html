@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Perfil do Usuário</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: #f9f9f9;
+      color: #333;
+    }
+
+    header {
+      background: white;
+      padding: 15px 25px;
+      border-bottom: 1px solid #ddd;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 20px;
+      font-weight: bold;
+    }
+
+    .voltar {
+      text-decoration: none;
+      font-size: 18px;
+      color: #007bff;
+    }
+
+    .perfil-container {
+      max-width: 500px;
+      margin: 40px auto;
+      background: white;
+      padding: 30px 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+      text-align: center;
+    }
+
+    .perfil-foto {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 3px solid #ccc;
+      margin-bottom: 20px;
+    }
+
+    .perfil-nome {
+      font-size: 22px;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+
+    .perfil-email {
+      font-size: 16px;
+      color: #777;
+      margin-bottom: 25px;
+    }
+
+    .botoes {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .botoes button {
+      padding: 12px;
+      font-size: 16px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    .editar {
+      background: #2980b9;
+      color: white;
+    }
+
+    .editar:hover {
+      background: #1f5f87;
+    }
+
+    .sair {
+      background: #e74c3c;
+      color: white;
+    }
+
+    .sair:hover {
+      background: #c0392b;
+    }
+
+    @media (max-width: 480px) {
+      .perfil-container {
+        margin: 20px;
+        padding: 20px;
+      }
+
+      .perfil-nome {
+        font-size: 20px;
+      }
+
+      .perfil-email {
+        font-size: 14px;
+      }
+
+      .botoes button {
+        font-size: 15px;
+      }
+    }
+  </style>
+
+  <!-- Proteção por senha + interceptador de fetch -->
+  <script>
+  (function(){
+    const KEY_NAME = 'dv_pwd';
+
+    async function ensurePassword(){
+      let pwd = localStorage.getItem(KEY_NAME) || '';
+      while(!pwd){
+        pwd = prompt('Digite a senha de acesso:') || '';
+        if(!pwd) continue;
+        try{
+          const r = await fetch('/api/ping', { headers:{ 'x-api-key': pwd } });
+          if(r.ok){
+            localStorage.setItem(KEY_NAME, pwd);
+            break;
+          }else{
+            alert('Senha incorreta.');
+            pwd = '';
+          }
+        }catch(e){
+          // se não der pra validar agora, ainda assim salva e segue
+          localStorage.setItem(KEY_NAME, pwd);
+          break;
+        }
+      }
+    }
+
+    // intercepta fetch para anexar a senha automaticamente
+    const _fetch = window.fetch.bind(window);
+    window.fetch = (input, init={})=>{
+      let url = (typeof input === 'string') ? input : (input && input.url) || '';
+      init = init || {};
+      const headers = new Headers(init.headers || ((typeof input !== 'string' && input.headers) || {}));
+      const pwd = localStorage.getItem(KEY_NAME) || '';
+      if(url.startsWith('/api/')){
+        if(pwd) headers.set('x-api-key', pwd);
+      }
+      return _fetch(input, Object.assign({}, init, { headers }));
+    };
+
+    // pede a senha apenas se ainda não houver
+    if(!localStorage.getItem(KEY_NAME)){
+      ensurePassword();
+    }
+
+    // expõe a chave para outros scripts, se precisar
+    window.__DV_PWD_KEY__ = KEY_NAME;
+  })();
+  </script>
+</head>
+<body>
+
+  <header>
+    <h1>Perfil</h1>
+    <a href="index.html" class="voltar">← Início</a>
+  </header>
+
+  <div class="perfil-container">
+    <img src="https://github.com/ClenaStore/grupodv/blob/main/paste/Imagem%20do%20WhatsApp%20de%202025-09-08%20%C3%A0(s)%2011.54.12_884bebc9.jpg?raw=true" alt="Foto do Usuário" class="perfil-foto">
+    <div class="perfil-nome">Leonardo Henrique</div>
+    <div class="perfil-email">leonardo_henrique1@hotmail.com</div>
+
+    <div class="botoes">
+      <button class="editar" onclick="editarPerfil()">Editar Perfil</button>
+      <button class="sair" onclick="sair()">Sair</button>
+    </div>
+  </div>
+
+  <script>
+    function editarPerfil() {
+      alert('Funcionalidade de edição em desenvolvimento.');
+    }
+
+    function sair() {
+      // limpa a senha guardada
+      try {
+        localStorage.removeItem('dv_pwd');
+
+        // OPCIONAL: limpar tudo que comece com "dv_"
+        // for (const k of Object.keys(localStorage)) {
+        //   if (/^dv_/i.test(k)) localStorage.removeItem(k);
+        // }
+      } catch(e){}
+
+      alert('Sessão encerrada. Você precisará informar a senha novamente no próximo acesso.');
+      // redireciona e força recarregar para disparar o prompt de senha
+      location.replace('index.html');
+    }
+  </script>
+
+</body>
+</html>
