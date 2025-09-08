@@ -5,8 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
   <title>Metas de Receita - Grupo DV</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
   <style>
     :root{
+      /* tema escuro (igual ao index) */
       --bg:#0b1020; --surface:#10172a; --card:#0f172a; --text:#e5e7eb; --muted:#94a3b8;
       --line:rgba(148,163,184,.25); --icon-bg:rgba(255,255,255,.06); --shadow:0 20px 60px rgba(2,6,23,.35);
       --brand:#60a5fa; --brand2:#22d3ee; --ok:#16a34a; --bad:#dc2626;
@@ -15,154 +17,434 @@
       --bg:#f6f7fb; --surface:#fff; --card:#fff; --text:#0f172a; --muted:#475569;
       --line:#e5e7eb; --icon-bg:rgba(2,6,23,.06); --shadow:0 16px 36px rgba(15,23,42,.08);
     }
-    body{margin:0;font-family:ui-sans-serif,Segoe UI,Roboto,Arial;background:var(--bg);color:var(--text)}
+    *{box-sizing:border-box}
     html,body{height:100%}
+    body{margin:0; font-family:ui-sans-serif,-apple-system,Segoe UI,Roboto,Arial; background:var(--bg); color:var(--text)}
 
-    header{position:sticky;top:0;z-index:40;backdrop-filter:blur(8px);
-      background:color-mix(in srgb,var(--surface) 80%,transparent);border-bottom:1px solid var(--line)}
-    .head{max-width:1200px;margin:0 auto;padding:14px 18px;display:flex;align-items:center;gap:12px}
-    .brand{display:flex;align-items:center;gap:10px;color:inherit;text-decoration:none}
+    /* Header unificado */
+    header{position:sticky; top:0; z-index:40; backdrop-filter:saturate(160%) blur(8px);
+      background:color-mix(in srgb, var(--surface) 80%, transparent); border-bottom:1px solid var(--line)}
+    .head{max-width:1200px; margin:0 auto; padding:14px 18px; display:flex; align-items:center; gap:12px}
+    .brand{display:flex; align-items:center; gap:10px; text-decoration:none; color:inherit}
     .brand img{height:42px}
-    .title{font-weight:800;font-size:clamp(18px,1.6vw,22px)}
+    .title{font-weight:800; letter-spacing:.2px; font-size:clamp(18px,1.6vw,22px)}
     .grow{flex:1}
+    .btn{border:1px solid var(--line); background:var(--surface); color:var(--text);
+      padding:10px 12px; border-radius:12px; font-weight:800; cursor:pointer; display:inline-flex; gap:8px; align-items:center}
+    .btn:hover{box-shadow:var(--shadow); transform:translateY(-1px)}
+    .only-desktop{display:inline-flex}
+    @media (max-width:900px){.only-desktop{display:none!important}}
 
-    .container{max-width:100%;padding:20px 18px}
-    .filters{display:grid;grid-template-columns:320px 220px 160px;gap:12px;align-items:end}
-    @media(max-width:900px){.filters{grid-template-columns:1fr 1fr}}
-    @media(max-width:600px){.filters{grid-template-columns:1fr}}
+    .user{position:relative}
+    .user-btn{display:flex; align-items:center; gap:10px; border:1px solid var(--line);
+      background:var(--surface); padding:6px 8px; border-radius:999px; cursor:pointer}
+    .user-btn img{width:34px; height:34px; border-radius:50%; object-fit:cover; background:var(--icon-bg)}
+    .user-menu{position:absolute; right:0; top:110%; background:var(--surface); border:1px solid var(--line);
+      border-radius:12px; min-width:200px; padding:6px; box-shadow:var(--shadow); display:none}
+    .user.open .user-menu{display:block}
+    .user-menu a,.user-menu button{display:flex; width:100%; padding:10px 12px; border-radius:10px;
+      border:none; background:transparent; color:var(--text); text-align:left; cursor:pointer; font-weight:600}
+    .user-menu a:hover,.user-menu button:hover{background:var(--icon-bg)}
 
-    .field{display:flex;align-items:center;gap:6px}
-    .picker-btn, select{width:100%;border:1px solid var(--line);background:var(--surface);color:var(--text);border-radius:12px;padding:12px 14px;font-weight:700}
-    .btn{border:1px solid var(--line);background:var(--surface);color:var(--text);padding:10px 12px;border-radius:12px;font-weight:800;cursor:pointer}
-    .btn.action{width:100%}
+    /* Página – tela cheia */
+    .container{max-width:100%; margin:0 auto; padding:20px 18px}
 
-    .period-display{font-weight:800;color:var(--muted)}
+    /* Filtros */
+    .filters{display:grid; grid-template-columns: 520px 220px 160px 200px; gap:12px; align-items:end}
+    @media (max-width:1100px){ .filters{grid-template-columns: 1fr 1fr} }
+    @media (max-width:640px){ .filters{grid-template-columns: 1fr} }
 
-    #painelMetas{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:16px}
-    @media(max-width:1200px){#painelMetas{grid-template-columns:repeat(2,1fr)}}
-    @media(max-width:700px){#painelMetas{grid-template-columns:1fr}}
+    .field label{display:block; margin:0 0 6px; color:var(--muted); font-weight:800; font-size:.95rem}
+    .picker-btn, select{width:100%; border:1px solid var(--line); background:var(--surface); color:var(--text);
+      border-radius:12px; padding:12px 14px; font-weight:700}
+    .action{width:100%}
+    .period-wrap{position:relative; display:flex; align-items:center; gap:10px}
+    .period-display{font-weight:800; color:var(--muted)}
 
-    .metas-box{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;box-shadow:var(--shadow);
-      text-align:center;cursor:pointer;min-height:180px;display:flex;flex-direction:column;justify-content:center;transition:.18s}
-    .metas-box:hover{transform:translateY(-3px)}
-    .metas-box h2{margin:0 0 6px;font-size:1.05rem;text-transform:uppercase}
-    .metas-box p{margin:4px 0;font-size:.9rem}
+    /* Popover calendário (1 calendário, só fecha ao aplicar/cancelar) */
+    .popover{position:absolute; z-index:50; background:var(--surface); color:var(--text); border:1px solid var(--line);
+      border-radius:14px; box-shadow:var(--shadow); padding:14px; width:min(380px,94vw); display:none; top:110%}
+    .popover.open{display:block}
+    .cal-head{display:flex; align-items:center; justify-content:space-between; padding:0 4px 8px}
+    .cal-nav{border:1px solid var(--line); background:var(--surface); border-radius:10px; width:34px; height:34px; display:grid; place-items:center; cursor:pointer}
+    .dow{display:grid; grid-template-columns:repeat(7,1fr); gap:6px; padding:6px 4px; color:var(--muted); font-weight:800}
+    .grid{display:grid; grid-template-columns:repeat(7,1fr); gap:6px; padding:0 4px 8px}
+    .day{height:40px; border-radius:12px; display:grid; place-items:center; cursor:pointer; user-select:none; background:color-mix(in srgb, var(--surface) 90%, #fff)}
+    .day.muted{opacity:.45}
+    .day.sel{background:#2563eb; color:#fff}
+    .day.in{background:color-mix(in srgb, #2563eb 18%, var(--surface))}
+    .cal-actions{display:flex; gap:8px; justify-content:flex-end; padding-top:6px}
+    .btn-sm{border:1px solid var(--line); background:var(--surface); color:var(--text); padding:8px 12px; border-radius:10px; font-weight:800; cursor:pointer}
+
+    /* GRID cards 3 por linha */
+    #painelMetas{display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:16px; margin-top:16px}
+    @media (max-width:1200px){#painelMetas{grid-template-columns:repeat(2,1fr)}}
+    @media (max-width:700px){#painelMetas{grid-template-columns:1fr}}
+
+    /* Card compacto */
+    .metas-box{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:16px; box-shadow:var(--shadow);
+      cursor:pointer; text-align:center; min-height:170px; display:flex; flex-direction:column; align-items:center; justify-content:center; transition:.18s}
+    .metas-box:hover{transform:translateY(-3px); box-shadow:0 8px 24px rgba(0,0,0,.28)}
+    .metas-box h2{margin:0 0 6px; font-size:1.05rem; text-transform:uppercase}
+    .metas-box p{margin:4px 0; color:var(--muted); font-size:.92rem}
     .metas-box.ok{border-color:var(--ok)}
     .metas-box.bad{border-color:var(--bad)}
 
+    /* Tooltip */
     .tooltip{position:relative}
-    .tooltip:hover::after{content:attr(data-tip);position:absolute;bottom:110%;left:50%;transform:translateX(-50%);
-      background:#111;color:#fff;padding:6px 10px;border-radius:8px;font-size:.8rem;white-space:nowrap}
+    .tooltip:hover::after{
+      content:attr(data-tip);
+      position:absolute; bottom:110%; left:50%; transform:translateX(-50%);
+      background:#111; color:#fff; padding:6px 10px; border-radius:8px; font-size:.8rem; white-space:nowrap; box-shadow:0 6px 18px rgba(0,0,0,.25);
+    }
 
-    .modal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:55}
+    /* Loading overlay */
+    .loading{position:fixed; inset:0; background:rgba(0,0,0,.55); display:none; align-items:center; justify-content:center; z-index:60}
+    .loading.show{display:flex}
+    .spinner{width:74px; height:74px; border-radius:50%; border:6px solid rgba(255,255,255,.25); border-top-color:#fff; animation:spin 1s linear infinite}
+    .loading p{color:#fff; font-weight:800; margin-top:12px; text-shadow:0 2px 6px rgba(0,0,0,.3)}
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    /* Modal evolução */
+    .modal{position:fixed; inset:0; background:rgba(0,0,0,.6); display:none; align-items:center; justify-content:center; z-index:55; padding:18px}
     .modal.open{display:flex}
-    .modal-card{background:var(--surface);border:1px solid var(--line);border-radius:14px;max-width:1000px;width:96%;padding:16px;box-shadow:var(--shadow)}
-    #graficoEmpresa{width:100%!important;height:360px!important}
+    .modal-card{background:var(--surface); border:1px solid var(--line); border-radius:14px; width:min(1100px,96vw); max-height:92vh;
+      box-shadow:var(--shadow); padding:16px; overflow:auto}
+    .modal-h{display:flex; align-items:center; gap:10px; margin-bottom:8px}
+    .close{margin-left:auto; cursor:pointer; font-weight:800; color:var(--muted)}
+    #graficoEmpresa{width:100%!important; height:360px!important}
   </style>
+
+  <!-- senha + tema sincronizado + fetch x-api-key -->
+  <script>
+  (function(){
+    const KEY = 'dv_pwd';
+    const t = localStorage.getItem('dv_theme'); if(t) document.documentElement.setAttribute('data-theme', t);
+
+    window.__toggleTheme = function(){
+      const cur = document.documentElement.getAttribute('data-theme')||'light';
+      const next = (cur==='light')?'dark':'light';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('dv_theme', next);
+    };
+
+    async function ensurePwd(){
+      let pwd = localStorage.getItem(KEY)||'';
+      while(!pwd){
+        pwd = prompt('Digite a senha de acesso:')||'';
+        if(!pwd) continue;
+        try{
+          const r = await fetch('/api/ping', {headers:{'x-api-key':pwd}});
+          if(r.ok){ localStorage.setItem(KEY, pwd); break; }
+          alert('Senha incorreta.'); pwd='';
+        }catch{ localStorage.setItem(KEY, pwd); break; }
+      }
+    }
+
+    const _f = window.fetch.bind(window);
+    window.fetch = (input, init={})=>{
+      const url = (typeof input==='string')?input:(input&&input.url)||'';
+      const headers = new Headers(init.headers||((typeof input!=='string'&&input.headers)||{}));
+      const pwd = localStorage.getItem(KEY)||'';
+      if(url.startsWith('/api/') && pwd) headers.set('x-api-key', pwd);
+      return _f(input, Object.assign({}, init, {headers}));
+    };
+
+    if(!localStorage.getItem(KEY)) ensurePwd();
+    window.handleLogout = ()=>{ localStorage.removeItem(KEY); location.reload(); }
+  })();
+  </script>
 </head>
 <body>
+
+  <!-- Header -->
   <header>
     <div class="head">
-      <a class="brand" href="#"><img src="https://github.com/ClenaStore/painel-principal/blob/main/img/GRUPO%20DV%20(1).png?raw=true"/><span class="title">Metas de Receita</span></a>
+      <a class="brand" href="index.html" aria-label="Início">
+        <img src="https://github.com/ClenaStore/painel-principal/blob/main/img/GRUPO%20DV%20(1).png?raw=true" alt="Logo">
+        <span class="title">Metas de Receita</span>
+      </a>
       <div class="grow"></div>
+      <a class="btn only-desktop" href="index.relatorios.html">📄 Relatórios</a>
+      <button id="themeToggle" class="btn" type="button">🌓 Tema</button>
+      <div class="user" id="userMenu">
+        <button class="user-btn" type="button">
+          <img src="https://github.com/ClenaStore/grupodv/blob/main/paste/Imagem%20do%20WhatsApp%20de%202025-09-08%20%C3%A0(s)%2011.54.12_884bebc9.jpg?raw=true" alt="Usuário">
+          <strong style="font-size:13px">Leonardo</strong>
+        </button>
+        <div class="user-menu">
+          <a href="perfil.html">👤 Meu Perfil</a>
+          <button onclick="handleLogout()">🚪 Sair</button>
+        </div>
+      </div>
     </div>
   </header>
 
+  <!-- Loading -->
+  <div id="loading" class="loading" aria-hidden="true">
+    <div style="display:flex;flex-direction:column;align-items:center">
+      <div class="spinner"></div>
+      <p>Carregando dados...</p>
+    </div>
+  </div>
+
   <div class="container">
+    <!-- Filtros -->
     <div class="filters">
       <div class="field">
-        <button id="rangeBtn" class="picker-btn">🗓️ Selecionar</button>
-        <span id="rangeHint" class="period-display"></span>
+        <label>Período</label>
+        <div class="period-wrap">
+          <button id="rangeBtn" class="picker-btn" type="button">🗓️ Selecionar</button>
+          <span id="rangeHint" class="period-display"></span>
+
+          <!-- Popover calendário -->
+          <div id="rangePop" class="popover">
+            <div class="cal-head">
+              <button id="prevM" class="cal-nav" type="button">‹</button>
+              <strong id="monthLabel"></strong>
+              <button id="nextM" class="cal-nav" type="button">›</button>
+            </div>
+            <div class="dow"><span>D</span><span>S</span><span>T</span><span>Q</span><span>Q</span><span>S</span><span>S</span></div>
+            <div id="daysGrid" class="grid"></div>
+            <div class="cal-actions">
+              <button id="cancelRange" class="btn-sm" type="button">Cancelar</button>
+              <button id="applyRange" class="btn-sm" type="button">Aplicar</button>
+            </div>
+          </div>
+        </div>
       </div>
-      <div class="field"><select id="empresaFiltro"><option value="">Todas</option></select></div>
-      <div class="field"><button id="btnFiltrar" class="btn action">Filtrar</button></div>
+
+      <div class="field">
+        <label>Empresa</label>
+        <select id="empresaFiltro"><option value="">Todas</option></select>
+      </div>
+
+      <div class="field">
+        <label>&nbsp;</label>
+        <button id="btnFiltrar" class="btn action" type="button">Filtrar</button>
+      </div>
+
+      <div class="field">
+        <label>&nbsp;</label>
+        <button id="btnWhats" class="btn action" type="button" style="background:#25d366; color:#fff; border-color:#21b75a">📲 WhatsApp</button>
+      </div>
     </div>
+
+    <!-- Cards -->
     <div id="painelMetas"></div>
   </div>
 
-  <div id="modal" class="modal">
+  <!-- Modal evolução -->
+  <div id="modal" class="modal" aria-hidden="true">
     <div class="modal-card">
-      <h3 id="modalTitle"></h3>
+      <div class="modal-h">
+        <h3 id="modalTitle" style="margin:0">Evolução</h3>
+        <span id="closeModal" class="close">✕</span>
+      </div>
       <canvas id="graficoEmpresa"></canvas>
     </div>
   </div>
 
 <script>
-const urlBase='/api/meta';
-const BRL=n=>(Number(n)||0).toLocaleString('pt-BR',{minimumFractionDigits:2});
-const ISO=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-const DMY=d=>`${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
-let range={start:null,end:null},chartEmpresa=null;
+/* ---------- Tema & usuário ---------- */
+document.getElementById('themeToggle').addEventListener('click', ()=>window.__toggleTheme && window.__toggleTheme());
+const user = document.getElementById('userMenu');
+user.querySelector('.user-btn').addEventListener('click', ()=>user.classList.toggle('open'));
+window.addEventListener('click', e=>{ if(!user.contains(e.target)) user.classList.remove('open'); });
+
+/* ---------- Helpers ---------- */
+const urlBase = '/api/meta';
+let chartEmpresa=null;
+const $$ = s => document.querySelector(s);
+const BRL = n => (Number(n)||0).toLocaleString('pt-BR',{minimumFractionDigits:2, maximumFractionDigits:2});
+const DMY = d => `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
+const ISO = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+function showLoading(v){ $$('#loading').classList.toggle('show', !!v); }
+
+/* ---------- Calendário range (1 calendário) ---------- */
+const range = { start:null, end:null, view:new Date(new Date().getFullYear(), new Date().getMonth(), 1) };
+const rangeBtn = $$('#rangeBtn'), pop = $$('#rangePop'), grid=$$('#daysGrid'), label=$$('#monthLabel'), hint=$$('#rangeHint');
 
 function setYesterdayDefault(){
-  const hoje=new Date();const y=new Date(hoje);y.setDate(hoje.getDate()-1);
-  range.start=y;range.end=y;
-  document.getElementById('rangeHint').textContent=`${DMY(y)} → ${DMY(y)}`;
+  const today = new Date(); const y = new Date(today); y.setDate(today.getDate()-1);
+  range.start = new Date(y.getFullYear(), y.getMonth(), y.getDate());
+  range.end   = new Date(y.getFullYear(), y.getMonth(), y.getDate());
+  range.view  = new Date(y.getFullYear(), y.getMonth(), 1);
+  updateHint();
 }
+function updateHint(){ hint.textContent = (range.start && range.end) ? `${DMY(range.start)} → ${DMY(range.end)}` : ''; }
+function openPop(){ renderMonth(); pop.classList.add('open'); document.addEventListener('keydown', onEsc); }
+function closePop(){ pop.classList.remove('open'); document.removeEventListener('keydown', onEsc); }
+function onEsc(e){ if(e.key==='Escape') closePop(); }
+function renderMonth(){
+  const y=range.view.getFullYear(), m=range.view.getMonth();
+  label.textContent = new Date(y,m,1).toLocaleDateString('pt-BR',{month:'long', year:'numeric'});
+  grid.innerHTML='';
+  const firstDow = new Date(y,m,1).getDay();
+  const daysInMonth = new Date(y,m+1,0).getDate();
+  for(let i=0;i<firstDow;i++){ const d=document.createElement('div'); d.className='day muted'; grid.appendChild(d); }
+  for(let d=1; d<=daysInMonth; d++){
+    const el = document.createElement('div'); el.className='day'; el.textContent=d;
+    const cur = new Date(y,m,d);
+    const inSel = range.start && range.end && cur>=strip(range.start) && cur<=strip(range.end);
+    const isStart = sameDay(cur, range.start); const isEnd = sameDay(cur, range.end);
+    if(inSel) el.classList.add('in'); if(isStart||isEnd) el.classList.add('sel');
+    el.addEventListener('click', ()=>pickDay(cur));
+    grid.appendChild(el);
+  }
+}
+function strip(d){ return new Date(d.getFullYear(), d.getMonth(), d.getDate()); }
+function sameDay(a,b){ if(!a||!b) return false; return a.getFullYear()==b.getFullYear() && a.getMonth()==b.getMonth() && a.getDate()==b.getDate(); }
+let firstPick = true;
+function pickDay(date){
+  if(firstPick){ range.start = date; range.end = date; firstPick=false; }
+  else{ if(date < range.start){ range.end = range.start; range.start = date; } else range.end = date; firstPick = true; }
+  renderMonth();
+}
+$('#prevM').addEventListener('click', ()=>{ range.view = new Date(range.view.getFullYear(), range.view.getMonth()-1, 1); renderMonth(); });
+$('#nextM').addEventListener('click', ()=>{ range.view = new Date(range.view.getFullYear(), range.view.getMonth()+1, 1); renderMonth(); });
+$('#cancelRange').addEventListener('click', ()=>closePop());
+$('#applyRange').addEventListener('click', ()=>{ updateHint(); closePop(); carregarMetas(); });
+rangeBtn.addEventListener('click', (e)=>{ e.stopPropagation(); openPop(); });
+document.addEventListener('click', e=>{ if(!pop.contains(e.target) && !rangeBtn.contains(e.target)) closePop(); });
 
+/* ---------- Lógica “mês fechado” (só colore verde/vermelho quando filtro cobre o mês todo) ---------- */
 function isMonthClosed(){
-  if(!range.start||!range.end)return false;
-  const sameMY=range.start.getMonth()===range.end.getMonth()&&range.start.getFullYear()===range.end.getFullYear();
-  if(!sameMY)return false;
-  const last=new Date(range.end.getFullYear(),range.end.getMonth()+1,0).getDate();
-  return range.start.getDate()===1 && range.end.getDate()===last;
+  if(!range.start || !range.end) return false;
+  const sameMy = (range.start.getFullYear()===range.end.getFullYear()) && (range.start.getMonth()===range.end.getMonth());
+  if(!sameMy) return false;
+  const lastDay = new Date(range.end.getFullYear(), range.end.getMonth()+1, 0).getDate();
+  return range.start.getDate()===1 && range.end.getDate()===lastDay;
 }
 
+/* ---------- Carregar cards ---------- */
 async function carregarMetas(){
-  const painel=document.getElementById('painelMetas');painel.innerHTML='';
-  const params=new URLSearchParams();
-  if(range.start)params.append('dataInicio',ISO(range.start));
-  if(range.end)params.append('dataFim',ISO(range.end));
-  const rsp=await fetch(`${urlBase}?${params}`);const metas=await rsp.json();
-  if(!metas.length){painel.innerHTML='<p>Nenhum dado encontrado</p>';return;}
-  const monthClosed=isMonthClosed();
+  showLoading(true);
+  const painel = $('#painelMetas'); painel.innerHTML = '';
+  try{
+    const params = new URLSearchParams();
+    if(range.start) params.append('dataInicio', ISO(range.start));
+    if(range.end)   params.append('dataFim', ISO(range.end));
+    const empresa = $('#empresaFiltro').value;
+    if(empresa) params.append('empresa', empresa);
 
-  metas.forEach(linha=>{
-    const previsto=parseFloat(linha.Previsto);
-    const realizado=parseFloat(String(linha.Realizado).replace(',','.'));
-    const atingido=previsto>0?(realizado/previsto*100):0;
+    const rsp = await fetch(`${urlBase}?${params.toString()}`);
+    const metas = await rsp.json();
 
-    // cálculo da previsão
-    const diasNoMes=new Date(range.end.getFullYear(),range.end.getMonth()+1,0).getDate();
-    const diasPassados=(range.end.getDate()-range.start.getDate()+1)||1;
-    const mediaDia=realizado/diasPassados;
-    const previsaoFinal=mediaDia*diasNoMes;
-    const previsaoPct=previsto>0?(previsaoFinal/previsto*100):0;
+    // empresas no select (uma vez)
+    const select = $('#empresaFiltro');
+    if(select.options.length<=1){
+      [...new Set(metas.map(m=>m.Empresa))].forEach(e=>{
+        const o=document.createElement('option'); o.value=e; o.textContent=e; select.appendChild(o);
+      });
+    }
 
-    const ok=realizado>=previsto;
-    const div=document.createElement('div');
-    div.className=`metas-box tooltip ${monthClosed?(ok?'ok':'bad'):''}`;
-    div.setAttribute('data-tip',`Realizado: R$ ${BRL(realizado)}`);
-    div.innerHTML=`
-      <h2>${linha.Empresa}</h2>
-      <p>💰 Previsto: R$ ${BRL(previsto)}</p>
-      <p>✅ Realizado: R$ ${BRL(realizado)}</p>
-      <p>📊 Atingido: ${atingido.toFixed(2)}%</p>
-      <p>📈 Previsão: R$ ${BRL(previsaoFinal)} (${previsaoPct.toFixed(2)}%)</p>
-    `;
-    div.addEventListener('click',()=>abrirEvolucaoEmpresa(linha.Empresa));
-    painel.appendChild(div);
-  });
+    if(!metas.length){
+      painel.innerHTML = `<p style="text-align:center; color:var(--muted)">Nenhum dado encontrado.</p>`;
+      return;
+    }
+
+    const monthClosed = isMonthClosed();
+
+    metas.forEach(linha=>{
+      const previsto = parseFloat(linha["Previsto"]);
+      const realizado = parseFloat(String(linha["Realizado"]).replace(',','.'));
+      const atingido = previsto>0 ? (realizado/previsto)*100 : 0;
+
+      // previsão no ritmo atual
+      const y=range.end.getFullYear(), m=range.end.getMonth();
+      const diasNoMes = new Date(y, m+1, 0).getDate();
+      const diasPassados = Math.max(1, (range.end - range.start)/(1000*60*60*24) + 1);
+      const mediaDia = realizado / diasPassados;
+      const previsaoFinal = mediaDia * diasNoMes;
+      const previsaoPct = previsto>0 ? (previsaoFinal/previsto)*100 : 0;
+
+      const ok = realizado >= previsto;
+
+      const div = document.createElement('div');
+      div.className = `metas-box tooltip ${monthClosed ? (ok ? 'ok' : 'bad') : ''}`;
+      div.setAttribute('data-tip', `Realizado: R$ ${BRL(realizado)}`);
+      div.innerHTML = `
+        <h2>${linha["Empresa"]}</h2>
+        <p>💰 Previsto: R$ ${BRL(previsto)}</p>
+        <p>✅ Realizado: R$ ${BRL(realizado)}</p>
+        <p>📊 Atingido: ${atingido.toFixed(2)}%</p>
+        <p>📈 Previsão: R$ ${BRL(previsaoFinal)} (${previsaoPct.toFixed(2)}%)</p>
+      `;
+      div.addEventListener('click', ()=>abrirEvolucaoEmpresa(linha["Empresa"]));
+      painel.appendChild(div);
+    });
+  }catch(e){
+    console.error(e);
+    $('#painelMetas').innerHTML = `<p style="text-align:center; color:var(--muted)">Erro ao carregar dados.</p>`;
+  }finally{
+    showLoading(false);
+  }
 }
 
+/* ---------- Modal: evolução mensal da empresa ---------- */
 async function abrirEvolucaoEmpresa(empresa){
-  document.getElementById('modalTitle').textContent=`Evolução — ${empresa}`;
-  document.getElementById('modal').classList.add('open');
-  const end=range.end||new Date();const y=end.getFullYear(),m=end.getMonth()+1;
-  const di=`${y}-${String(m).padStart(2,'0')}-01`;const df=`${y}-${String(m).padStart(2,'0')}-${new Date(y,m,0).getDate()}`;
-  const rsp=await fetch(`${urlBase}?dataInicio=${di}&dataFim=${df}&empresa=${empresa}`);const metas=await rsp.json();
-  const labels=metas.map(m=>m.Data.split('-').reverse().join('/'));
-  const vals=metas.map(m=>parseFloat(String(m.Realizado).replace(',','.')));
-  const ctx=document.getElementById('graficoEmpresa').getContext('2d');
-  if(chartEmpresa)chartEmpresa.destroy();
-  chartEmpresa=new Chart(ctx,{type:'line',data:{labels,datasets:[{label:empresa+' — Realizado',data:vals,borderColor:'#2563eb',
-    backgroundColor:'rgba(37,99,235,.12)',tension:.25,pointRadius:5,pointHoverRadius:8}]},
-    options:{interaction:{mode:'nearest',intersect:true},plugins:{tooltip:{callbacks:{label:c=>'R$ '+BRL(c.raw)}}}}});
-}
-document.getElementById('modal').addEventListener('click',e=>{if(e.target.id==='modal')e.target.classList.remove('open')});
-document.getElementById('btnFiltrar').addEventListener('click',carregarMetas);
+  const ctx = $('#graficoEmpresa').getContext('2d');
+  $('#modalTitle').textContent = `Evolução — ${empresa}`;
+  $('#modal').classList.add('open');
 
-setYesterdayDefault();carregarMetas();
+  // mês inteiro da data final selecionada
+  const end = range.end || new Date();
+  const y = end.getFullYear(), mo = end.getMonth()+1;
+  const di = `${y}-${String(mo).padStart(2,'0')}-01`;
+  const df = `${y}-${String(mo).padStart(2,'0')}-${String(new Date(y,mo,0).getDate()).padStart(2,'0')}`;
+
+  showLoading(true);
+  try{
+    const p = new URLSearchParams({ dataInicio:di, dataFim:df, empresa:empresa });
+    const rsp = await fetch(`${urlBase}?${p.toString()}`);
+    const metas = await rsp.json();
+    metas.sort((a,b)=> new Date(a.Data)-new Date(b.Data));
+    const labels = metas.map(m=> m["Data"]?.split('-').reverse().join('/'));
+    const vals = metas.map(m=> parseFloat(String(m["Realizado"]).replace(',','.')));
+
+    if(chartEmpresa) chartEmpresa.destroy();
+    chartEmpresa = new Chart(ctx,{
+      type:'line',
+      data:{labels, datasets:[{label:`${empresa} — Realizado`, data:vals, borderColor:'#2563eb',
+        backgroundColor:'rgba(37,99,235,.12)', fill:true, tension:.25, pointRadius:5, pointHoverRadius:8, pointHitRadius:28}]},
+      options:{
+        responsive:true,
+        interaction:{mode:'nearest', intersect:true}, /* mostra o valor no ponto sob o mouse */
+        events:['mousemove','mouseout','click','touchstart','touchmove','touchend'],
+        plugins:{
+          tooltip:{intersect:true, callbacks:{label:c=> 'R$ '+(Number(c.parsed.y)||0).toLocaleString('pt-BR',{minimumFractionDigits:2})}}
+        },
+        scales:{ y:{ beginAtZero:true, ticks:{ callback:v=>'R$ '+v.toLocaleString('pt-BR') } } }
+      }
+    });
+  }catch(e){ console.error(e); }
+  finally{ showLoading(false); }
+}
+$('#closeModal').addEventListener('click', ()=>$('#modal').classList.remove('open'));
+$('#modal').addEventListener('click', e=>{ if(e.target.id==='modal') $('#modal').classList.remove('open'); });
+
+/* ---------- WhatsApp ---------- */
+$('#btnWhats').addEventListener('click', ()=>{
+  if(!range.start || !range.end) return;
+  const periodo = `${DMY(range.start)} - ${DMY(range.end)}`;
+  const blocos = document.querySelectorAll('.metas-box'); if(!blocos.length) return alert('Nenhum dado para enviar.');
+  let msg = `📆 Resumo da meta de receitas ${periodo}\n\n`;
+  blocos.forEach(b=>{
+    const t=b.querySelector('h2').innerText;
+    const linhas=[...b.querySelectorAll('p')].map(p=>p.innerText).join('\n');
+    msg += `*${t}*\n${linhas}\n\n`;
+  });
+  const numero='5577999761436';
+  window.open(`https://wa.me/${numero}?text=${encodeURIComponent(msg.trim())}`,'_blank');
+});
+
+/* ---------- Ações ---------- */
+$('#btnFiltrar').addEventListener('click', carregarMetas);
+
+/* ---------- Inicialização ---------- */
+setYesterdayDefault();  // padrão = dia anterior ao atual
+carregarMetas();
 </script>
 </body>
 </html>
