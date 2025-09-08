@@ -108,12 +108,20 @@
     .user-menu a:hover, .user-menu button:hover{ background: var(--icon-bg) }
 
     /* ===== Conteúdo original (mantido) com variáveis do tema ===== */
-    .conteudo{
+ .conteudo{
   width: 100%;
-  max-width: none;   /* ou remova essa linha */
-  padding: 20px 18px 32px;
+  padding: 20px 24px 32px;
   margin: 0 auto;
+  max-width: 1200px; /* padrão para mobile/tablet */
 }
+
+/* Em telas grandes (desktop ≥ 1200px) ocupa 100% */
+@media (min-width: 1200px){
+  .conteudo{
+    max-width: 100%;
+  }
+}
+
 
 
     .filtros{
