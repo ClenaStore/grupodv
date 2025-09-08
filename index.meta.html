@@ -13,6 +13,7 @@
       --line:rgba(148,163,184,.25); --icon-bg:rgba(255,255,255,.06);
       --shadow:0 20px 60px rgba(2,6,23,.35); --brand:#60a5fa; --brand2:#22d3ee;
       --grad:linear-gradient(135deg,var(--brand),var(--brand2));
+      --ok:#16a34a; --bad:#dc2626;
     }
     [data-theme="light"]{
       --bg:#f6f7fb; --surface:#fff; --card:#fff; --text:#0f172a; --muted:#475569;
@@ -83,6 +84,18 @@
     .metas-box:hover{transform:translateY(-3px); box-shadow:0 8px 24px rgba(0,0,0,.28)}
     .metas-box h2{margin:0 0 8px; font-size:1.05rem; text-transform:uppercase}
     .metas-box p{margin:4px 0; color:var(--muted); font-size:.95rem}
+
+    /* Estados: atingiu / não atingiu */
+    .metas-box.ok{
+      border-color: color-mix(in srgb, var(--ok) 65%, var(--line));
+      box-shadow: var(--shadow), 0 0 0 2px color-mix(in srgb, var(--ok) 28%, transparent) inset;
+      background: linear-gradient(180deg, color-mix(in srgb, var(--ok) 12%, var(--card)) 0%, var(--card) 100%);
+    }
+    .metas-box.bad{
+      border-color: color-mix(in srgb, var(--bad) 65%, var(--line));
+      box-shadow: var(--shadow), 0 0 0 2px color-mix(in srgb, var(--bad) 22%, transparent) inset;
+      background: linear-gradient(180deg, color-mix(in srgb, var(--bad) 12%, var(--card)) 0%, var(--card) 100%);
+    }
 
     /* Tooltip no hover (mostra Realizado) */
     .tooltip{position:relative}
@@ -355,14 +368,16 @@ async function carregarMetas(){
       const previsto = parseFloat(linha["Previsto"]);
       const realizado = parseFloat(String(linha["Realizado"]).replace(',','.'));
       const atingido = previsto>0 ? (realizado/previsto)*100 : 0;
+      const ok = realizado >= previsto;
 
       const div = document.createElement('div');
-      div.className='metas-box tooltip';
+      div.className = `metas-box tooltip ${ok ? 'ok' : 'bad'}`;
       div.setAttribute('data-tip', `Realizado: R$ ${formatarNumero(realizado)}`);
       div.title = `Realizado: R$ ${formatarNumero(realizado)}`; // fallback
       div.innerHTML = `
         <h2>${linha["Empresa"]}</h2>
         <p>💰 Previsto: R$ ${formatarNumero(previsto)}</p>
+        <p>✅ Realizado: R$ ${formatarNumero(realizado)}</p>
         <p>📊 Atingido: ${formatarNumero(atingido)}%</p>
       `;
       div.addEventListener('click', ()=>abrirEvolucaoEmpresa(linha["Empresa"]));
@@ -393,6 +408,10 @@ function mostrarGrafico(metas){
       borderColor:'#388e3c', backgroundColor:'rgba(56,142,60,.12)', tension:.3, pointRadius:4}]},
     options:{
       responsive:true,
+      interaction:{mode:'nearest', axis:'x', intersect:false},
+      plugins:{
+        tooltip:{ callbacks:{ label:c=> 'R$ '+(Number(c.parsed.y)||0).toLocaleString('pt-BR',{minimumFractionDigits:2}) } }
+      },
       scales:{ y:{ beginAtZero:true, ticks:{ callback:v=>'R$ '+v.toLocaleString('pt-BR') } } }
     }
   });
@@ -425,7 +444,14 @@ async function abrirEvolucaoEmpresa(empresa){
       type:'line',
       data:{labels, datasets:[{label:`${empresa} — Realizado`, data:vals, borderColor:'#2563eb',
         backgroundColor:'rgba(37,99,235,.12)', fill:true, tension:.25, pointRadius:5}]},
-      options:{ responsive:true, scales:{ y:{ beginAtZero:true, ticks:{ callback:v=>'R$ '+v.toLocaleString('pt-BR') } } } }
+      options:{
+        responsive:true,
+        interaction:{mode:'nearest', axis:'x', intersect:false},
+        plugins:{
+          tooltip:{ callbacks:{ label:c=> 'R$ '+(Number(c.parsed.y)||0).toLocaleString('pt-BR',{minimumFractionDigits:2}) } }
+        },
+        scales:{ y:{ beginAtZero:true, ticks:{ callback:v=>'R$ '+v.toLocaleString('pt-BR') } } }
+      }
     });
   }catch(e){ console.error(e); }
   finally{ showLoading(false); }
