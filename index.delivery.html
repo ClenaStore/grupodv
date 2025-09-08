@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <title>Vendas Delivery</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <style>
@@ -50,32 +50,34 @@
     .user-menu a:hover,.user-menu button:hover{background:var(--icon-bg)}
 
     /* Página */
-    .container {
-      padding: 20px;      /* desktop */
-      max-width: 100%;
-      margin: 0;
-    }
-    @media (max-width: 768px) {
-      .container { padding: 10px; }  /* celular */
-    }
+    .container { padding: 20px; max-width: 100%; margin: 0; }
+    @media (max-width: 768px){ .container{ padding:10px; } }
 
-    /* Filtros */
+    /* Filtros – grid flexível:
+       1ª coluna (Empresa) cresce para caber o nome completo; meses fixos; botão fixo. */
     .filters{
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr 200px; /* 3 colunas flexíveis + botão fixo */
-  gap: 12px;
-  align-items: end;
-}
-@media (max-width:1000px){
-  .filters{ grid-template-columns: 1fr 1fr; }
-}
-@media (max-width:600px){
-  .filters{ grid-template-columns: 1fr; }
-}
-
+      display:grid;
+      grid-template-columns: minmax(340px,2fr) 160px 160px 200px;
+      gap:12px; align-items:end;
+    }
+    /* telas médias: um pouco mais compactas mantendo leitura */
+    @media (max-width:1200px){
+      .filters{ grid-template-columns: minmax(260px,1fr) 150px 150px 160px; }
+    }
+    /* tablets: 2 colunas */
+    @media (max-width:900px){
+      .filters{ grid-template-columns: 1fr 1fr; }
+    }
+    /* celular: 1 coluna */
+    @media (max-width:600px){
+      .filters{ grid-template-columns: 1fr; }
+    }
+    .field{min-width:0;} /* permite o campo Empresa expandir sem quebrar layout */
     .field label{display:block; margin:0 0 6px; color:var(--muted); font-weight:800; font-size:.95rem}
-    select{width:100%; border:1px solid var(--line); background:var(--surface); color:var(--text);
-      border-radius:12px; padding:12px 14px; font-weight:700}
+    select{
+      width:100%; border:1px solid var(--line); background:var(--surface); color:var(--text);
+      border-radius:12px; padding:12px 14px; font-weight:700; font-size:14px;
+    }
     .btn-whats{background:#25d366; color:#fff; border-color:#21b75a}
 
     /* Cards/caixas */
@@ -83,23 +85,24 @@
     .card h3{margin:0 0 10px}
     .total-line{display:flex; justify-content:space-between; padding:6px 0; font-weight:800}
 
+    /* Gráfico principal mais “estreito” */
+    #graficoVendas{ width:100%; height:220px !important; }
+    @media (max-width:768px){ #graficoVendas{ height:170px !important; } }
+
     /* Tabelas */
-    table{width:100%; border-collapse:separate; border-spacing:0; font-size:.95rem}
-    th,td{padding:10px; border-bottom:1px solid var(--line); white-space:nowrap}
+    table{width:100%; border-collapse:collapse; font-size:.95rem}
+    th,td{padding:10px; border-bottom:1px solid var(--line)}
     th{color:var(--muted); text-align:left}
     td:last-child, th:last-child{text-align:right}
 
-    /* Tabela rolável no ranking + coluna "Mês" fixa */
+    /* Ranking rolável + coluna “Mês” fixa à esquerda */
     .table-scroll{overflow-x:auto; -webkit-overflow-scrolling:touch}
-    .ranking-table{min-width:720px}
-    .ranking-table thead th{
-      position: sticky; top: 0; z-index: 3; background: var(--surface);
+    .ranking-table{white-space:nowrap; min-width:720px}
+    .ranking-table thead th{position:sticky; top:0; background:var(--surface); z-index:1}
+    .ranking-table th:first-child,
+    .ranking-table td:first-child{
+      position:sticky; left:0; background:var(--surface); z-index:2;
     }
-    .ranking-table .sticky-col{
-      position: sticky; left: 0; z-index: 2; background: var(--surface);
-      box-shadow: 4px 0 8px rgba(0,0,0,.06); /* suave separador na rolagem */
-    }
-    .ranking-table thead th.sticky-col{ z-index: 4; } /* acima dos demais */
 
     /* Resumo por empresa (cards clicáveis) */
     .resumo-linha{background:var(--card); border:2px solid var(--line); border-radius:12px; padding:14px; margin-bottom:12px; box-shadow:var(--shadow);
@@ -124,15 +127,6 @@
     .modal-h{display:flex; align-items:center; gap:10px; margin-bottom:8px}
     .close{margin-left:auto; cursor:pointer; font-weight:800; color:var(--muted)}
     #modalChart{width:100%!important; height:360px!important}
-/* Altura do gráfico principal (mais estreito pra baixo) */
-#graficoVendas{
-  width: 100%;
-  height: 220px !important;   /* ajuste aqui: 180, 200, 220… */
-}
-@media (max-width: 768px){
-  #graficoVendas{ height: 170px !important; }
-}
-
   </style>
 
   <!-- proteção por senha + tema + fetch x-api-key -->
@@ -262,7 +256,7 @@
       </table>
     </div>
 
-    <!-- Ranking (rolável com Mês travado) -->
+    <!-- Ranking (rolável com mês travado) -->
     <div class="card">
       <h3>🏆 Ranking de Empresas</h3>
       <div class="table-scroll">
@@ -349,7 +343,7 @@ function filtrarGrafico() {
   const filtrados = getFiltros();
   const agg = {};
   filtrados.forEach(d => {
-    const mes = d.data.slice(0, 7);
+    const mes = d.data.slice(0,7);
     agg[mes] = (agg[mes] || 0) + parseFloat(d.bruto || 0);
   });
 
@@ -376,22 +370,19 @@ function filtrarGrafico() {
     },
     options: {
       responsive: true,
-      maintainAspectRatio: false, // ← faz o Chart respeitar a altura definida no CSS
-      interaction: { mode:'nearest', intersect:false, axis:'x' },
+      maintainAspectRatio: false,      // respeita altura do CSS
+      interaction:{mode:'nearest', intersect:false, axis:'x'},
       plugins: {
         legend: { display: false },
-        tooltip: { intersect:false, callbacks:{ label:c => 'R$ ' + BRL(c.parsed.y) } }
+        tooltip: { intersect:false, callbacks:{ label:c=>'R$ '+BRL(c.parsed.y) } }
       },
       scales: {
-        y: { beginAtZero: true, ticks: { callback: v => 'R$ ' + v.toLocaleString('pt-BR') } }
+        y: { beginAtZero: true, ticks: { callback:v=>'R$ '+v.toLocaleString('pt-BR') } }
       }
     }
   });
-
-  // toque/clique no mobile para fixar tooltip
   wireTooltipOnClick(chart, 'graficoVendas');
 }
-
 
 function atualizarMediaMensal() {
   const filtrados = getFiltros();
@@ -436,12 +427,12 @@ function atualizarRankingEmpresas() {
 
   const tbody = $('#tabela-ranking');
   const thead = tbody.parentElement.parentElement.querySelector('thead');
-  thead.innerHTML = `<tr><th class="sticky-col">Mês</th>${empresas.map(e=>`<th>${e}</th>`).join('')}</tr>`;
+  thead.innerHTML = `<tr><th>Mês</th>${empresas.map(e=>`<th>${e}</th>`).join('')}</tr>`;
   tbody.innerHTML='';
 
   meses.forEach(m=>{
     const [ano,mm]=m.split('-');
-    const linha=[`<td class="sticky-col">${nomesMes[+mm-1]}/${ano}</td>`];
+    const linha=[`<td>${nomesMes[+mm-1]}/${ano}</td>`];
     const vals = empresas.map(e=>dadosMesEmpresa[m][e]||0);
     const max = Math.max(...vals);
     empresas.forEach((e,i)=>{
