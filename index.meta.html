@@ -6,11 +6,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    /* ===== Visual antigo (simples) ===== */
     :root{
       --bg:#f7f7f7; --card:#fff; --line:#e5e7eb; --text:#0f172a;
       --muted:#475569; --shadow:0 6px 18px rgba(0,0,0,.06);
-      --accent:#1e1e2f; --accent-2:#111827;
+      --accent:#1e1e2f; --accent-2:#111827; --brand:#2563eb;
     }
     *{ box-sizing:border-box }
     html,body{ height:100% }
@@ -27,9 +26,9 @@
     .container{ padding:20px; max-width:100%; margin:0 auto; }
 
     .filters{
-      display:flex; flex-wrap:wrap; gap:12px; align-items:end; margin-bottom:16px;
+      display:flex; flex-wrap:wrap; gap:12px; align-items:end; margin-bottom:16px; position:relative;
     }
-    .filters > div{ flex:1 1 200px; min-width:200px }
+    .filters > div{ flex:1 1 220px; min-width:220px }
     .filters label{ font-weight:bold; color:var(--muted); display:block; margin-bottom:6px }
     .filters input[type="date"], .filters select{
       width:100%; padding:10px; border-radius:8px; border:1px solid #ccc; background:#fff;
@@ -39,6 +38,22 @@
     }
     .btn-dark{ background:var(--accent); color:#fff }
     .btn{ background:#fff; border:1px solid #ccc; }
+
+    /* Botão período + popover calendário */
+    .periodo-wrap{ position:relative; }
+    .periodo-btn{ background:#fff; border:1px solid #ccc; border-radius:8px; padding:10px 12px; width:100%; text-align:left; cursor:pointer }
+    .periodo-btn strong{ color:#0f172a }
+    .popover{
+      position:absolute; top:100%; left:0; margin-top:8px; z-index:50;
+      background:#fff; border:1px solid var(--line); border-radius:12px; box-shadow:0 20px 40px rgba(0,0,0,.12);
+      width:min(520px, 90vw); padding:12px; display:none;
+    }
+    .popover.open{ display:block }
+    .popover .grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    .popover .row{ display:flex; gap:8px; flex-wrap:wrap; margin-top:8px }
+    .popover .row .btn{ flex:1 1 auto }
+    .popover .apply{ display:flex; justify-content:flex-end; margin-top:8px }
+    .popover input[type="date"]{ width:100%; padding:10px; border:1px solid #ccc; border-radius:8px }
 
     /* Cards */
     .cards{
@@ -57,6 +72,7 @@
     .meta-card .row{ display:flex; align-items:center; justify-content:space-between; margin:8px 0 }
     .label{ color:var(--muted) }
     .kpi{ font-weight:800 }
+    .small{ font-size:.86em; color:var(--muted); margin-top:6px }
 
     /* Loading overlay */
     #loading{
@@ -66,7 +82,7 @@
       background:#111827; color:#fff; padding:14px 18px; border-radius:10px; box-shadow:var(--shadow); font-weight:800;
     }
 
-    /* Modal (igual ao resumo financeiro) */
+    /* Modal */
     .modal{ position:fixed; inset:0; background:rgba(0,0,0,.6); display:none; align-items:center; justify-content:center; padding:20px; z-index:1001 }
     .modal.open{ display:flex }
     .modal-card{
@@ -80,7 +96,7 @@
     #graficoMes{ width:100% !important; height:100% !important }
   </style>
 
-  <!-- Proteção por senha + interceptador (mesmo padrão que você usa) -->
+  <!-- Proteção por senha + interceptador -->
   <script>
   (function(){
     const KEY_NAME='dv_pwd';
@@ -122,32 +138,52 @@
   </header>
 
   <div class="container">
-    <!-- Filtros (visual antigo + “Pesquisar dia”) -->
-    <div class="filters">
-      <div>
-        <label>Data Início:</label>
-        <input type="date" id="dataInicio">
+    <!-- Filtros -->
+    <div class="filters" id="filters">
+      <!-- Botão de período com popover (calendário) -->
+      <div class="periodo-wrap">
+        <label>Período:</label>
+        <button id="btnPeriodo" type="button" class="periodo-btn">📅 <strong id="periodoTexto">Selecionar período</strong></button>
+        <div id="popoverPeriodo" class="popover" role="dialog" aria-modal="true">
+          <div class="grid">
+            <div>
+              <label>Início</label>
+              <input type="date" id="popInicio">
+            </div>
+            <div>
+              <label>Fim</label>
+              <input type="date" id="popFim">
+            </div>
+          </div>
+          <div class="row" style="margin-top:10px">
+            <button class="btn" id="popOntem">Ontem</button>
+            <button class="btn" id="popUlt7">Últimos 7 dias</button>
+            <button class="btn" id="popMes">Este mês</button>
+          </div>
+          <div class="apply">
+            <button class="btn-dark" id="popAplicar">Aplicar período</button>
+          </div>
+        </div>
       </div>
-      <div>
-        <label>Data Fim:</label>
-        <input type="date" id="dataFim">
-      </div>
+
       <div>
         <label>Pesquisar dia:</label>
         <input type="date" id="diaBusca">
       </div>
+
       <div>
         <label>Empresa:</label>
         <select id="empresaFiltro"><option value="">Todas</option></select>
       </div>
+
       <div style="display:flex; gap:8px; align-items:end">
         <button id="btnOntem" class="btn">Ontem</button>
-        <button id="btnUlt7" class="btn">Últimos 7 dias</button>
+        <button id="btnUlt7" class="btn">Últimos 7</button>
         <button id="btnAplicar" class="btn-dark">Aplicar</button>
       </div>
     </div>
 
-    <!-- Cards (um por empresa) -->
+    <!-- Cards -->
     <div class="cards" id="cards"></div>
   </div>
 
@@ -163,7 +199,7 @@
   </div>
 
   <script>
-  /* ===== Config Chart – bolinha maior + hit em linha e celular ===== */
+  /* ===== Chart config ===== */
   const POINT_RADIUS = 5, HOVER_RADIUS = 9, HIT_RADIUS = 28;
   Chart.defaults.elements.point.radius = POINT_RADIUS;
   Chart.defaults.elements.point.hoverRadius = HOVER_RADIUS;
@@ -180,15 +216,78 @@
   const toISO = d => `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
   const parseISO = s => { const [y,m,d]=String(s).split('-').map(Number); return new Date(y,(m||1)-1,d||1); };
   const diffDaysInc = (a,b)=> Math.floor((b - a)/(24*3600*1000)) + 1;
-  const daysInMonth = (y,m)=> new Date(y,m+1,0).getDate(); // m: 0-11
-  const fmtBR = d => d.toLocaleDateString('pt-BR');
+  const daysInMonth = (y,m)=> new Date(y,m+1,0).getDate();
+  const fmtRange = (a,b)=> `${a.toLocaleDateString('pt-BR')} — ${b.toLocaleDateString('pt-BR')}`;
+
+  // Converte "YYYY-MM-DD" ou "DD/MM/YYYY" para ISO "YYYY-MM-DD"
+  function toISODateFlexible(s){
+    if(!s) return '';
+    const str = String(s).slice(0,10);
+    if(str.includes('-')){ // ISO
+      return str;
+    }
+    if(str.includes('/')){ // BR
+      const [dd,mm,yy] = str.split('/');
+      return `${yy}-${pad2(mm)}-${pad2(dd)}`;
+    }
+    return str; // fallback
+  }
+
+  // Converte número com vírgula/ponto
+  const toNum = v => parseFloat(String(v??0).toString().replace('.','').replace(',','.')) || 0;
 
   /* ===== Estado ===== */
   const API = '/api/meta';
-  let dados = [];             // dataset bruto
-  let rangeIni, rangeFim;     // datas selecionadas
-  let empresaSel = '';        // filtro empresa ('' = todas)
-  let chartMes = null;        // referência do gráfico do modal
+  let dados = [];     // {Empresa, Data, Previsto, Realizado, ...} + derivados
+  let rangeIni, rangeFim;
+  let empresaSel = '';
+  let chartMes = null;
+
+  /* ===== Calendário popover ===== */
+  const btnPeriodo = $('#btnPeriodo');
+  const popover = $('#popoverPeriodo');
+  const popIni = $('#popInicio');
+  const popFim = $('#popFim');
+  const periodoTexto = $('#periodoTexto');
+
+  btnPeriodo.addEventListener('click', ()=>{
+    // sincroniza datas atuais ao abrir
+    popIni.value = toISO(rangeIni);
+    popFim.value = toISO(rangeFim);
+    popover.classList.toggle('open');
+  });
+  document.addEventListener('click', (e)=>{
+    if(!popover.contains(e.target) && !btnPeriodo.contains(e.target)){
+      popover.classList.remove('open');
+    }
+  });
+  $('#popOntem').addEventListener('click', ()=>{
+    const hoje = new Date();
+    const fim = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate()-1);
+    popIni.value = toISO(fim); popFim.value = toISO(fim);
+  });
+  $('#popUlt7').addEventListener('click', ()=>{
+    const hoje = new Date();
+    const fim = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate()-1);
+    const ini = new Date(fim.getFullYear(), fim.getMonth(), fim.getDate()-6);
+    popIni.value = toISO(ini); popFim.value = toISO(fim);
+  });
+  $('#popMes').addEventListener('click', ()=>{
+    const d = new Date();
+    const ini = new Date(d.getFullYear(), d.getMonth(), 1);
+    const fim = new Date(d.getFullYear(), d.getMonth(), daysInMonth(d.getFullYear(), d.getMonth()));
+    popIni.value = toISO(ini); popFim.value = toISO(fim);
+  });
+  $('#popAplicar').addEventListener('click', ()=>{
+    if(popIni.value && popFim.value){
+      $('#dataInicio').value = popIni.value;
+      $('#dataFim').value = popFim.value;
+      $('#diaBusca').value = ''; // limpar pesquisa-dia
+      periodoTexto.textContent = fmtRange(parseISO(popIni.value), parseISO(popFim.value));
+      popover.classList.remove('open');
+      aplicar();
+    }
+  });
 
   /* ===== Inicialização ===== */
   window.addEventListener('load', async ()=>{
@@ -199,16 +298,28 @@
     $('#dataInicio').value = toISO(rangeIni);
     $('#dataFim').value = toISO(rangeFim);
     $('#diaBusca').value = toISO(rangeIni);
+    periodoTexto.textContent = fmtRange(rangeIni, rangeFim);
 
     await carregar();
-    aplicar(); // monta cards padrão (ontem)
+    aplicar();
   });
 
   async function carregar(){
     showLoading(true);
     try{
       const r = await fetch(API);
-      dados = await r.json();
+      const raw = await r.json();
+
+      // normaliza dados (DataISO, PrevistoNum, RealizadoNum)
+      dados = raw.map(row=>{
+        const iso = toISODateFlexible(row.Data);
+        return {
+          ...row,
+          DataISO: iso,
+          PrevistoNum: toNum(row.Previsto),
+          RealizadoNum: toNum(row.Realizado)
+        };
+      });
 
       // popular empresas
       const empresas = [...new Set(dados.map(x=>x.Empresa))].sort();
@@ -226,22 +337,21 @@
   function aplicar(){
     showLoading(true);
     setTimeout(()=>{
-      // lê filtros
       const iniStr = $('#dataInicio').value;
       const fimStr = $('#dataFim').value;
       const diaStr = $('#diaBusca').value;
       empresaSel = $('#empresaFiltro').value || '';
 
-      // se “Pesquisar dia” preenchido, força range = dia
       if(diaStr){
         rangeIni = parseISO(diaStr);
         rangeFim = parseISO(diaStr);
-        // sincroniza inputs
         $('#dataInicio').value = diaStr;
         $('#dataFim').value = diaStr;
+        periodoTexto.textContent = fmtRange(rangeIni, rangeFim);
       }else{
         rangeIni = iniStr ? parseISO(iniStr) : rangeIni;
         rangeFim = fimStr ? parseISO(fimStr) : rangeFim;
+        periodoTexto.textContent = fmtRange(rangeIni, rangeFim);
       }
 
       renderCards();
@@ -249,11 +359,12 @@
     }, 20);
   }
 
-  /* ===== Lógica de cálculo conforme suas regras =====
-     - Resultado do período = (último Realizado) - (primeiro Realizado)
-     - % da meta = resultado / Previsto
-     - Média por dia = resultado / (dias no período, inclusivo)
-     - Previsão do mês = média por dia * (dias do mês da data final)
+  /* ===== Regras de cálculo =====
+     - 1 dia no período  => resultado = Realizado do dia (valor registrado)
+     - >= 2 dias         => resultado = último(Realizado) − primeiro(Realizado)
+     - % meta            => resultado / Previsto
+     - média/dia         => resultado / dias do período
+     - previsão do mês   => média/dia * (dias do mês da data final)
   */
   function renderCards(){
     const iniISO = toISO(rangeIni), fimISO = toISO(rangeFim);
@@ -262,38 +373,33 @@
     dados.forEach(row=>{
       const emp = row.Empresa || '';
       if(empresaSel && emp !== empresaSel) return;
-      const data = String(row.Data||'');
-      if(data < iniISO || data > fimISO) return;
+      const d = row.DataISO;
+      if(!d || d < iniISO || d > fimISO) return;
       if(!mapa.has(emp)) mapa.set(emp, []);
       mapa.get(emp).push(row);
     });
 
     const itens = [];
     mapa.forEach((lista, emp)=>{
-      // ordena por data
-      lista.sort((a,b)=> new Date(a.Data) - new Date(b.Data));
+      lista.sort((a,b)=> a.DataISO.localeCompare(b.DataISO));
+      const first = lista[0], last = lista[lista.length-1];
 
-      const first = lista[0];
-      const last = lista[lista.length-1];
+      const previsto = (last?.PrevistoNum || first?.PrevistoNum || 0);
+      const rFirst = (first?.RealizadoNum || 0);
+      const rLast  = (last?.RealizadoNum  || 0);
 
-      // Previsto (meta mensal) — usa do last ou first
-      const previsto = parseFloat(String((last?.Previsto ?? first?.Previsto) || 0).toString().replace(',','.')) || 0;
-
-      // Realizado (pode vir com vírgula)
-      const rFirst = parseFloat(String(first?.Realizado ?? 0).toString().replace(',','.')) || 0;
-      const rLast  = parseFloat(String(last?.Realizado  ?? 0).toString().replace(',','.')) || 0;
-
-      const resultado = rLast - rFirst; // regra principal
+      const resultado = (lista.length===1) ? rLast : (rLast - rFirst); // regra para 1 dia
       const diasPeriodo = Math.max(1, diffDaysInc(rangeIni, rangeFim));
       const mediaDia = resultado / diasPeriodo;
 
       const y = rangeFim.getFullYear(), m = rangeFim.getMonth();
-      const diasMes = daysInMonth(y, m);
-      const previsaoMes = mediaDia * diasMes;
-
+      const previsaoMes = mediaDia * daysInMonth(y,m);
       const percMeta = previsto > 0 ? (resultado/previsto)*100 : 0;
 
-      itens.push({ emp, previsto, resultado, mediaDia, previsaoMes, percMeta });
+      itens.push({
+        emp, previsto, resultado, mediaDia, previsaoMes, percMeta,
+        regInicio: rFirst, regFim: rLast
+      });
     });
 
     // ordena por maior resultado
@@ -314,44 +420,41 @@
         <div class="row"><div class="label">Média por dia</div><div class="kpi">${BRL(item.mediaDia)}</div></div>
         <div class="row"><div class="label">Previsão do mês</div><div class="kpi">${BRL(item.previsaoMes)}</div></div>
         <div class="row"><div class="label">Meta mensal (Previsto)</div><div class="kpi">${BRL(item.previsto)}</div></div>
+        <div class="small">Registros na planilha: início ${BRL(item.regInicio)} → fim ${BRL(item.regFim)}</div>
       </div>
     `).join('');
 
-    // click -> modal evolução mensal do mês do fim do período (se for 1 dia, é o mês desse dia)
+    // click -> modal evolução mensal (mês da data final do período / ou do dia)
     cards.querySelectorAll('.meta-card').forEach(card=>{
       card.addEventListener('click', ()=> abrirEvolucao(card.getAttribute('data-emp')));
     });
   }
 
-  /* ===== Botões rápidos ===== */
+  /* ===== Botões rápidos fora do popover ===== */
   $('#btnOntem').addEventListener('click', ()=>{
     const hoje = new Date();
-    const ontem = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate()-1);
-    $('#dataInicio').value = toISO(ontem);
-    $('#dataFim').value   = toISO(ontem);
-    $('#diaBusca').value  = toISO(ontem);
+    const d = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate()-1);
+    $('#dataInicio').value = toISO(d);
+    $('#dataFim').value = toISO(d);
+    $('#diaBusca').value = toISO(d);
     aplicar();
   });
-
   $('#btnUlt7').addEventListener('click', ()=>{
     const hoje = new Date();
     const fim = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate()-1);
     const ini = new Date(fim.getFullYear(), fim.getMonth(), fim.getDate()-6);
     $('#dataInicio').value = toISO(ini);
-    $('#dataFim').value    = toISO(fim);
-    $('#diaBusca').value   = ''; // limpa pesquisa-dia
+    $('#dataFim').value = toISO(fim);
+    $('#diaBusca').value = '';
     aplicar();
   });
-
   $('#btnAplicar').addEventListener('click', aplicar);
-
-  // se digitar um “dia” específico, sincroniza início/fim ao aplicar
   $('#diaBusca').addEventListener('change', ()=>{
     const d = $('#diaBusca').value;
-    if(d){ $('#dataInicio').value = d; $('#dataFim').value = d; }
+    if(d){ $('#dataInicio').value = d; $('#dataFim').value = d; periodoTexto.textContent = fmtRange(parseISO(d), parseISO(d)); }
   });
 
-  /* ===== Modal: evolução mensal (empresa, mês do fim do período) ===== */
+  /* ===== Modal: evolução mensal ===== */
   const modal = $('#modal'), fecharModal = $('#fecharModal');
   fecharModal.addEventListener('click', ()=> closeModal());
   modal.addEventListener('click', (e)=>{ if(e.target===modal) closeModal(); });
@@ -362,26 +465,24 @@
   }
 
   function abrirEvolucao(empresa){
-    // referência de mês: fim do período
     const y = rangeFim.getFullYear(), m = rangeFim.getMonth();
     const mesIni = new Date(y, m, 1);
     const mesFim = new Date(y, m, daysInMonth(y,m));
-
-    // filtra dados do mês para a empresa
     const iniISO = toISO(mesIni), fimISO = toISO(mesFim);
-    const linhas = dados.filter(r => r.Empresa===empresa && String(r.Data)>=iniISO && String(r.Data)<=fimISO)
-                        .sort((a,b)=> new Date(a.Data) - new Date(b.Data));
+
+    const linhas = dados
+      .filter(r => r.Empresa===empresa && r.DataISO>=iniISO && r.DataISO<=fimISO)
+      .sort((a,b)=> a.DataISO.localeCompare(b.DataISO));
 
     const labels = linhas.map(l => {
-      const [yy,mm,dd] = l.Data.split('-'); return `${dd}/${mm}`;
+      const iso = l.DataISO; // YYYY-MM-DD
+      const [yy,mm,dd] = iso.split('-'); return `${dd}/${mm}`;
     });
-    const valores = linhas.map(l => parseFloat(String(l.Realizado||0).toString().replace(',','.')) || 0);
+    const valores = linhas.map(l => l.RealizadoNum || 0);
 
-    // título
     const nomeMes = mesIni.toLocaleString('pt-BR',{month:'long',year:'numeric'});
     $('#modalTitulo').textContent = `Evolução mensal — ${empresa} (${nomeMes})`;
 
-    // desenha
     const ctx = document.getElementById('graficoMes').getContext('2d');
     if(chartMes) chartMes.destroy();
     chartMes = new Chart(ctx, {
@@ -391,13 +492,13 @@
         datasets: [{
           label: 'Realizado (R$)',
           data: valores,
-          borderColor:'#2563eb',
-          backgroundColor:'rgba(37,99,235,.15)',
+          borderColor: '#2563eb',
+          backgroundColor: 'rgba(37,99,235,.15)',
           fill:true,
           tension:.25,
-          pointRadius:POINT_RADIUS,
-          pointHoverRadius:HOVER_RADIUS,
-          pointHitRadius:HIT_RADIUS
+          pointRadius: POINT_RADIUS,
+          pointHoverRadius: HOVER_RADIUS,
+          pointHitRadius: HIT_RADIUS
         }]
       },
       options:{
@@ -415,6 +516,9 @@
 
     modal.classList.add('open');
   }
+
+  /* ===== Empresa select: aplicar ao mudar ===== */
+  $('#empresaFiltro').addEventListener('change', aplicar);
   </script>
 </body>
 </html>
