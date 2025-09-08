@@ -298,9 +298,25 @@ const ISO = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-$
 const toNum = v => typeof v==='number' ? v : (Number(String(v).replace(/\./g,'').replace(',','.'))||0);
 function showLoading(v){ $$('#loading').classList.toggle('show', !!v); }
 
+/* ---------- Tooltip por clique/toque (mobile) ---------- */
+function wireTooltipOnClick(chart, canvasId){
+  const el = (typeof canvasId === 'string') ? document.getElementById(canvasId) : canvasId;
+  function activate(evt){
+    const pts = chart.getElementsAtEventForMode(evt, 'nearest', {intersect:true}, true);
+    if(!pts.length) return;
+    const {datasetIndex, index} = pts[0];
+    const node = chart.getDatasetMeta(datasetIndex).data[index];
+    chart.setActiveElements([{datasetIndex, index}]);
+    chart.tooltip.setActiveElements([{datasetIndex, index}], {x: node.x, y: node.y});
+    chart.update();
+  }
+  el.addEventListener('click', activate, {passive:true});
+  el.addEventListener('touchstart', activate, {passive:true});
+}
+
 /* ---------- Calendário (1 mês, range; fecha só em aplicar/cancelar) ---------- */
 const range = { start:null, end:null, view:new Date(new Date().getFullYear(), new Date().getMonth(), 1) };
-const rangeBtn = $$('#rangeBtn'), pop = $$('#rangePop'), grid=$$('#daysGrid'), label=$$('#monthLabel'), hint=$$('#rangeHint');
+const rangeBtn = $$('#rangeBtn'), pop = $$('#rangePop'), grid=$$('#daysGrid'), label=$$('#monthLabel'), hint=$$('#rangeHint']);
 
 function setYesterdayDefault(){
   const today = new Date(); const y = new Date(today); y.setDate(today.getDate()-1);
@@ -406,8 +422,8 @@ async function carregarMetas(){
     [...porEmpresa.values()].sort((a,b)=> a.empresa.localeCompare(b.empresa)).forEach(agg=>{
       const {empresa, realizado, previsto} = agg;
       const atingido = previsto>0 ? (realizado/previsto)*100 : 0;
-      const mediaDiaria = realizado / Math.max(1, diasCorridos); // CORRIGIDO
-      const previsaoFinal = mediaDiaria * totalDiasMes;           // CORRIGIDO
+      const mediaDiaria = realizado / Math.max(1, diasCorridos);
+      const previsaoFinal = mediaDiaria * totalDiasMes;
       const previsaoPercentual = previsto>0 ? (previsaoFinal/previsto)*100 : 0;
 
       const ok = realizado >= previsto;
@@ -448,14 +464,22 @@ function mostrarGrafico(metas){
   chart = new Chart(ctx,{
     type:'line',
     data:{labels:dias, datasets:[{label:'Evolução do Faturamento', data:vals, fill:true,
-      borderColor:'#388e3c', backgroundColor:'rgba(56,142,60,.12)', tension:.25, pointRadius:5, pointHoverRadius:8, pointHitRadius:28}]},
+      borderColor:'#388e3c', backgroundColor:'rgba(56,142,60,.12)', tension:.25, pointRadius:5, pointHoverRadius:8, pointHitRadius:28, borderWidth:3}]},
     options:{
       responsive:true,
-      interaction:{mode:'nearest', intersect:true},
-      plugins:{ tooltip:{intersect:true, callbacks:{label:c=>'R$ '+(Number(c.parsed.y)||0).toLocaleString('pt-BR',{minimumFractionDigits:2})}}},
+      // hover em linha OU ponto
+      interaction:{mode:'nearest', intersect:false, axis:'x'},
+      plugins:{
+        tooltip:{
+          intersect:false,
+          callbacks:{label:c=>'R$ '+(Number(c.parsed.y)||0).toLocaleString('pt-BR',{minimumFractionDigits:2})}
+        }
+      },
       scales:{ y:{ beginAtZero:true, ticks:{ callback:v=>'R$ '+v.toLocaleString('pt-BR') } } }
     }
   });
+  // tooltip via clique/toque (mobile)
+  wireTooltipOnClick(chart, 'graficoFaturamento');
 }
 function hideGrafico(){ if(chart){ chart.destroy(); chart=null; } $$('#graficoContainer').style.display='none'; }
 
@@ -483,14 +507,22 @@ async function abrirEvolucaoEmpresa(empresa){
     chartEmpresa = new Chart(ctx,{
       type:'line',
       data:{labels, datasets:[{label:`${empresa} — Realizado`, data:vals, borderColor:'#2563eb',
-        backgroundColor:'rgba(37,99,235,.12)', fill:true, tension:.25, pointRadius:5, pointHoverRadius:8, pointHitRadius:28}]},
+        backgroundColor:'rgba(37,99,235,.12)', fill:true, tension:.25, pointRadius:5, pointHoverRadius:8, pointHitRadius:28, borderWidth:3}]},
       options:{
         responsive:true,
-        interaction:{mode:'nearest', intersect:true},
-        plugins:{ tooltip:{intersect:true, callbacks:{label:c=>'R$ '+(Number(c.parsed.y)||0).toLocaleString('pt-BR',{minimumFractionDigits:2})}}},
+        // hover em linha OU ponto
+        interaction:{mode:'nearest', intersect:false, axis:'x'},
+        plugins:{
+          tooltip:{
+            intersect:false,
+            callbacks:{label:c=>'R$ '+(Number(c.parsed.y)||0).toLocaleString('pt-BR',{minimumFractionDigits:2})}
+          }
+        },
         scales:{ y:{ beginAtZero:true, ticks:{ callback:v=>'R$ '+v.toLocaleString('pt-BR') } } }
       }
     });
+    // tooltip via clique/toque no modal
+    wireTooltipOnClick(chartEmpresa, 'graficoEmpresa');
   }catch(e){ console.error(e); }
   finally{ showLoading(false); }
 }
