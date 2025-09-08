@@ -1,382 +1,299 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-BR" data-theme="light">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
   <title>Metas de Receita - Grupo DV</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f7f7f7;
-      margin: 0;
-      padding: 0;
+    :root {
+      --bg: #0b1020;
+      --surface: #10172a;
+      --card: #0f172a;
+      --text: #e5e7eb;
+      --muted: #94a3b8;
+      --line: rgba(148,163,184,.25);
+      --brand: #60a5fa;
+      --brand-2: #22d3ee;
+      --shadow: 0 20px 60px rgba(2,6,23,.35);
     }
+    [data-theme="light"] {
+      --bg: #f6f7fb;
+      --surface: #fff;
+      --card: #fff;
+      --text: #0f172a;
+      --muted: #475569;
+      --line: #e5e7eb;
+      --shadow: 0 16px 36px rgba(15,23,42,.08);
+    }
+
+    body {
+      font-family: ui-sans-serif, -apple-system, Segoe UI, Roboto, Arial;
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+    }
+
     header {
-      background-color: white;
-      padding: 10px 20px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--line);
+      padding: 14px 20px;
       display: flex;
       align-items: center;
-      border-bottom: 1px solid #ccc;
+      gap: 12px;
+      position: sticky;
+      top: 0;
+      z-index: 50;
     }
-    header img {
-      height: 50px;
-      margin-right: 20px;
-    }
-    header h1 {
-      margin: 0 auto;
-      font-size: 1.6em;
-      font-weight: bold;
-      text-align: center;
-      flex: 1;
-    }
-    .container {
-      padding: 20px;
-      max-width: 1200px;
-      margin: auto;
-    }
+    header img { height: 46px; }
+    header h1 { flex: 1; text-align: center; font-size: 1.4em; font-weight: 800; }
+
+    .container { padding: 20px; max-width: 1200px; margin: auto; }
+
     .filters {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 12px;
       margin-bottom: 20px;
       align-items: end;
     }
     .filters label {
-      font-weight: bold;
+      font-weight: 700; color: var(--muted); font-size: .95em; margin-bottom: 6px;
+      display: block;
     }
-    .filters select,
-    .filters input[type="date"] {
+    .filters select {
       padding: 10px;
       border-radius: 8px;
-      border: 1px solid #ccc;
+      border: 1px solid var(--line);
+      background: var(--surface);
+      color: var(--text);
       width: 100%;
     }
-    .filters > div {
-      flex: 1 1 200px;
+    .date-btn {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--surface);
+      color: var(--text);
+      padding: 10px;
+      font-weight: 700;
+      cursor: pointer;
+      width: 100%;
     }
-    .filters button,
-    #btnWhats {
-      padding: 10px 20px;
-      border: none;
+    .range-label { font-weight: 600; font-size: .9em; color: var(--muted); }
+
+    .filters button, #btnWhats {
+      padding: 10px 16px;
       border-radius: 8px;
       font-weight: bold;
       cursor: pointer;
+      border: 1px solid var(--line);
     }
-    .filters button {
-      background-color: #1e1e2f;
-      color: white;
-    }
-    #btnWhats {
-      background-color: #25d366;
-      color: white;
-      margin: 10px 0;
-    }
+    .filters button { background: var(--surface); color: var(--text); }
+    #btnWhats { background: #25d366; color: white; margin: 10px 0; }
+
     .metas-box {
-      background: white;
+      background: var(--card);
       border-radius: 10px;
       padding: 20px;
-      margin-bottom: 20px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+      margin-bottom: 16px;
+      box-shadow: var(--shadow);
     }
-    .metas-box h2 {
-      margin: 0 0 10px;
-      font-size: 1.2em;
-      color: #2c3e50;
-    }
-    .metas-box p {
-      margin: 5px 0;
-      font-size: 1em;
-    }
+    .metas-box h2 { margin: 0 0 10px; font-size: 1.1em; font-weight: 800; }
+    .metas-box p { margin: 4px 0; font-size: .95em; }
+
     .chart-box {
-      background: white;
+      background: var(--card);
       border-radius: 10px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+      box-shadow: var(--shadow);
       padding: 20px;
-      margin-bottom: 20px;
     }
-    .chart-box h3 {
-      margin-top: 0;
+
+    /* Loading overlay */
+    #loading {
+      position: fixed;
+      inset: 0;
+      background: rgba(2,6,23,.6);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 2000;
+      color: #fff;
+      font-weight: 800;
+      flex-direction: column;
     }
-    .chart-box canvas {
-      max-width: 100%;
-      height: 300px;
+    #loading.show { display: flex; }
+    .spinner {
+      width: 42px; height: 42px; border: 4px solid rgba(255,255,255,.25);
+      border-top-color: #fff; border-radius: 50%; animation: spin 1s linear infinite;
+      margin-bottom: 12px;
     }
-    @media (max-width: 600px) {
-      header {
-        flex-direction: column;
-        text-align: center;
-      }
-      header img {
-        margin: 0 0 10px;
-      }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    @media (max-width: 768px) {
+      .filters { grid-template-columns: 1fr; }
     }
   </style>
-<script>
-(function(){
-  const KEY_NAME = 'dv_pwd';
-  async function ensurePassword(){
-    let pwd = localStorage.getItem(KEY_NAME) || '';
-    while(!pwd){
-      pwd = prompt('Digite a senha de acesso:') || '';
-      if(!pwd) continue;
-      try{
-        const r = await fetch('/api/ping', {headers:{'x-api-key': pwd }});
-        if(r.ok){
-          localStorage.setItem(KEY_NAME, pwd);
-          break;
-        }else{
-          alert('Senha incorreta.');
-          pwd = '';
-        }
-      }catch(e){
-        // se não der pra validar agora, ainda assim salva e segue
-        localStorage.setItem(KEY_NAME, pwd);
-        break;
-      }
-    }
-  }
-
-  // intercepta fetch para anexar a senha automaticamente
-  const _fetch = window.fetch.bind(window);
-  window.fetch = (input, init={})=>{
-    let url = (typeof input === 'string') ? input : (input && input.url) || '';
-    init = init || {};
-    const headers = new Headers(init.headers || ((typeof input !== 'string' && input.headers) || {}));
-    const pwd = localStorage.getItem(KEY_NAME) || '';
-    if(url.startsWith('/api/')){
-      if(pwd) headers.set('x-api-key', pwd);
-    }
-    return _fetch(input, Object.assign({}, init, { headers }));
-  };
-
-  // pede a senha apenas se ainda não houver
-  if(!localStorage.getItem(KEY_NAME)){
-    ensurePassword();
-  }
-})();
-</script>
 </head>
 <body>
 
 <header>
-  <img src="https://github.com/ClenaStore/painel-principal/blob/main/img/GRUPO%20DV%20(1).png?raw=true" alt="Logo CB Systems">
-  <h1>📊 Painel de Metas - Grupo DV</h1>
+  <img src="https://github.com/ClenaStore/painel-principal/blob/main/img/GRUPO%20DV%20(1).png?raw=true" alt="Logo">
+  <h1>📊 Painel de Metas</h1>
 </header>
 
 <div class="container">
   <div class="filters">
-    <div>
-      <label>Data Início:</label>
-      <input type="date" id="dataInicio">
-    </div>
-    <div>
-      <label>Data Fim:</label>
-      <input type="date" id="dataFim">
+    <div style="grid-column: span 2;">
+      <label>Período:</label>
+      <button id="btnRange" class="date-btn">📅 Selecionar</button>
+      <span id="rangeLabel" class="range-label">—</span>
+      <input type="hidden" id="dataInicio">
+      <input type="hidden" id="dataFim">
     </div>
     <div>
       <label>Empresa:</label>
-      <select id="empresaFiltro">
-        <option value="">Todas</option>
-      </select>
+      <select id="empresaFiltro"><option value="">Todas</option></select>
     </div>
     <div>
-      <button onclick="carregarMetas()">Filtrar</button>
+      <button id="btnFiltrar">Filtrar</button>
     </div>
   </div>
 
   <button id="btnWhats">📲 Enviar via WhatsApp</button>
-
   <div id="painelMetas"></div>
 
-  <div class="chart-box" id="graficoContainer">
+  <div class="chart-box" id="graficoContainer" style="display:none;">
     <h3>📈 Evolução do Faturamento</h3>
     <canvas id="graficoFaturamento"></canvas>
   </div>
 </div>
 
+<!-- Loading overlay -->
+<div id="loading"><div class="spinner"></div><div id="loadingText">Carregando…</div></div>
+
 <script>
 const urlBase = '/api/meta';
 let chart;
 
-function formatarNumero(valor) {
-  return parseFloat(valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
-}
+// Utils
+const $ = s=>document.querySelector(s);
+const pad2 = n=> String(n).padStart(2,'0');
+const toISO = d => `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
+const toBR = d => `${pad2(d.getDate())}/${pad2(d.getMonth()+1)}/${d.getFullYear()}`;
+const fmtRangeBR = (a,b)=> `${toBR(a)} → ${toBR(b)}`;
 
-function formatarDataBR(dataISO) {
-  const [y, m, d] = dataISO.split("-");
-  return `${d}/${m}/${y}`;
-}
+function showLoading(txt){ $("#loadingText").textContent = txt||"Carregando…"; $("#loading").classList.add('show'); }
+function hideLoading(){ $("#loading").classList.remove('show'); }
 
-function preencherDataOntem() {
+function formatarNumero(v){ return parseFloat(v).toLocaleString('pt-BR',{minimumFractionDigits:2}); }
+function formatarDataBR(dataISO){ const [y,m,d] = dataISO.split("-"); return `${d}/${m}/${y}`; }
+
+// Calendário rápido (igual ao do Couvert)
+function selecionarOntem(){
   const hoje = new Date();
-  const ontem = new Date(hoje);
-  ontem.setDate(hoje.getDate() - 1);
-  const dataFormatada = ontem.toISOString().split('T')[0];
-  document.getElementById("dataInicio").value = dataFormatada;
-  document.getElementById("dataFim").value = dataFormatada;
+  const ontem = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate()-1);
+  $("#dataInicio").value = toISO(ontem);
+  $("#dataFim").value = toISO(ontem);
+  $("#rangeLabel").textContent = fmtRangeBR(ontem,ontem);
 }
 
-window.onload = () => {
-  preencherDataOntem();
-  carregarMetas();
-};
-
-async function carregarMetas() {
-  const painel = document.getElementById("painelMetas");
-  painel.innerHTML = "Carregando...";
-
-  const dataInicio = document.getElementById("dataInicio").value;
-  const dataFim = document.getElementById("dataFim").value;
-  const empresa = document.getElementById("empresaFiltro").value;
-
-  let diasCorridosNoMes = 30;
-  let diasCorridosAteData = 30;
-
-  if (dataFim) {
-    const dataRef = new Date(dataFim);
-    const mesRef = dataRef.getMonth();
-    const anoRef = dataRef.getFullYear();
-    const hoje = new Date();
-
-    const ultimoDiaMesRef = new Date(anoRef, mesRef + 1, 0);
-    diasCorridosNoMes = ultimoDiaMesRef.getDate();
-
-    if (anoRef === hoje.getFullYear() && mesRef === hoje.getMonth()) {
-      diasCorridosAteData = hoje.getDate();
-    } else {
-      diasCorridosAteData = dataRef.getDate();
-    }
-  }
+async function carregarMetas(){
+  showLoading("Carregando metas…");
+  const painel = $("#painelMetas");
+  painel.innerHTML = "";
 
   const params = new URLSearchParams();
-  if (dataInicio) params.append("dataInicio", dataInicio);
-  if (dataFim) params.append("dataFim", dataFim);
-  if (empresa) params.append("empresa", empresa);
+  if($("#dataInicio").value) params.append("dataInicio", $("#dataInicio").value);
+  if($("#dataFim").value) params.append("dataFim", $("#dataFim").value);
+  if($("#empresaFiltro").value) params.append("empresa", $("#empresaFiltro").value);
 
-  try {
-    const resposta = await fetch(`${urlBase}?${params.toString()}`);
-    const metas = await resposta.json();
+  try{
+    const r = await fetch(`${urlBase}?${params.toString()}`);
+    const metas = await r.json();
 
-    const empresas = [...new Set(metas.map(m => m.Empresa))];
-    const select = document.getElementById("empresaFiltro");
-    if (select.options.length <= 1) {
-      empresas.forEach(e => {
-        const opt = document.createElement("option");
-        opt.value = e;
-        opt.textContent = e;
-        select.appendChild(opt);
+    // Preenche empresas
+    const empresas = [...new Set(metas.map(m=>m.Empresa))];
+    const sel = $("#empresaFiltro");
+    if(sel.options.length<=1){
+      empresas.forEach(e=>{
+        const opt=document.createElement("option");
+        opt.value=e; opt.textContent=e;
+        sel.appendChild(opt);
       });
     }
 
-    painel.innerHTML = "";
-    if (metas.length === 0) {
-      painel.innerHTML = "<p style='text-align:center'>Nenhum dado encontrado.</p>";
-      esconderGrafico();
+    if(metas.length===0){
+      painel.innerHTML="<p style='text-align:center;color:var(--muted)'>Nenhum dado encontrado.</p>";
+      $("#graficoContainer").style.display="none";
+      hideLoading();
       return;
     }
 
-    metas.forEach(linha => {
+    metas.forEach(linha=>{
       const previsto = parseFloat(linha["Previsto"]);
-      const realizado = parseFloat(linha["Realizado"].toString().replace(",", "."));
-      const atingido = previsto > 0 ? (realizado / previsto) * 100 : 0;
-      const mediaDiaria = realizado / diasCorridosAteData;
-      const previsaoFinal = mediaDiaria * diasCorridosNoMes;
-      const previsaoPercentual = previsto > 0 ? (previsaoFinal / previsto) * 100 : 0;
+      const realizado = parseFloat(linha["Realizado"].toString().replace(",","."))||0;
+      const atingido = previsto>0 ? (realizado/previsto)*100 : 0;
 
-      const div = document.createElement("div");
-      div.className = "metas-box";
-      div.innerHTML = `
-  <h2>${linha["Empresa"]}</h2>
-  <p>💰 Previsto: R$ ${formatarNumero(previsto)}</p>
-  <p>✅ Realizado: R$ ${formatarNumero(realizado)}</p>
-  <p>📊 Atingido: ${formatarNumero(atingido)}%</p>
-  <p>📅 Média por dia: R$ ${formatarNumero(mediaDiaria)}</p>
-  <p>📈 Previsão: R$ ${formatarNumero(previsaoFinal)} (${formatarNumero(previsaoPercentual)}%)</p>
-`;
+      const div=document.createElement("div");
+      div.className="metas-box";
+      div.innerHTML=`
+        <h2>${linha.Empresa}</h2>
+        <p>💰 Previsto: R$ ${formatarNumero(previsto)}</p>
+        <p>✅ Realizado: R$ ${formatarNumero(realizado)}</p>
+        <p>📊 Atingido: ${formatarNumero(atingido)}%</p>`;
       painel.appendChild(div);
     });
 
-    if (empresa) mostrarGrafico(metas);
-    else esconderGrafico();
-
-  } catch (e) {
-    painel.innerHTML = "Erro ao carregar dados.";
-    console.error(e);
-  }
-}
-
-function mostrarGrafico(metas) {
-  const ctx = document.getElementById('graficoFaturamento').getContext('2d');
-  metas.sort((a, b) => new Date(a.Data) - new Date(b.Data));
-  const dias = metas.map(m => m["Data"]?.split("-").reverse().join("/"));
-  const valores = metas.map(m => parseFloat(m["Realizado"].toString().replace(",", ".")));
-
-  if (chart) chart.destroy();
-
-  chart = new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels: dias,
-      datasets: [{
-        label: 'Evolução do Faturamento',
-        data: valores,
-        fill: true,
-        borderColor: '#388e3c',
-        backgroundColor: 'rgba(56, 142, 60, 0.1)',
-        tension: 0.3,
-        pointRadius: 4
-      }]
-    },
-    options: {
-      responsive: true,
-      plugins: {
-        legend: { display: true },
-        title: { display: false }
-      },
-      scales: {
-        y: {
-          beginAtZero: true,
-          ticks: {
-            callback: function(value) {
-              return 'R$ ' + value.toLocaleString('pt-BR');
-            }
-          }
-        }
-      }
+    if($("#empresaFiltro").value){
+      mostrarGrafico(metas);
+      $("#graficoContainer").style.display="block";
+    }else{
+      $("#graficoContainer").style.display="none";
     }
-  });
-}
-
-function esconderGrafico() {
-  if (chart) {
-    chart.destroy();
-    chart = null;
+  }catch(e){
+    painel.innerHTML="Erro ao carregar.";
   }
+  hideLoading();
 }
 
-document.getElementById("btnWhats").addEventListener("click", () => {
-  const dataInicio = document.getElementById("dataInicio").value;
-  const dataFim = document.getElementById("dataFim").value;
-  const periodo = (dataInicio && dataFim)
-    ? `${formatarDataBR(dataInicio)} - ${formatarDataBR(dataFim)}`
-    : "Período não informado";
+function mostrarGrafico(metas){
+  const ctx=$("#graficoFaturamento").getContext("2d");
+  metas.sort((a,b)=> new Date(a.Data)-new Date(b.Data));
+  const dias=metas.map(m=>m.Data.split("-").reverse().join("/"));
+  const valores=metas.map(m=> parseFloat(m.Realizado.toString().replace(",",".")));
 
-  const blocos = document.querySelectorAll(".metas-box");
-  if (!blocos.length) return alert("Nenhum dado para enviar.");
-
-  let mensagem = `📆 Resumo da meta de receitas ${periodo}\n\n`;
-  blocos.forEach(box => {
-    const titulo = box.querySelector("h2").innerText;
-    const linhas = [...box.querySelectorAll("p")].map(p => p.innerText).join("\n");
-    mensagem += `*${titulo}*\n${linhas}\n\n`;
+  if(chart) chart.destroy();
+  chart=new Chart(ctx,{
+    type:'line',
+    data:{ labels:dias, datasets:[{
+      label:"Evolução do Faturamento",
+      data:valores, fill:true,
+      borderColor:"#388e3c",
+      backgroundColor:"rgba(56,142,60,0.1)",
+      tension:0.3, pointRadius:6, pointHoverRadius:10, pointHitRadius:28
+    }]},
+    options:{ responsive:true, interaction:{mode:'nearest',intersect:false} }
   });
+}
 
-  const numero = "5577999761436";
-  const link = `https://wa.me/${numero}?text=${encodeURIComponent(mensagem.trim())}`;
-  window.open(link, "_blank");
+// WhatsApp
+$("#btnWhats").addEventListener("click",()=>{
+  const di=$("#dataInicio").value, df=$("#dataFim").value;
+  const periodo=(di&&df)? `${formatarDataBR(di)} - ${formatarDataBR(df)}`:"Período não informado";
+  const blocos=document.querySelectorAll(".metas-box");
+  if(!blocos.length) return alert("Nada para enviar.");
+
+  let msg=`📆 Resumo da meta de receitas ${periodo}\n\n`;
+  blocos.forEach(b=>{
+    msg+=`*${b.querySelector("h2").innerText}*\n${[...b.querySelectorAll("p")].map(p=>p.innerText).join("\n")}\n\n`;
+  });
+  window.open(`https://wa.me/5577999761436?text=${encodeURIComponent(msg)}`,"_blank");
 });
-</script>
 
+// Inicializa
+window.onload=()=>{ selecionarOntem(); carregarMetas(); };
+$("#btnFiltrar").onclick=carregarMetas;
+</script>
 </body>
 </html>
