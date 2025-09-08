@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <title>Index.Meta</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <link rel="stylesheet" href="../assets/styles.css">
+  <script src="../assets/auth.js"></script>
+</head>
+<body>
+  <header>
+    <div class="head-wrap">
+      <a class="brand" href="../index.html"><img src="https://github.com/ClenaStore/painel-principal/blob/main/img/GRUPO%20DV%20(1).png?raw=true" alt="Logo"><div class="title">Index.Meta</div></a>
+      <div class="head-spacer"></div>
+      <a class="icon-btn only-desktop" href="../index.relatorios.html">📄 Relatórios</a>
+      <button id="themeToggle" class="icon-btn" type="button">🌓 Tema</button>
+      <div class="user" id="userMenu"><button class="user-btn"><img src="https://www.w3schools.com/howto/img_avatar.png"><strong style="font-size:13px">Leonardo</strong></button><div class="user-menu"><a href="../perfil.html">👤 Meu Perfil</a><button onclick="handleLogout()">🚪 Sair</button></div></div>
+    </div>
+  </header>
+
+  <section class="container">
+    <div class="card-panel">
+      <div class="panel-head">
+        <div class="title-sm">Período</div>
+        <div style="display:flex; gap:8px; align-items:center">
+          <button id="btnRange" class="btn">Selecionar</button>
+          <span id="lblRange" style="color:var(--muted); font-weight:800"></span>
+        </div>
+      </div>
+      <div id="legacy-content"><header>
+  <img src="https://github.com/ClenaStore/painel-principal/blob/main/img/GRUPO%20DV%20(1).png?raw=true" alt="Logo CB Systems">
+  <h1>📊 Painel de Metas - Grupo DV</h1>
+</header>
+
+<div class="container">
+  <div class="filters">
+    <div>
+      <label>Data Início:</label>
+      <input type="date" id="dataInicio">
+    </div>
+    <div>
+      <label>Data Fim:</label>
+      <input type="date" id="dataFim">
+    </div>
+    <div>
+      <label>Empresa:</label>
+      <select id="empresaFiltro">
+        <option value="">Todas</option>
+      </select>
+    </div>
+    <div>
+      <button onclick="carregarMetas()">Filtrar</button>
+    </div>
+  </div>
+
+  <button id="btnWhats">📲 Enviar via WhatsApp</button>
+
+  <div id="painelMetas"></div>
+
+  <div class="chart-box" id="graficoContainer">
+    <h3>📈 Evolução do Faturamento</h3>
+    <canvas id="graficoFaturamento"></canvas>
+  </div>
+</div>
+
+<script>
+const urlBase = '/api/meta';
+let chart;
+
+function formatarNumero(valor) {
+  return parseFloat(valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+}
+
+function formatarDataBR(dataISO) {
+  const [y, m, d] = dataISO.split("-");
+  return `${d}/${m}/${y}`;
+}
+
+function preencherDataOntem() {
+  const hoje = new Date();
+  const ontem = new Date(hoje);
+  ontem.setDate(hoje.getDate() - 1);
+  const dataFormatada = ontem.toISOString().split('T')[0];
+  document.getElementById("dataInicio").value = dataFormatada;
+  document.getElementById("dataFim").value = dataFormatada;
+}
+
+window.onload = () => {
+  preencherDataOntem();
+  carregarMetas();
+};
+
+async function carregarMetas() {
+  const painel = document.getElementById("painelMetas");
+  painel.innerHTML = "Carregando...";
+
+  const dataInicio = document.getElementById("dataInicio").value;
+  const dataFim = document.getElementById("dataFim").value;
+  const empresa = document.getElementById("empresaFiltro").value;
+
+  let diasCorridosNoMes = 30;
+  let diasCorridosAteData = 30;
+
+  if (dataFim) {
+    const dataRef = new Date(dataFim);
+    const mesRef = dataRef.getMonth();
+    const anoRef = dataRef.getFullYear();
+    const hoje = new Date();
+
+    const ultimoDiaMesRef = new Date(anoRef, mesRef + 1, 0);
+    diasCorridosNoMes = ultimoDiaMesRef.getDate();
+
+    if (anoRef === hoje.getFullYear() && mesRef === hoje.getMonth()) {
+      diasCorridosAteData = hoje.getDate();
+    } else {
+      diasCorridosAteData = dataRef.getDate();
+    }
+  }
+
+  const params = new URLSearchParams();
+  if (dataInicio) params.append("dataInicio", dataInicio);
+  if (dataFim) params.append("dataFim", dataFim);
+  if (empresa) params.append("empresa", empresa);
+
+  try {
+    const resposta = await fetch(`${urlBase}?${params.toString()}`);
+    const metas = await resposta.json();
+
+    const empresas = [...new Set(metas.map(m => m.Empresa))];
+    const select = document.getElementById("empresaFiltro");
+    if (select.options.length <= 1) {
+      empresas.forEach(e => {
+        const opt = document.createElement("option");
+        opt.value = e;
+        opt.textContent = e;
+        select.appendChild(opt);
+      });
+    }
+
+    painel.innerHTML = "";
+    if (metas.length === 0) {
+      painel.innerHTML = "<p style='text-align:center'>Nenhum dado encontrado.</p>";
+      esconderGrafico();
+      return;
+    }
+
+    metas.forEach(linha => {
+      const previsto = parseFloat(linha["Previsto"]);
+      const realizado = parseFloat(linha["Realizado"].toString().replace(",", "."));
+      const atingido = previsto > 0 ? (realizado / previsto) * 100 : 0;
+      const mediaDiaria = realizado / diasCorridosAteData;
+      const previsaoFinal = mediaDiaria * diasCorridosNoMes;
+      const previsaoPercentual = previsto > 0 ? (previsaoFinal / previsto) * 100 : 0;
+
+      const div = document.createElement("div");
+      div.className = "metas-box";
+      div.innerHTML = `
+  <h2>${linha["Empresa"]}</h2>
+  <p>💰 Previsto: R$ ${formatarNumero(previsto)}</p>
+  <p>✅ Realizado: R$ ${formatarNumero(realizado)}</p>
+  <p>📊 Atingido: ${formatarNumero(atingido)}%</p>
+  <p>📅 Média por dia: R$ ${formatarNumero(mediaDiaria)}</p>
+  <p>📈 Previsão: R$ ${formatarNumero(previsaoFinal)} (${formatarNumero(previsaoPercentual)}%)</p>
+`;
+      painel.appendChild(div);
+    });
+
+    if (empresa) mostrarGrafico(metas);
+    else esconderGrafico();
+
+  } catch (e) {
+    painel.innerHTML = "Erro ao carregar dados.";
+    console.error(e);
+  }
+}
+
+function mostrarGrafico(metas) {
+  const ctx = document.getElementById('graficoFaturamento').getContext('2d');
+  metas.sort((a, b) => new Date(a.Data) - new Date(b.Data));
+  const dias = metas.map(m => m["Data"]?.split("-").reverse().join("/"));
+  const valores = metas.map(m => parseFloat(m["Realizado"].toString().replace(",", ".")));
+
+  if (chart) chart.destroy();
+
+  chart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: dias,
+      datasets: [{
+        label: 'Evolução do Faturamento',
+        data: valores,
+        fill: true,
+        borderColor: '#388e3c',
+        backgroundColor: 'rgba(56, 142, 60, 0.1)',
+        tension: 0.3,
+        pointRadius: 4
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { display: true },
+        title: { display: false }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: {
+            callback: function(value) {
+              return 'R$ ' + value.toLocaleString('pt-BR');
+            }
+          }
+        }
+      }
+    }
+  });
+}
+
+function esconderGrafico() {
+  if (chart) {
+    chart.destroy();
+    chart = null;
+  }
+}
+
+document.getElementById("btnWhats").addEventListener("click", () => {
+  const dataInicio = document.getElementById("dataInicio").value;
+  const dataFim = document.getElementById("dataFim").value;
+  const periodo = (dataInicio && dataFim)
+    ? `${formatarDataBR(dataInicio)} - ${formatarDataBR(dataFim)}`
+    : "Período não informado";
+
+  const blocos = document.querySelectorAll(".metas-box");
+  if (!blocos.length) return alert("Nenhum dado para enviar.");
+
+  let mensagem = `📆 Resumo da meta de receitas ${periodo}\n\n`;
+  blocos.forEach(box => {
+    const titulo = box.querySelector("h2").innerText;
+    const linhas = [...box.querySelectorAll("p")].map(p => p.innerText).join("\n");
+    mensagem += `*${titulo}*\n${linhas}\n\n`;
+  });
+
+  const numero = "5577999761436";
+  const link = `https://wa.me/${numero}?text=${encodeURIComponent(mensagem.trim())}`;
+  window.open(link, "_blank");
+});
+</script></div>
+    </div>
+  </section>
+
+  <script src="../assets/ui.js"></script>
+  <script src="../assets/daterange.js"></script>
+  <script>
+    let currentRange=null;
+    window.addEventListener('DOMContentLoaded', ()=>{
+      attachDateRange({
+        button:'#btnRange',
+        label:'#lblRange',
+        onChange:(rng)=>{ currentRange=rng; console.log('Período selecionado', rng); }
+      });
+    });
+  </script>
+</body>
+</html>

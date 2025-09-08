@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <title>Index.Travas</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <link rel="stylesheet" href="../assets/styles.css">
+  <script src="../assets/auth.js"></script>
+</head>
+<body>
+  <header>
+    <div class="head-wrap">
+      <a class="brand" href="../index.html"><img src="https://github.com/ClenaStore/painel-principal/blob/main/img/GRUPO%20DV%20(1).png?raw=true" alt="Logo"><div class="title">Index.Travas</div></a>
+      <div class="head-spacer"></div>
+      <a class="icon-btn only-desktop" href="../index.relatorios.html">📄 Relatórios</a>
+      <button id="themeToggle" class="icon-btn" type="button">🌓 Tema</button>
+      <div class="user" id="userMenu"><button class="user-btn"><img src="https://www.w3schools.com/howto/img_avatar.png"><strong style="font-size:13px">Leonardo</strong></button><div class="user-menu"><a href="../perfil.html">👤 Meu Perfil</a><button onclick="handleLogout()">🚪 Sair</button></div></div>
+    </div>
+  </header>
+
+  <section class="container">
+    <div class="card-panel">
+      <div class="panel-head">
+        <div class="title-sm">Período</div>
+        <div style="display:flex; gap:8px; align-items:center">
+          <button id="btnRange" class="btn">Selecionar</button>
+          <span id="lblRange" style="color:var(--muted); font-weight:800"></span>
+        </div>
+      </div>
+      <div id="legacy-content"><header>GRUPO DV</header>
+
+<div class="wrap">
+  <div class="filters">
+    <label>Empresa
+      <select id="empresa">
+        <option>TODAS AS EMPRESAS</option>
+        <option>MERCATTO DELICIA</option>
+        <option>DELICIA GOURMET</option>
+        <option>VILLA GOURMET</option>
+        <option>M. KIDS</option>
+        <option>PADARIA DELICIA</option>
+      </select>
+    </label>
+    <label>Período
+      <input id="periodo" type="month" />
+    </label>
+  </div>
+
+  <div id="content" class="section"></div>
+  <div style="margin-top:20px; text-align:center;">
+    <a href="index.comparacao.html" 
+       style="background:#0ea5e9; color:#fff; padding:10px 20px; 
+              border-radius:8px; text-decoration:none; font-weight:600; 
+              display:inline-block;">
+      Análisar planos de contas
+    </a>
+  </div>
+</div> <!-- Fim da .wrap -->
+
+<!-- Modal de Planos -->
+<div id="modal" aria-hidden="true">
+  <div class="backdrop" data-close></div>
+  <div class="panel" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <header style="display:flex;align-items:center;justify-content:space-between">
+      <h3 id="modal-title">Detalhamento Fornecedores</h3>
+      <button class="close" title="Fechar" aria-label="Fechar" data-close>&times;</button>
+    </header>
+    <ul id="modal-list" class="list"></ul>
+    <div id="modal-empty" class="empty" style="display:none">Sem itens para exibir.</div>
+  </div>
+</div>
+
+<!-- Modal Comparativo -->
+<div id="cmp-modal" aria-hidden="true">
+  <div class="backdrop" data-close></div>
+  <div class="panel" role="dialog" aria-modal="true" aria-labelledby="cmp-title">
+    <header>
+      <h3 id="cmp-title">Comparativo por Plano</h3>
+      <button class="close" title="Fechar" aria-label="Fechar" data-close>&times;</button>
+    </header>
+    <div id="cmp-meta"></div>
+    <canvas id="cmp-chart"></canvas>
+    <ol id="cmp-list"></ol>
+    <div id="cmp-note">Valores e percentuais referentes ao período selecionado e ao total de Fornecedores da empresa no mês.</div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+/* ======= CONFIG ======= */
+const API_BASE='/api/travas_comparacao';
+const EMPRESAS=['MERCATTO DELICIA','DELICIA GOURMET','VILLA GOURMET','M. KIDS','PADARIA DELICIA'];
+
+/* ======= PLANOS VÁLIDOS (para soma "Fornecedores") ======= */
+const PLANOS_VALIDOS = new Set([
+  'Fornecedores em geral (insumos)','Bebidas (adegas)','Cerveja/Long','Refrigerantes/água/suco',
+  'Frios/congelados','Doces e chocolates','Laticínios','Gelatto','Hortaliças (Padaria)','Hortifruti',
+  'Processados/assados (Panificação)','Salmão','Pescados (peixaria)','Chopp Brahma','Açougues','Aves',
+  'Mercados Locais LEM','Mercado (Materiais Não Consumo)'
+]);
+
+/* ======= HELPERS ======= */
+const norm=s=>String(s||'').normalize('NFD').replace(/\p{Diacritic}/gu,'').replace(/[^A-Za-z0-9 ]/g,'').replace(/\s+/g,' ').trim().toUpperCase();
+const moeda=v=>Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+const parseBR = (val) => {
+  if (val == null || val === '') return 0;
+  if (typeof val === 'number') return val;
+  const s = String(val).trim().replace(/[^\d\-.,]/g,'').replace(/\.(?=\d{3})/g,'').replace(',', '.');
+  const n = Number(s); return isNaN(n) ? 0 : n;
+};
+const aliases=(o,keys,def=0)=>{for(const k of keys){if(o&&k in o&&o[k]!==''&&o[k]!=null){const n=parseBR(o[k]);if(!isNaN(n))return n;}}return def;};
+
+/* Cache (5 min) */
+const TTL=5*60*1000, CK=(e,p)=>`travas:${e}|${p}`;
+const getC=(e,p)=>{try{const r=sessionStorage.getItem(CK(e,p));if(!r)return null;const o=JSON.parse(r);return (Date.now()-o.t<TTL)?o.v:null}catch{return null}};
+const setC=(e,p,v)=>{try{sessionStorage.setItem(CK(e,p),JSON.stringify({t:Date.now(),v}))}catch{}};
+
+/* Datas / previsão */
+function parseYYYYMM(s){if(!s)return null;const [y,m]=s.split('-').map(Number);if(!y||!m)return null;return new Date(y,m-1,1)}
+function daysInMonth(d){return new Date(d.getFullYear(),d.getMonth()+1,0).getDate()}
+function monthCompare(a,b){if(a.getFullYear()===b.getFullYear()&&a.getMonth()===b.getMonth())return 0;return (a<b)?-1:1}
+function progressCalc(limit, spent, perStr){
+  const today=new Date(), pd=parseYYYYMM(perStr)||new Date(today.getFullYear(),today.getMonth(),1);
+  const dim=daysInMonth(pd), cmp=monthCompare(pd,new Date(today.getFullYear(),today.getMonth(),1));
+  let elapsed=0, remain=0;
+  if(cmp<0){elapsed=dim;remain=0;} else if(cmp>0){elapsed=0;remain=dim;} else {elapsed=Math.min(today.getDate(),dim);remain=Math.max(dim-elapsed,0);}
+  const pct=limit>0?spent/limit*100:0, available=limit-spent;
+  const daily=elapsed>0?spent/elapsed:0, forecast=spent+daily*remain, forecastPct=limit>0?forecast/limit*100:0;
+  let status='neutral'; if(cmp<0) status=spent>limit?'bad':'good'; else if(cmp===0) status=forecast>limit?'bad':(pct>=80?'warn':'good'); else status=pct>=80?'warn':'neutral';
+  return {pct,available,forecast,forecastPct,status};
+}
+
+/* ===== REGRA DE COR 80% (solicitada) ===== */
+function statusBy80(limit, spent, perStr){
+  const today=new Date();
+  const pd=parseYYYYMM(perStr)||new Date(today.getFullYear(),today.getMonth(),1);
+  const cmp=monthCompare(pd,new Date(today.getFullYear(),today.getMonth(),1)); // -1 passado, 0 atual, 1 futuro
+  const pct = limit>0 ? (spent/limit*100) : 0;
+
+  // >80% -> vermelho
+  // mês fechado (passado) e <80% -> verde
+  // demais -> branco (sem classe)
+  if (cmp < 0) { // mês já fechado
+    if (pct < 80) return 'good';
+    if (pct > 80) return 'bad';
+    return '';
+  } else { // mês corrente/futuro
+    return (pct > 80) ? 'bad' : '';
+  }
+}
+
+/* Fonte 9 total (fallbacks) */
+function fonte9Total(rec){
+  const keys=['totalFonte9','fonte9Total','valorCompradoFonte9','compradoFonte9','valorTotalComprado'];
+  for(const k of keys){const v=rec?.[k]; if(v!==undefined&&v!=='') return parseBR(v);}
+  if(Array.isArray(rec?.fonte9Detalhe)) return rec.fonte9Detalhe.reduce((a,i)=>a+Math.abs(parseBR(i.valor??i.total??0)),0);
+  if(Array.isArray(rec?.categorias)){
+    let t=0; rec.categorias.forEach(c=>(c.subs||[]).forEach(s=>{const f=Number(s.font); if(f===9) t+=Math.abs(parseBR(s.valor||0))})); return t;
+  }
+  return 0;
+}
+
+/* Planos (detecta layout vertical B:C e inclui a linha onde A tem a data) */
+function extractPlanos(rec){
+  if (Array.isArray(rec?.planosFonte9) && rec.planosFonte9.length) {
+    return rec.planosFonte9.map(p=>({nome:String(p.nome??'—'),valor:Math.abs(parseBR(p.valor??0))}));
+  }
+  const grid = rec?.grid || rec?.tabela;
+  if (Array.isArray(grid) && Array.isArray(grid[0]) && grid[0].length >= 3) {
+    const out=[];
+    for (let r=0; r<grid.length; r++){
+      const nome = grid[r][1];           // Coluna B
+      const val  = parseBR(grid[r][2]);  // Coluna C
+      if (nome != null && nome !== '' && !isNaN(val) && val !== 0){
+        out.push({nome:String(nome), valor:Math.abs(val)});
+      }
+    }
+    if (out.length) return out;
+  }
+  if (Array.isArray(rec?.fonte9Detalhe) && rec.fonte9Detalhe.length) {
+    return rec.fonte9Detalhe.map(i=>({nome:i.nome??i.planocontas??i.categoria??'—',valor:Math.abs(parseBR(i.valor??i.total??0))}));
+  }
+  if (Array.isArray(rec?.categorias)){
+    const out=[]; rec.categorias.forEach(c=>(c.subs||[]).forEach(s=>{const f=Number(s.font); if(f===9) out.push({nome:s.nome??'—',valor:Math.abs(parseBR(s.valor||0))})}));
+    if(out.length) return out;
+  }
+  return [];
+}
+
+/* Fetch com timeout + retry leve */
+async function fetchWithTimeout(url, { timeout=12000, retries=1 } = {}){
+  for(let i=0;i<=retries;i++){
+    const ctrl=new AbortController();
+    const to=setTimeout(()=>ctrl.abort(), timeout);
+    try{
+      const r=await fetch(url,{cache:'no-store',signal:ctrl.signal});
+      clearTimeout(to);
+      if(!r.ok) throw new Error(await r.text());
+      return await r.text();
+    }catch(err){
+      clearTimeout(to);
+      if(i===retries) throw err;
+    }
+  }
+}
+
+/* API */
+async function getEmpresaPeriodo(emp, periodo){
+  const c=getC(emp,periodo); if(c) return c;
+  const url=`${API_BASE}?empresa=${encodeURIComponent(emp)}${periodo?`&periodo=${encodeURIComponent(periodo)}`:''}`;
+  const t=await fetchWithTimeout(url,{timeout:12000,retries:1});
+  let j; try{j=JSON.parse(t);}catch{throw new Error('JSON inválido');}
+  let rec=j;
+  if(j?.empresa) rec=j;
+  else if(Array.isArray(j?.data)) rec=j.data.find(x=>norm(x.empresa||x.Empresa)===norm(emp))||j.data[0];
+  else if(Array.isArray(j)) rec=j.find(x=>norm(x.empresa||x.Empresa)===norm(emp))||j[0];
+  setC(emp,periodo,rec); return rec;
+}
+
+/* UI */
+const selEmpresa=document.getElementById('empresa');
+const inpPeriodo=document.getElementById('periodo');
+const container=document.getElementById('content');
+let ChartLib=null;
+let currentRun = 0;
+
+/* Modal helpers — evita balanço */
+function scrollbarWidth(){
+  const div=document.createElement('div');
+  div.style.visibility='hidden'; div.style.overflow='scroll'; div.style.position='absolute'; div.style.top='-9999px'; div.style.width='100px'; div.style.height='100px';
+  document.body.appendChild(div);
+  const inner=document.createElement('div'); inner.style.width='100%'; inner.style.height='200px'; div.appendChild(inner);
+  const sbw=div.offsetWidth - div.clientWidth;
+  document.body.removeChild(div);
+  return sbw;
+}
+function lockBodyScroll(lock){
+  if(lock){
+    document.documentElement.style.setProperty('--sbw', scrollbarWidth()+'px');
+    document.body.classList.add('modal-open');
+  }else{
+    document.body.classList.remove('modal-open');
+    document.documentElement.style.removeProperty('--sbw');
+  }
+}
+function closeModal(){const m=document.getElementById('modal');m.style.display='none';m.setAttribute('aria-hidden','true');lockBodyScroll(false);}
+function openModal(title, items){
+  const modal=document.getElementById('modal'); document.getElementById('modal-title').textContent=title||'Detalhes';
+  const ul=document.getElementById('modal-list'); const empty=document.getElementById('modal-empty'); ul.innerHTML='';
+  const arr=(items||[]).slice().sort((a,b)=>Math.abs(a.valor)<Math.abs(b.valor)?1:-1);
+  if(arr.length){ empty.style.display='none';
+    arr.forEach(d=>{ 
+      const li=document.createElement('li'); li.className='item';
+      const btn=document.createElement('button'); btn.className='item-btn'; btn.type='button';
+      const b=document.createElement('b'); b.textContent=d.nome||'—';
+      const v=document.createElement('span'); v.className='val'; v.textContent=moeda(Math.abs(parseBR(d.valor||0)));
+      btn.appendChild(b); btn.appendChild(v); li.appendChild(btn); ul.appendChild(li);
+      // Ao clicar no plano, abre comparativo entre empresas
+      btn.addEventListener('click', ()=> openComparativoPlano(d.nome||'—', inpPeriodo.value));
+    });
+  }else empty.style.display='block';
+  modal.style.display='flex'; modal.setAttribute('aria-hidden','false');
+  lockBodyScroll(true);
+}
+document.addEventListener('click',(e)=>{ if(e.target.matches('[data-close], #modal .backdrop')) closeModal(); });
+document.addEventListener('keydown',(e)=>{ if(e.key==='Escape') { closeModal(); closeCmpModal(); } });
+
+/* ===== Modal Comparativo ===== */
+function closeCmpModal(){const m=document.getElementById('cmp-modal'); m.style.display='none'; m.setAttribute('aria-hidden','true'); lockBodyScroll(false); }
+document.addEventListener('click',(e)=>{ if(e.target.matches('#cmp-modal [data-close], #cmp-modal .backdrop')) closeCmpModal(); });
+
+async function ensureChart(){
+  if(ChartLib){ return ChartLib; }
+  if (window.Chart){ ChartLib = window.Chart; return ChartLib; }
+  await new Promise((ok,ko)=>{const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/chart.js';s.onload=ok;s.onerror=ko;document.head.appendChild(s);});
+  ChartLib = window.Chart; return ChartLib;
+}
+
+let cmpChart = null;
+
+// Abre o modal comparativo com barras + lista de valores e %
+async function openComparativoPlano(planoNome, periodo){
+  try{
+    const Chart = await ensureChart();
+    const per = /^\d{4}-\d{2}$/.test(periodo||'') ? periodo : (()=>{ const d=new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`; })();
+
+    // Busca dados de todas as empresas em paralelo
+    const results = await Promise.allSettled(EMPRESAS.map(emp => getEmpresaPeriodo(emp, per)));
+
+    // Para cada empresa: valor do plano e total de Fornecedores (PLANOS_VALIDOS)
+    const labels=[], valores=[], percents=[], detalhes=[];
+    results.forEach((res, idx)=>{
+      const emp = EMPRESAS[idx];
+      let valPlano=0, totalFor=0;
+      if(res.status==='fulfilled'){
+        const rec = res.value;
+        const planos = extractPlanos(rec);
+        // total fornecedores: soma só dos válidos (fallback: soma de todos os planos)
+        const somaValid = planos.filter(p=>PLANOS_VALIDOS.has(String(p.nome))).reduce((a,p)=>a+Math.abs(parseBR(p.valor||0)),0);
+        totalFor = somaValid>0 ? somaValid : planos.reduce((a,p)=>a+Math.abs(parseBR(p.valor||0)),0);
+        // valor do plano selecionado (match normalizado)
+        const alvo = planos.find(p=>norm(p.nome)===norm(planoNome));
+        valPlano = alvo ? Math.abs(parseBR(alvo.valor||0)) : 0;
+      }
+      const pct = totalFor>0 ? (valPlano/totalFor*100) : 0;
+      labels.push(emp);
+      valores.push(valPlano);
+      percents.push(pct);
+      detalhes.push({emp, valPlano, pct});
+    });
+
+    // Monta UI
+    document.getElementById('cmp-title').textContent = `Comparativo — ${planoNome}`;
+    const [y,m] = per.split('-'); 
+    document.getElementById('cmp-meta').textContent = `Período: ${m}/${y}`;
+
+    // Lista abaixo do gráfico
+    const list = document.getElementById('cmp-list');
+    list.innerHTML = detalhes
+      .sort((a,b)=>b.valPlano-a.valPlano)
+      .map((d,i)=>`<li><b>${i+1}º</b> ${d.emp}: <b>${moeda(d.valPlano)}</b> — ${d.pct.toFixed(1)}%</li>`)
+      .join('') || '<li>Nada a mostrar.</li>';
+
+    // Gráfico
+    const ctx = document.getElementById('cmp-chart').getContext('2d');
+    if(cmpChart){ cmpChart.destroy(); cmpChart=null; }
+    cmpChart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [{ label: `Valor do plano — ${planoNome}`, data: valores }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: true, position: 'bottom' },
+          tooltip: {
+            callbacks: {
+              label: (ctx)=> `${moeda(ctx.parsed.y||0)} — ${(percents[ctx.dataIndex]||0).toFixed(1)}%`
+            }
+          }
+        },
+        scales: { y: { beginAtZero: true } }
+      }
+    });
+
+    // Abre modal
+    const modal=document.getElementById('cmp-modal');
+    modal.style.display='flex';
+    modal.setAttribute('aria-hidden','false');
+    lockBodyScroll(true);
+
+  }catch(err){
+    console.error('Falha comparativo', err);
+    alert('Não foi possível carregar o comparativo agora.');
+  }
+}
+
+/* Eventos filtros */
+selEmpresa.addEventListener('change', run);
+inpPeriodo.addEventListener('change', run);
+
+window.addEventListener('DOMContentLoaded', ()=>{
+  const hoje=new Date();
+  inpPeriodo.value=hoje.toISOString().slice(0,7);
+  run();
+});
+
+/* Skeleton rápido por empresa */
+function companySkeleton(nome){
+  return `
+    <section class="company" data-empresa="${nome}">
+      <div class="title">${nome}</div>
+      <div class="kpis">
+        <div class="kpi">
+          <div class="label">Carregando…</div>
+          <div class="progress"><span style="width:35%"></span></div>
+        </div>
+        <div class="kpi">
+          <div class="label">Carregando…</div>
+          <div class="progress"><span style="width:55%"></span></div>
+        </div>
+      </div>
+    </section>`;
+}
+
+/* Render principal */
+async function run(){
+  const runId = ++currentRun;
+  const empSel=selEmpresa.value, periodo=inpPeriodo.value;
+  const empresas = empSel==='TODAS AS EMPRESAS' ? EMPRESAS : [empSel];
+
+  container.innerHTML = empresas.map(e => companySkeleton(e)).join('');
+
+  const results = await Promise.allSettled(empresas.map(emp => getEmpresaPeriodo(emp, periodo)));
+  if (runId !== currentRun) return;
+
+  results.forEach((res, idx)=>{
+    const emp = empresas[idx];
+    const sec = container.querySelector(`section[data-empresa="${emp}"]`);
+    if(!sec) return;
+
+    if(res.status!=='fulfilled'){
+      sec.innerHTML = `
+        <div class="title">${emp}</div>
+        <div class="kpi bad">
+          <div class="label">Erro</div>
+          <div class="value" style="font-size:16px">${String(res.reason?.message||res.reason||'Falha ao carregar')}</div>
+        </div>`;
+      return;
+    }
+
+    const rec = res.value;
+    const periodOk = rec?.matchesPeriod !== false;
+
+    const travaTotal= periodOk ? aliases(rec,['travaTotal','trava_total','E2','travaTotalE2'],0) : 0;
+    const fornecLim = periodOk ? aliases(rec,['travaCompras','trava_compras','fornecedoresTotal','D2'],0) : 0;
+
+    const planos    = periodOk ? extractPlanos(rec) : [];
+
+    // TOTAL GASTO (Trava Total): soma de todos os planos (ou fallback fonte9Total)
+    const fonte9 = periodOk
+      ? (planos.length ? planos.reduce((a,p)=>a+Math.abs(parseBR(p.valor||0)),0) : fonte9Total(rec))
+      : 0;
+
+    // JÁ COMPRADO Fornecedores: apenas planos válidos (ou campos agregados se existirem)
+    const fornComp = periodOk
+      ? (planos.length
+          ? planos.filter(p => PLANOS_VALIDOS.has(String(p.nome)))
+                  .reduce((a,p)=>a+Math.abs(parseBR(p.valor||0)),0)
+          : aliases(rec,['fornecedoresComprado','valorCompradoFornecedores','compradoFornecedores'],0))
+      : 0;
+
+    const gTotal=progressCalc(travaTotal, fonte9, periodo);
+    const gForn =progressCalc(fornecLim,  fornComp, periodo);
+
+    // Percentuais e classes pela regra 80%
+    const pctTotal = travaTotal>0 ? (fonte9/travaTotal*100) : 0;
+    const pctForn  = fornecLim>0 ? (fornComp/fornecLim*100) : 0;
+    const clsTotal = statusBy80(travaTotal, fonte9, periodo);
+    const clsForn  = statusBy80(fornecLim,  fornComp, periodo);
+
+    sec.innerHTML = `
+      <div class="title">${emp}</div>
+      <div class="kpis">
+        <div class="kpi ${clsTotal}">
+          <div class="label">Trava Total de Pagamentos</div>
+          <div class="value">${moeda(travaTotal)}</div>
+          <div class="hint">
+            Gasto geral: <b>${moeda(fonte9)}</b> • ${pctTotal.toFixed(1)}%<br/>
+            Valor geral disponível: <b style="color:${gTotal.available<0?'#b91c1c':'inherit'}">${moeda(gTotal.available)}</b>
+          </div>
+          <div class="progress"><span style="width:${Math.min(Math.max(gTotal.pct,0),100)}%"></span></div>
+          <div class="note">Atualizado em: ${rec?.dataRef || '—'}</div>
+          ${!periodOk?`<div class="note">Sem dados para ${periodo}. Última data: ${rec?.dataRef||'—'}.</div>`:''}
+        </div>
+
+        <div class="kpi ${clsForn}">
+          <button class="btn-link" data-ver-planos>Ver planos</button>
+          <div class="label">Trava para fornecedores</div>
+          <div class="value">${moeda(fornecLim)}</div>
+          <div class="hint">
+            Já comprado em FORNECEDORES: <b>${moeda(fornComp)}</b> • ${pctForn.toFixed(1)}%<br/>
+            Disponível: <b style="color:${gForn.available<0?'#b91c1c':'inherit'}">${moeda(gForn.available)}</b><br/>
+            Previsão fim do mês: <b>${moeda(gForn.forecast)}</b> (${gForn.forecastPct.toFixed(1)}%)
+          </div>
+          <div class="progress"><span style="width:${Math.min(Math.max(gForn.pct,0),100)}%"></span></div>
+          <div class="note">Atualizado em: ${rec?.dataRef || '—'}</div>
+          ${!periodOk?`<div class="note">Sem dados para ${periodo}. Última data: ${rec?.dataRef||'—'}.</div>`:''}
+        </div>
+      </div>
+    `;
+    const btn = sec.querySelector('[data-ver-planos]');
+    if(btn) btn.addEventListener('click',()=>openModal(`Detalhamento Fornecedores — ${emp}`, planos));
+  });
+
+  if(empSel!=='TODAS AS EMPRESAS'){
+    const chartWrap=document.createElement('div'); chartWrap.className='grid';
+    chartWrap.innerHTML=renderChartBlock(empSel);
+    container.appendChild(chartWrap);
+    await mountChart(empSel, chartWrap, runId);
+  }
+}
+
+/* Bloco do gráfico */
+function renderChartBlock(emp){
+  const now=new Date(); const year=now.getFullYear();
+  const from=`${year}-01`;
+  const to=`${year}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  const planId=`plan-${Math.random().toString(36).slice(2,7)}`, fromId=`from-${Math.random().toString(36).slice(2,7)}`, toId=`to-${Math.random().toString(36).slice(2,7)}`, cvs=`cv-${Math.random().toString(36).slice(2,7)}`;
+  return `
+    <div class="card">
+      <div class="title">Evolução de compras (por Plano de Contas)</div>
+      <div class="chart-toolbar">
+        <span class="chip">Plano de contas:
+          <select id="${planId}">
+            <option value="" selected disabled>Selecione…</option>
+          </select>
+        </span>
+        <span class="chip">De: <input id="${fromId}" type="month" value="${from}"></span>
+        <span class="chip">Até: <input id="${toId}" type="month" value="${to}"></span>
+        <span class="chip"><button id="${cvs}-apply">Aplicar</button></span>
+      </div>
+      <canvas id="${cvs}" height="180"></canvas>
+      <div class="chart-note" id="${cvs}-note">Escolha um plano acima para ver o gráfico.</div>
+      <div class="title" style="margin-top:12px">Despesas mais caras (Top 10 do mês mais recente)</div>
+      <ul class="list" id="${cvs}-top"></ul>
+    </div>`;
+}
+
+/* Range de meses */
+function monthRange(from,to){let a=parseYYYYMM(from),b=parseYYYYMM(to);if(!a||!b)return[];if(a>b){const t=a;a=b;b=t;}const out=[],c=new Date(a);while(c<=b){out.push(`${c.getFullYear()}-${String(c.getMonth()+1).padStart(2,'0')}`);c.setMonth(c.getMonth()+1);}return out}
+
+/* Séries — paraleliza requisições e preserva ordem */
+async function buildSeries(emp, from, to){
+  const months=monthRange(from,to);
+  const results = await Promise.all(months.map(per => getEmpresaPeriodo(emp, per)));
+  const planMap = {}; const plansSet=new Set();
+
+  results.forEach((rec, i)=>{
+    const periodOk = rec?.matchesPeriod !== false;
+    const planos = periodOk ? extractPlanos(rec) : [];
+    planos.forEach(p=>{
+      plansSet.add(p.nome);
+      if(!planMap[p.nome]) planMap[p.nome]=new Array(months.length).fill(0);
+      planMap[p.nome][i]=Math.abs(parseBR(p.valor||0));
+    });
+  });
+  return {labels:months, planMap, plans:[...plansSet].sort()};
+}
+
+/* Chart (linha histórico) */
+async function mountChart(emp, holder, runIdAtMount){
+  if(!ChartLib){
+    await new Promise((ok,ko)=>{const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/chart.js';s.onload=ok;s.onerror=ko;document.head.appendChild(s);});
+    ChartLib=window.Chart;
+  }
+  const planSel=holder.querySelector('select');
+  const fromInp=holder.querySelector('input[id^="from-"]');
+  const toInp=holder.querySelector('input[id^="to-"]');
+  const cvs=holder.querySelector('canvas');
+  const btn=holder.querySelector('button[id$="-apply"]');
+  const topList=holder.querySelector('ul');
+  const note=holder.querySelector('.chart-note');
+
+  let cachedSeries=null;
+
+  async function populatePlans(){
+    topList.innerHTML='<li>Carregando…</li>';
+    cachedSeries = await buildSeries(emp, fromInp.value, toInp.value);
+    if (runIdAtMount !== currentRun) return;
+    planSel.innerHTML='<option value="" selected disabled>Selecione…</option>' + cachedSeries.plans.map(p=>`<option value="${p}">${p}</option>`).join('');
+    const last=cachedSeries.labels.length-1;
+    const arr=Object.entries(cachedSeries.planMap).map(([nome,vals])=>({nome,valor:Math.abs(vals[last]||0)})).sort((a,b)=>b.valor-a.valor).slice(0,10);
+    topList.innerHTML=arr.map(i=>`<li>${i.nome} — <b>${moeda(i.valor)}</b></li>`).join('') || '<li>Nada a mostrar.</li>';
+  }
+
+  async function draw(){
+    if(!cachedSeries){ await populatePlans(); if (runIdAtMount !== currentRun) return; }
+    const chosen=planSel.value||'';
+    if(holder.__chart){ holder.__chart.destroy(); holder.__chart=null; }
+    if(!chosen){
+      note.textContent='Escolha um plano acima para ver o gráfico.';
+      return;
+    }
+    note.textContent='';
+    const ds=[{label:chosen,data:cachedSeries.planMap[chosen]||new Array(cachedSeries.labels.length).fill(0),tension:.25}];
+    holder.__chart=new ChartLib(cvs.getContext('2d'),{
+      type:'line',
+      data:{labels:cachedSeries.labels,datasets:ds},
+      options:{responsive:true,plugins:{legend:{position:'bottom'}},scales:{y:{beginAtZero:true}}}
+    });
+  }
+
+  btn.addEventListener('click', async()=>{ cachedSeries=null; await populatePlans(); await draw(); });
+  planSel.addEventListener('change', draw);
+
+  await populatePlans();
+}
+</script></div>
+    </div>
+  </section>
+
+  <script src="../assets/ui.js"></script>
+  <script src="../assets/daterange.js"></script>
+  <script>
+    let currentRange=null;
+    window.addEventListener('DOMContentLoaded', ()=>{
+      attachDateRange({
+        button:'#btnRange',
+        label:'#lblRange',
+        onChange:(rng)=>{ currentRange=rng; console.log('Período selecionado', rng); }
+      });
+    });
+  </script>
+</body>
+</html>

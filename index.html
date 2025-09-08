@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <title>Análise Financeira</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <link rel="stylesheet" href="assets/styles.css">
+  <script src="assets/auth.js"></script>
+</head>
+<body>
+  <header>
+    <div class="head-wrap">
+      <a class="brand" href="index.html" aria-label="Início">
+        <img src="https://github.com/ClenaStore/painel-principal/blob/main/img/GRUPO%20DV%20(1).png?raw=true" alt="Logo">
+        <div class="title">Análise Financeira</div>
+      </a>
+      <div class="head-spacer"></div>
+      <a class="icon-btn only-desktop" href="index.relatorios.html" title="Relatório Consolidado">📄 Relatórios</a>
+      <button id="themeToggle" class="icon-btn" type="button" title="Alternar tema">🌓 Tema</button>
+      <div class="user" id="userMenu">
+        <button class="user-btn" type="button" title="Perfil">
+          <img src="https://www.w3schools.com/howto/img_avatar.png" alt="Usuário">
+          <strong style="font-size:13px">Leonardo</strong>
+        </button>
+        <div class="user-menu">
+          <a href="perfil.html">👤 Meu Perfil</a>
+          <button onclick="handleLogout()">🚪 Sair</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <section class="hero">
+    <h2>Selecione um painel ou filtre pelo nome</h2>
+    <div class="tools">
+      <div class="search"><span class="magnify">🔎</span><input id="searchInput" type="search" placeholder="Buscar (atalho: / )"></div>
+      <div class="chips" id="chips">
+        <span class="chip active" data-cat="all">Todos</span>
+        <span class="chip" data-cat="financeiro">Financeiro</span>
+        <span class="chip" data-cat="vendas">Vendas</span>
+        <span class="chip" data-cat="operacoes">Operações</span>
+        <span class="chip" data-cat="qualidade">Qualidade</span>
+      </div>
+    </div>
+  </section>
+
+  <main class="grid" id="grid">
+    <div class="section-title">Financeiro</div><a class="card" data-cat="financeiro" data-title="index.conciliacao" href="pages/index.conciliacao.html"><div class="icon">💳</div><div><h3>Index.Conciliacao</h3><p>Abrir página</p></div><span class="badge">Financeiro</span></a>
+<a class="card" data-cat="financeiro" data-title="index.meta" href="pages/index.meta.html"><div class="icon">🎯</div><div><h3>Index.Meta</h3><p>Abrir página</p></div><span class="badge">Financeiro</span></a>
+<a class="card" data-cat="financeiro" data-title="index.resumofinanceiro" href="pages/index.resumofinanceiro.html"><div class="icon">📈</div><div><h3>Index.Resumofinanceiro</h3><p>Abrir página</p></div><span class="badge">Financeiro</span></a><div class="section-title">Vendas</div><a class="card" data-cat="vendas" data-title="index.abc" href="pages/index.abc.html"><div class="icon">🅰️🅱️</div><div><h3>Index.Abc</h3><p>Abrir página</p></div><span class="badge">Vendas</span></a>
+<a class="card" data-cat="vendas" data-title="index.delivery" href="pages/index.delivery.html"><div class="icon">🚚</div><div><h3>Index.Delivery</h3><p>Abrir página</p></div><span class="badge">Vendas</span></a><div class="section-title">Operacoes</div><a class="card" data-cat="operacoes" data-title="index.comparacao" href="pages/index.comparacao.html"><div class="icon">📄</div><div><h3>Index.Comparacao</h3><p>Abrir página</p></div><span class="badge">Operacoes</span></a>
+<a class="card" data-cat="operacoes" data-title="index.couvert" href="pages/index.couvert.html"><div class="icon">🎤</div><div><h3>Index.Couvert</h3><p>Abrir página</p></div><span class="badge">Operacoes</span></a>
+<a class="card" data-cat="operacoes" data-title="index.relatorios" href="pages/index.relatorios.html"><div class="icon">📄</div><div><h3>Index.Relatorios</h3><p>Abrir página</p></div><span class="badge">Operacoes</span></a>
+<a class="card" data-cat="operacoes" data-title="index.reservas" href="pages/index.reservas.html"><div class="icon">🗓️</div><div><h3>Index.Reservas</h3><p>Abrir página</p></div><span class="badge">Operacoes</span></a>
+<a class="card" data-cat="operacoes" data-title="index.travas" href="pages/index.travas.html"><div class="icon">🔒</div><div><h3>Index.Travas</h3><p>Abrir página</p></div><span class="badge">Operacoes</span></a>
+<a class="card" data-cat="operacoes" data-title="login" href="pages/login.html"><div class="icon">📄</div><div><h3>Login</h3><p>Abrir página</p></div><span class="badge">Operacoes</span></a>
+<a class="card" data-cat="operacoes" data-title="perfil" href="pages/perfil.html"><div class="icon">📄</div><div><h3>Perfil</h3><p>Abrir página</p></div><span class="badge">Operacoes</span></a><div class="section-title">Qualidade</div><a class="card" data-cat="qualidade" data-title="index.avaliacoes" href="pages/index.avaliacoes.html"><div class="icon">🔎</div><div><h3>Index.Avaliacoes</h3><p>Abrir página</p></div><span class="badge">Qualidade</span></a>
+<a class="card" data-cat="qualidade" data-title="index.cancelamentos" href="pages/index.cancelamentos.html"><div class="icon">❌</div><div><h3>Index.Cancelamentos</h3><p>Abrir página</p></div><span class="badge">Qualidade</span></a>
+  </main>
+
+  <footer class="container" style="display:flex;justify-content:space-between;color:var(--muted);font-size:12px;border-top:1px dashed var(--line);padding-top:10px">
+    <div>© Grupo DV • Painel</div>
+    <div>Atalho: pressione <strong>/</strong> para buscar</div>
+  </footer>
+
+  <script src="assets/ui.js"></script>
+  <script>
+    const searchInput = document.getElementById('searchInput');
+    const chips = document.getElementById('chips');
+    const cards = Array.from(document.querySelectorAll('.card'));
+    let activeCat='all';
+    function applyFilters(){
+      const q=(searchInput.value||'').toLowerCase().trim();
+      cards.forEach(c=>{
+        const cat=c.getAttribute('data-cat'); const text=(c.getAttribute('data-title')||'').toLowerCase();
+        const matchCat=(activeCat==='all')||(cat===activeCat);
+        const matchText=!q||text.includes(q);
+        c.style.display=(matchCat && matchText)?'':'none';
+      });
+    }
+    chips.addEventListener('click', (e)=>{
+      const chip=e.target.closest('.chip'); if(!chip) return;
+      chips.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));
+      chip.classList.add('active'); activeCat=chip.dataset.cat; applyFilters();
+    });
+    searchInput.addEventListener('input', applyFilters);
+    window.addEventListener('keydown', (e)=>{ if(e.key==='/' && document.activeElement!==searchInput){ e.preventDefault(); searchInput.focus(); } });
+  </script>
+</body>
+</html>

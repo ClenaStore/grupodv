@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <title>Index.Abc</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <link rel="stylesheet" href="../assets/styles.css">
+  <script src="../assets/auth.js"></script>
+</head>
+<body>
+  <header>
+    <div class="head-wrap">
+      <a class="brand" href="../index.html"><img src="https://github.com/ClenaStore/painel-principal/blob/main/img/GRUPO%20DV%20(1).png?raw=true" alt="Logo"><div class="title">Index.Abc</div></a>
+      <div class="head-spacer"></div>
+      <a class="icon-btn only-desktop" href="../index.relatorios.html">📄 Relatórios</a>
+      <button id="themeToggle" class="icon-btn" type="button">🌓 Tema</button>
+      <div class="user" id="userMenu"><button class="user-btn"><img src="https://www.w3schools.com/howto/img_avatar.png"><strong style="font-size:13px">Leonardo</strong></button><div class="user-menu"><a href="../perfil.html">👤 Meu Perfil</a><button onclick="handleLogout()">🚪 Sair</button></div></div>
+    </div>
+  </header>
+
+  <section class="container">
+    <div class="card-panel">
+      <div class="panel-head">
+        <div class="title-sm">Período</div>
+        <div style="display:flex; gap:8px; align-items:center">
+          <button id="btnRange" class="btn">Selecionar</button>
+          <span id="lblRange" style="color:var(--muted); font-weight:800"></span>
+        </div>
+      </div>
+      <div id="legacy-content"><header>
+  <img src="https://github.com/ClenaStore/painel-principal/blob/main/img/GRUPO%20DV%20(1).png?raw=true" alt="Grupo DV">
+  <h1>ABC de Vendas • Grupo DV</h1>
+</header>
+
+<div class="page">
+  <div class="container">
+    <!-- Filtros -->
+    <div class="grid filters">
+      <div class="card pad">
+        <label>🏢 Empresa</label>
+        <select id="filtroEmpresa">
+          <option value="MERCATTO">MERCATTO (padrão)</option>
+          <option value="PADARIA">PADARIA (carregando…)</option>
+          <option value="DELICIA">DELICIA (carregando…)</option>
+          <option value="VILLA GOURMET">VILLA GOURMET (carregando…)</option>
+          <option value="M. KIDS">M. KIDS (carregando…)</option>
+          <option value="">Todas (depois que carregar)</option>
+        </select>
+      </div>
+      <div class="card pad">
+        <label>🔍 Busca</label>
+        <input id="filtroBusca" type="text" placeholder="Produto..." />
+      </div>
+      <div class="card pad">
+        <label>📅 Início</label>
+        <input id="dataInicio" type="date" />
+      </div>
+      <div class="card pad">
+        <label>📅 Fim</label>
+        <input id="dataFim" type="date" />
+      </div>
+      <div class="card pad" style="visibility:hidden"></div>
+      <div class="card pad" style="visibility:hidden"></div>
+    </div>
+
+    <!-- KPIs -->
+    <div class="kpis">
+      <div class="card kpi"><h3>Faturamento</h3><p id="kpiFat">R$ 0,00</p></div>
+      <div class="card kpi"><h3>Lucro</h3><p id="kpiLuc">R$ 0,00</p></div>
+      <div class="card kpi"><h3>Qtd. Registros</h3><p id="kpiQtd">0</p></div>
+      <div class="card kpi"><h3>Ticket Médio</h3><p id="kpiTicket">R$ 0,00</p></div>
+    </div>
+
+    <!-- Gráfico -->
+    <div class="card" id="wrapGraf">
+      <canvas id="graficoVendas"></canvas>
+    </div>
+
+    <!-- Listas -->
+    <div class="section-title">Análises</div>
+    <div class="grid lists">
+      <div class="card pad"><h3 class="muted" style="margin:0 0 10px">⭐ Top Produtos</h3><div id="topVendidos"></div></div>
+      <div class="card pad"><h3 class="muted" style="margin:0 0 10px">💰 Mais Lucrativos</h3><div id="maisLucro"></div></div>
+      <div class="card pad"><h3 class="muted" style="margin:0 0 10px">📉 Menos Lucrativos</h3><div id="menosLucro"></div></div>
+    </div>
+
+    <div class="section-title">Registros</div>
+    <div class="card pad">
+      <div id="statusBox" class="loader"><div class="spinner"></div> Carregando MERCATTO…</div>
+      <div id="listaVendas" style="display:none"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* =================== CONFIG =================== */
+const URL_SCRIPT = '/api/abc_vendas';
+const EMPRESAS = ['MERCATTO','PADARIA','DELICIA','VILLA GOURMET','M. KIDS'];
+
+/* =================== ESTADO (cache por empresa) =================== */
+let CACHE = {};            // { 'MERCATTO': [rows], ... }
+let RAW = [];              // concat de todas carregadas
+let chartVendas = null;
+
+/* =================== UTILS =================== */
+const $$ = sel => document.querySelector(sel);
+const BRL = n => (n||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+const dBR = iso => !iso ? '' : iso.split('-').reverse().join('/');
+
+async function fetchEmpresa(empresa){
+  const url = empresa ? `${URL_SCRIPT}?empresa=${encodeURIComponent(empresa)}` : URL_SCRIPT;
+  const res = await fetch(url, { method:'GET' });
+  const txt = await res.text();
+  let json;
+  try { json = JSON.parse(txt); } catch(e){ throw new Error('Resposta inválida do servidor:\n' + txt.slice(0,300)); }
+  const arr = Array.isArray(json) ? json : (json.dados || []);
+  return arr.filter(x => x && x.empresa); // sanitiza
+}
+
+function marcarEmpresaPronta(empresa){
+  const sel = $$('#filtroEmpresa');
+  [...sel.options].forEach(o=>{
+    if (o.value === empresa) o.textContent = empresa; // remove "(carregando…)"
+  });
+  // habilita "Todas" quando ao menos 2 empresas carregarem
+  const carregadas = Object.keys(CACHE).length;
+  if (carregadas >= 2){
+    const optTodas = [...sel.options].find(o => o.value === '');
+    if (optTodas) optTodas.textContent = 'Todas';
+  }
+}
+
+function setDatasPorFaixa(arr){
+  const datas = arr.map(d=>d.data).filter(Boolean).sort();
+  if (!datas.length) return;
+  $$('#dataInicio').value = datas[0];
+  $$('#dataFim').value    = datas[datas.length-1];
+}
+
+/* =================== RENDER =================== */
+function aplicar(){
+  const empresa = $$('#filtroEmpresa').value; // pode ser '' (todas)
+  const busca = ($$('#filtroBusca').value||'').toLowerCase();
+  const di = $$('#dataInicio').value;
+  const df = $$('#dataFim').value;
+
+  const base = empresa ? (CACHE[empresa] || []) : RAW;
+  const F = base.filter(r=>{
+    if (busca && !String(r.produto||'').toLowerCase().includes(busca)) return false;
+    if (di && r.data < di) return false;
+    if (df && r.data > df) return false;
+    return true;
+  });
+
+  const fat = F.reduce((s,x)=>s+(x.faturamento||0),0);
+  const luc = F.reduce((s,x)=>s+(x.lucro||0),0);
+  const qtd = F.length;
+  const ticket = qtd ? (fat / qtd) : 0;
+
+  $$('#kpiFat').textContent = BRL(fat);
+  $$('#kpiLuc').textContent = BRL(luc);
+  $$('#kpiQtd').textContent = qtd.toLocaleString('pt-BR');
+  $$('#kpiTicket').textContent = BRL(ticket);
+
+  desenharGrafico(F, true);
+
+  const byProd = {};
+  F.forEach(x=>{
+    const p = x.produto||'';
+    if (!byProd[p]) byProd[p]={q:0,f:0,l:0};
+    byProd[p].q += (x.quantidade||0);
+    byProd[p].f += (x.faturamento||0);
+    byProd[p].l += (x.lucro||0);
+  });
+  const arr = Object.entries(byProd).map(([produto,v])=>({produto,...v}));
+
+  renderLista('#topVendidos',   [...arr].sort((a,b)=>b.f-a.f).slice(0,5), p=>`⭐ ${p.produto} — ${p.q} un • ${BRL(p.f)}`);
+  renderLista('#maisLucro',     [...arr].sort((a,b)=>b.l-a.l).slice(0,5), p=>`💰 ${p.produto} — ${BRL(p.l)}`);
+  renderLista('#menosLucro',    [...arr].sort((a,b)=>a.l-b.l).slice(0,5), p=>`📉 ${p.produto} — ${BRL(p.l)}`);
+
+  const agrup = {};
+  F.forEach(x=>{
+    const key = `${x.produto}__${x.empresa}`;
+    if (!agrup[key]) agrup[key]={produto:x.produto,empresa:x.empresa,q:0,f:0,l:0,rows:[]};
+    agrup[key].q += (x.quantidade||0);
+    agrup[key].f += (x.faturamento||0);
+    agrup[key].l += (x.lucro||0);
+    agrup[key].rows.push(x);
+  });
+  const lista = Object.values(agrup).sort((a,b)=>b.f-a.f);
+
+  const cont = $$('#listaVendas');
+  cont.innerHTML = '';
+  lista.forEach(p=>{
+    const div = document.createElement('div');
+    div.className='item';
+    div.innerHTML = `<strong>${p.produto}</strong> <span class="muted">• ${p.empresa}</span><br>
+      ${p.q} un • ${BRL(p.f)} • Lucro: ${BRL(p.l)}`;
+    cont.appendChild(div);
+  });
+
+  const box = $$('#statusBox');
+  if (!lista.length){
+    box.style.display='block';
+    box.className='empty';
+    box.textContent='Nenhum registro com os filtros atuais.';
+  } else {
+    box.style.display='none';
+    $$('#listaVendas').style.display='block';
+  }
+}
+
+function renderLista(sel, arr, fmt){
+  const el = document.querySelector(sel);
+  el.innerHTML = arr.map(x=>`<div class="item">${fmt(x)}</div>`).join('') || '<div class="muted">—</div>';
+}
+
+function desenharGrafico(F, mostrar){
+  const canvas = $$('#graficoVendas');
+  const porDia = {};
+  F.forEach(x=> porDia[x.data] = (porDia[x.data]||0) + (x.faturamento||0));
+  const labels = Object.keys(porDia).sort();
+  const vals = labels.map(d=>porDia[d]);
+
+  if (chartVendas) chartVendas.destroy();
+  chartVendas = new Chart(canvas.getContext('2d'), {
+    type:'line',
+    data:{ labels:labels.map(dBR), datasets:[{ label:'Faturamento por dia', data:vals, fill:true, borderColor:'#2563eb', backgroundColor:'rgba(37,99,235,.15)', pointRadius:4, pointHoverRadius:6 }] },
+    options:{ responsive:true, maintainAspectRatio:false,
+      scales:{ y:{ beginAtZero:true } },
+      plugins:{ legend:{display:false}, title:{display:true,text:'Evolução de Vendas'} }
+    }
+  });
+  canvas.style.display='block';
+}
+
+/* =================== BOOTSTRAP =================== */
+async function boot(){
+  const box = $$('#statusBox');
+
+  // 1) Carrega MERCATTO primeiro (render imediato)
+  try{
+    box.innerHTML = '<div class="spinner"></div> Carregando MERCATTO…';
+    const mercatto = await fetchEmpresa('MERCATTO');
+    CACHE['MERCATTO'] = mercatto;
+    RAW = mercatto.slice(); // por enquanto, RAW = MERCATTO
+    setDatasPorFaixa(mercatto);
+    marcarEmpresaPronta('MERCATTO');
+    $$('#filtroEmpresa').value = 'MERCATTO';
+    aplicar();
+  }catch(e){
+    box.className='error';
+    box.textContent = 'Erro ao carregar MERCATTO: ' + (e.message||e);
+    console.error(e);
+    return;
+  }
+
+  // 2) Em segundo plano, carrega as demais
+  const restantes = EMPRESAS.filter(e => e !== 'MERCATTO');
+  for (const emp of restantes){
+    try{
+      const arr = await fetchEmpresa(emp);
+      CACHE[emp] = arr;
+      RAW = Object.values(CACHE).flat(); // atualiza conjunto completo
+      marcarEmpresaPronta(emp);
+
+      // Se o usuário já escolheu essa empresa enquanto carregava, atualiza a tela
+      if ($$('#filtroEmpresa').value === emp) {
+        setDatasPorFaixa(arr);
+        aplicar();
+      }
+    }catch(e){
+      console.warn('Falha ao carregar', emp, e);
+      // marca como erro no seletor
+      const sel = $$('#filtroEmpresa');
+      [...sel.options].forEach(o=>{
+        if (o.value === emp) o.textContent = `${emp} (erro ao carregar)`;
+      });
+    }
+  }
+
+  // 3) Quando tiver pelo menos 2 empresas, permita “Todas”
+  if (Object.keys(CACHE).length >= 2){
+    const optTodas = [...$$('#filtroEmpresa').options].find(o => o.value === '');
+    if (optTodas) optTodas.textContent = 'Todas';
+  }
+}
+
+window.addEventListener('load', ()=>{
+  boot();
+
+  ['change','input'].forEach(evt=>{
+    $$('#filtroEmpresa').addEventListener(evt, ()=>{
+      const emp = $$('#filtroEmpresa').value;
+      // ao trocar empresa, ajustar datas para a faixa daquela empresa (se já carregada)
+      if (emp && CACHE[emp] && CACHE[emp].length){
+        setDatasPorFaixa(CACHE[emp]);
+      } else if (!emp && RAW.length){
+        setDatasPorFaixa(RAW);
+      }
+      aplicar();
+    });
+    $$('#filtroBusca').addEventListener(evt, aplicar);
+    $$('#dataInicio').addEventListener(evt, aplicar);
+    $$('#dataFim').addEventListener(evt, aplicar);
+  });
+});
+</script></div>
+    </div>
+  </section>
+
+  <script src="../assets/ui.js"></script>
+  <script src="../assets/daterange.js"></script>
+  <script>
+    let currentRange=null;
+    window.addEventListener('DOMContentLoaded', ()=>{
+      attachDateRange({
+        button:'#btnRange',
+        label:'#lblRange',
+        onChange:(rng)=>{ currentRange=rng; console.log('Período selecionado', rng); }
+      });
+    });
+  </script>
+</body>
+</html>

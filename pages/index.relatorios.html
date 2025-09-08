@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <title>Index.Relatorios</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <link rel="stylesheet" href="../assets/styles.css">
+  <script src="../assets/auth.js"></script>
+</head>
+<body>
+  <header>
+    <div class="head-wrap">
+      <a class="brand" href="../index.html"><img src="https://github.com/ClenaStore/painel-principal/blob/main/img/GRUPO%20DV%20(1).png?raw=true" alt="Logo"><div class="title">Index.Relatorios</div></a>
+      <div class="head-spacer"></div>
+      <a class="icon-btn only-desktop" href="../index.relatorios.html">📄 Relatórios</a>
+      <button id="themeToggle" class="icon-btn" type="button">🌓 Tema</button>
+      <div class="user" id="userMenu"><button class="user-btn"><img src="https://www.w3schools.com/howto/img_avatar.png"><strong style="font-size:13px">Leonardo</strong></button><div class="user-menu"><a href="../perfil.html">👤 Meu Perfil</a><button onclick="handleLogout()">🚪 Sair</button></div></div>
+    </div>
+  </header>
+
+  <section class="container">
+    <div class="card-panel">
+      <div class="panel-head">
+        <div class="title-sm">Período</div>
+        <div style="display:flex; gap:8px; align-items:center">
+          <button id="btnRange" class="btn">Selecionar</button>
+          <span id="lblRange" style="color:var(--muted); font-weight:800"></span>
+        </div>
+      </div>
+      <div id="legacy-content"><header>
+    <a href="index.html" title="Voltar para tela principal" aria-label="Voltar para tela principal">
+      <!-- Ícone de casa simples SVG -->
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
+      </svg>
+    </a>
+  </header>
+
+  <div class="grid">
+    <div class="card" data-url="https://grupodvbr.github.io/MENU-LEONARDO/index.resumofinanceiro.html">
+      <button class="btn-open" title="Abrir relatório">Abrir</button>
+      <iframe src="https://grupodvbr.github.io/MENU-LEONARDO/index.resumofinanceiro.html"></iframe>
+    </div>
+    <div class="card" data-url="https://grupodvbr.github.io/MENU-LEONARDO/index.delivery.html">
+      <button class="btn-open" title="Abrir relatório">Abrir</button>
+      <iframe src="https://grupodvbr.github.io/MENU-LEONARDO/index.delivery.html"></iframe>
+    </div>
+    <div class="card" data-url="https://grupodvbr.github.io/MENU-LEONARDO/index.cancelamentos.html">
+      <button class="btn-open" title="Abrir relatório">Abrir</button>
+      <iframe src="https://grupodvbr.github.io/MENU-LEONARDO/index.cancelamentos.html"></iframe>
+    </div>
+    <div class="card" data-url="https://grupodvbr.github.io/MENU-LEONARDO/index.conciliacao.html">
+      <button class="btn-open" title="Abrir relatório">Abrir</button>
+      <iframe src="https://grupodvbr.github.io/MENU-LEONARDO/index.conciliacao.html"></iframe>
+    </div>
+    <div class="card" data-url="https://grupodvbr.github.io/MENU-LEONARDO/index.meta.html">
+      <button class="btn-open" title="Abrir relatório">Abrir</button>
+      <iframe src="https://grupodvbr.github.io/MENU-LEONARDO/index.meta.html"></iframe>
+    </div>
+
+    
+        <div class="card" data-url="https://grupodvbr.github.io/MENU-LEONARDO/index.reservas.html">
+      <button class="btn-open" title="Abrir relatório">Abrir</button>
+      <iframe src="https://grupodvbr.github.io/MENU-LEONARDO/index.reservas.html"></iframe>
+    </div>
+        <div class="card" data-url="https://grupodvbr.github.io/MENU-LEONARDO/index.couvert.html">
+      <button class="btn-open" title="Abrir relatório">Abrir</button>
+      <iframe src="https://grupodvbr.github.io/MENU-LEONARDO/index.couvert.html"></iframe>
+    </div>
+        <div class="card" data-url="https://grupodvbr.github.io/MENU-LEONARDO/index.travas.html">
+      <button class="btn-open" title="Abrir relatório">Abrir</button>
+      <iframe src="https://grupodvbr.github.io/MENU-LEONARDO/index.travas.html"></iframe>
+    </div>   
+  </div>
+
+  <!-- Modal -->
+  <div id="modalOverlay">
+    <div id="modalContent">
+      <button id="modalClose" title="Fechar">&times;</button>
+      <iframe src="" frameborder="0"></iframe>
+    </div>
+  </div>
+
+  <script>
+    const modalOverlay = document.getElementById('modalOverlay');
+    const modalIframe = modalOverlay.querySelector('iframe');
+    const modalClose = document.getElementById('modalClose');
+
+    // Abrir modal com url
+    function abrirModal(url) {
+      modalIframe.src = url;
+      modalOverlay.style.display = 'flex';
+    }
+
+    // Fechar modal
+    function fecharModal() {
+      modalIframe.src = '';
+      modalOverlay.style.display = 'none';
+    }
+
+    modalClose.addEventListener('click', fecharModal);
+    modalOverlay.addEventListener('click', e => {
+      if(e.target === modalOverlay) fecharModal();
+    });
+
+    // Botões abrir nos cards
+    document.querySelectorAll('.btn-open').forEach(btn => {
+      btn.addEventListener('click', e => {
+        e.stopPropagation(); // para não disparar o triple click do card
+        const card = btn.closest('.card');
+        const url = card.getAttribute('data-url');
+        abrirModal(url);
+      });
+    });
+
+    // Triple click para abrir em nova aba (mantido)
+    document.querySelectorAll('.card').forEach(card => {
+      let clickCount = 0;
+      let clickTimer = null;
+
+      card.addEventListener('click', () => {
+        clickCount++;
+
+        if (clickCount === 3) {
+          const url = card.getAttribute('data-url');
+          window.open(url, '_blank');
+          resetClicks();
+          return;
+        }
+
+        if (clickTimer) clearTimeout(clickTimer);
+        clickTimer = setTimeout(() => {
+          resetClicks();
+        }, 600);
+
+        function resetClicks() {
+          clickCount = 0;
+          clickTimer = null;
+        }
+      });
+    });
+  </script></div>
+    </div>
+  </section>
+
+  <script src="../assets/ui.js"></script>
+  <script src="../assets/daterange.js"></script>
+  <script>
+    let currentRange=null;
+    window.addEventListener('DOMContentLoaded', ()=>{
+      attachDateRange({
+        button:'#btnRange',
+        label:'#lblRange',
+        onChange:(rng)=>{ currentRange=rng; console.log('Período selecionado', rng); }
+      });
+    });
+  </script>
+</body>
+</html>

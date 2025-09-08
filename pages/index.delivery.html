@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <title>Index.Delivery</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <link rel="stylesheet" href="../assets/styles.css">
+  <script src="../assets/auth.js"></script>
+</head>
+<body>
+  <header>
+    <div class="head-wrap">
+      <a class="brand" href="../index.html"><img src="https://github.com/ClenaStore/painel-principal/blob/main/img/GRUPO%20DV%20(1).png?raw=true" alt="Logo"><div class="title">Index.Delivery</div></a>
+      <div class="head-spacer"></div>
+      <a class="icon-btn only-desktop" href="../index.relatorios.html">📄 Relatórios</a>
+      <button id="themeToggle" class="icon-btn" type="button">🌓 Tema</button>
+      <div class="user" id="userMenu"><button class="user-btn"><img src="https://www.w3schools.com/howto/img_avatar.png"><strong style="font-size:13px">Leonardo</strong></button><div class="user-menu"><a href="../perfil.html">👤 Meu Perfil</a><button onclick="handleLogout()">🚪 Sair</button></div></div>
+    </div>
+  </header>
+
+  <section class="container">
+    <div class="card-panel">
+      <div class="panel-head">
+        <div class="title-sm">Período</div>
+        <div style="display:flex; gap:8px; align-items:center">
+          <button id="btnRange" class="btn">Selecionar</button>
+          <span id="lblRange" style="color:var(--muted); font-weight:800"></span>
+        </div>
+      </div>
+      <div id="legacy-content"><header>
+    <img src="https://github.com/ClenaStore/painel-principal/blob/main/img/GRUPO%20DV%20(1).png?raw=true" alt="Logo CB Systems">
+    <h1>Vendas Delivery</h1>
+  </header>
+
+  <div class="container">
+    <div class="filters">
+      <div>
+        <label for="empresaFiltro">Empresa:</label>
+        <select id="empresaFiltro" onchange="atualizarTudo()">
+          <option value="">TODAS</option>
+        </select>
+      </div>
+      <div>
+        <label for="mesInicio">Mês Início:</label>
+        <select id="mesInicio" onchange="atualizarTudo()">
+          <option value="">Todos</option>
+          <option value="01">Janeiro</option>
+          <option value="02">Fevereiro</option>
+          <option value="03">Março</option>
+          <option value="04">Abril</option>
+          <option value="05">Maio</option>
+          <option value="06">Junho</option>
+          <option value="07">Julho</option>
+          <option value="08">Agosto</option>
+          <option value="09">Setembro</option>
+          <option value="10">Outubro</option>
+          <option value="11">Novembro</option>
+          <option value="12">Dezembro</option>
+        </select>
+      </div>
+      <div>
+        <label for="mesFim">Mês Fim:</label>
+        <select id="mesFim" onchange="atualizarTudo()">
+          <option value="">Todos</option>
+          <option value="01">Janeiro</option>
+          <option value="02">Fevereiro</option>
+          <option value="03">Março</option>
+          <option value="04">Abril</option>
+          <option value="05">Maio</option>
+          <option value="06">Junho</option>
+          <option value="07">Julho</option>
+          <option value="08">Agosto</option>
+          <option value="09">Setembro</option>
+          <option value="10">Outubro</option>
+          <option value="11">Novembro</option>
+          <option value="12">Dezembro</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="chart-box">
+      <h3>📈 Vendas Brutas por Mês</h3>
+      <canvas id="graficoVendas"></canvas>
+    </div>
+
+    <div class="total-box">
+      <h3>📊 Média por Mês</h3>
+      <div class="total-line">
+        <strong>Média:</strong> <strong id="media-mensal">R$ 0,00</strong>
+      </div>
+    </div>
+
+    <div class="total-box">
+      <h3>📊 Totais por Plataforma</h3>
+      <table>
+        <thead><tr><th>Plataforma</th><th style="text-align:right">Total</th></tr></thead>
+        <tbody id="tabela-plataformas"></tbody>
+      </table>
+    </div>
+
+    <div class="total-box">
+      <h3>🏆 Ranking de Empresas</h3>
+      <table class="ranking-table">
+        <thead></thead>
+        <tbody id="tabela-ranking"></tbody>
+      </table>
+    </div>
+
+    <button class="btn-whatsapp" onclick="enviarWhatsapp()">📤 Enviar via WhatsApp</button>
+
+    <div class="resumo-box">
+      <h3>📦 Resumo por Empresa</h3>
+      <div id="resumo-empresas"></div>
+    </div>
+  </div>
+
+  <script>
+    const URL_SCRIPT = "/api/delivery";
+    let dados = [];
+    let chart;
+
+    async function carregarDados() {
+      const res = await fetch(URL_SCRIPT);
+      dados = await res.json();
+      const empresas = [...new Set(dados.map(d => d.empresa))].sort();
+      const select = document.getElementById("empresaFiltro");
+      empresas.forEach(emp => {
+        const opt = document.createElement("option");
+        opt.value = emp;
+        opt.textContent = emp;
+        select.appendChild(opt);
+      });
+      atualizarTudo();
+    }
+
+    function atualizarTudo() {
+      atualizarResumoEmpresa();
+      filtrarGrafico();
+      atualizarMediaMensal();
+      atualizarTotaisPorPlataforma();
+      atualizarRankingEmpresas();
+    }
+
+    function getFiltros() {
+      const empresa = document.getElementById("empresaFiltro").value;
+      const mesInicio = document.getElementById("mesInicio").value;
+      const mesFim = document.getElementById("mesFim").value;
+
+      return dados.filter(d => {
+        const mes = d.data.split("-")[1];
+        return (!empresa || d.empresa === empresa) &&
+               (!mesInicio || mes >= mesInicio) &&
+               (!mesFim || mes <= mesFim);
+      });
+    }
+
+    function filtrarGrafico() {
+      const filtrados = getFiltros();
+      const agrupado = {};
+      filtrados.forEach(d => {
+        const mes = d.data.slice(0, 7);
+        agrupado[mes] = (agrupado[mes] || 0) + parseFloat(d.bruto || 0);
+      });
+
+      const labels = Object.keys(agrupado).sort();
+      const valores = labels.map(l => agrupado[l]);
+
+      if (chart) chart.destroy();
+      chart = new Chart(document.getElementById("graficoVendas"), {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Bruto por Mês',
+            data: valores,
+            borderColor: '#2c3e50',
+            backgroundColor: 'rgba(44, 62, 80, 0.2)',
+            fill: true,
+            tension: 0.3
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { display: false } }
+        }
+      });
+    }
+
+    function atualizarMediaMensal() {
+      const filtrados = getFiltros();
+      const agrupado = {};
+      filtrados.forEach(d => {
+        const mes = d.data.slice(0,7);
+        agrupado[mes] = (agrupado[mes] || 0) + parseFloat(d.bruto || 0);
+      });
+      const valores = Object.values(agrupado);
+      const media = valores.length ? valores.reduce((a,b) => a + b, 0) / valores.length : 0;
+      document.getElementById("media-mensal").textContent = "R$ " + media.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+    }
+
+    function atualizarTotaisPorPlataforma() {
+      const filtrados = getFiltros();
+      const totais = {};
+      filtrados.forEach(d => {
+        totais[d.plataforma] = (totais[d.plataforma] || 0) + parseFloat(d.bruto || 0);
+      });
+      const el = document.getElementById("tabela-plataformas");
+      el.innerHTML = '';
+      Object.entries(totais).forEach(([plat, val]) => {
+        el.innerHTML += `<tr><td>${plat}</td><td style="text-align:right">R$ ${val.toLocaleString('pt-BR')}</td></tr>`;
+      });
+    }
+
+    function atualizarRankingEmpresas() {
+      const filtrados = getFiltros();
+      const dadosMesEmpresa = {};
+
+      filtrados.forEach(d => {
+        const mes = d.data.slice(0, 7);
+        const empresa = d.empresa;
+        const valor = parseFloat(d.bruto || 0);
+        if (!dadosMesEmpresa[mes]) dadosMesEmpresa[mes] = {};
+        if (!dadosMesEmpresa[mes][empresa]) dadosMesEmpresa[mes][empresa] = 0;
+        dadosMesEmpresa[mes][empresa] += valor;
+      });
+
+      function traduzMes(mesAno) {
+        const [ano, mes] = mesAno.split("-");
+        const nomes = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+        return `${nomes[parseInt(mes) - 1]}/${ano}`;
+      }
+
+      const mesesOrdenados = Object.keys(dadosMesEmpresa).sort().reverse();
+      const todasEmpresas = [...new Set(filtrados.map(d => d.empresa))].sort();
+
+      const corpo = document.getElementById("tabela-ranking");
+      const thead = corpo.parentElement.querySelector('thead');
+      thead.innerHTML = `<tr><th>Mês</th>${todasEmpresas.map(emp => `<th style="text-align:right">${emp}</th>`).join('')}</tr>`;
+      corpo.innerHTML = '';
+
+      mesesOrdenados.forEach(mes => {
+        const valores = todasEmpresas.map(emp => dadosMesEmpresa[mes][emp] || 0);
+        const max = Math.max(...valores);
+
+        const linha = [`<td>${traduzMes(mes)}</td>`];
+        todasEmpresas.forEach(emp => {
+          const valor = dadosMesEmpresa[mes][emp] || 0;
+          const destaque = valor === max ? ' style="text-align:right; color:green; font-weight:bold"' : ' style="text-align:right"';
+          linha.push(`<td${destaque}>R$ ${valor.toLocaleString('pt-BR')}</td>`);
+        });
+
+        corpo.innerHTML += `<tr>${linha.join('')}</tr>`;
+      });
+    }
+
+    function atualizarResumoEmpresa() {
+      const filtrados = getFiltros();
+      const resumo = {};
+      filtrados.forEach(d => {
+        const chave = `${d.empresa} | ${d.plataforma}`;
+        if (!resumo[chave]) resumo[chave] = { bruto: 0, liquido: 0, taxa: 0 };
+        resumo[chave].bruto += parseFloat(d.bruto || 0);
+        resumo[chave].liquido += parseFloat(d.liquido || 0);
+        resumo[chave].taxa += parseFloat(d.taxa || 0);
+      });
+
+      const div = document.getElementById("resumo-empresas");
+      div.innerHTML = '';
+      Object.entries(resumo).sort().forEach(([chave, valores]) => {
+        const [empresa, plataforma] = chave.split(" | ");
+        const perc = (valores.taxa / valores.bruto) * 100 || 0;
+        div.innerHTML += `
+          <div class="resumo-linha">
+            <strong>${empresa} - ${plataforma}</strong>
+            💰 Bruto: R$ ${valores.bruto.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}<br>
+            💵 Líquido: R$ ${valores.liquido.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}<br>
+            📉 Investimento (${perc.toFixed(2)}%): R$ ${valores.taxa.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+          </div>
+        `;
+      });
+    }
+
+    function enviarWhatsapp() {
+      const empresa = document.getElementById("empresaFiltro").value || "TODAS";
+      const media = document.getElementById("media-mensal").textContent;
+      const msg = `📊 Resumo de Vendas Delivery\n🏢 Empresa: ${empresa}\n📈 Média: ${media}`;
+      const url = `https://wa.me/557799999999?text=${encodeURIComponent(msg)}`;
+      window.open(url, "_blank");
+    }
+
+    carregarDados();
+  </script></div>
+    </div>
+  </section>
+
+  <script src="../assets/ui.js"></script>
+  <script src="../assets/daterange.js"></script>
+  <script>
+    let currentRange=null;
+    window.addEventListener('DOMContentLoaded', ()=>{
+      attachDateRange({
+        button:'#btnRange',
+        label:'#lblRange',
+        onChange:(rng)=>{ currentRange=rng; console.log('Período selecionado', rng); }
+      });
+    });
+  </script>
+</body>
+</html>

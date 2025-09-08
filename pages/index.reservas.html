@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <title>Index.Reservas</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <link rel="stylesheet" href="../assets/styles.css">
+  <script src="../assets/auth.js"></script>
+</head>
+<body>
+  <header>
+    <div class="head-wrap">
+      <a class="brand" href="../index.html"><img src="https://github.com/ClenaStore/painel-principal/blob/main/img/GRUPO%20DV%20(1).png?raw=true" alt="Logo"><div class="title">Index.Reservas</div></a>
+      <div class="head-spacer"></div>
+      <a class="icon-btn only-desktop" href="../index.relatorios.html">📄 Relatórios</a>
+      <button id="themeToggle" class="icon-btn" type="button">🌓 Tema</button>
+      <div class="user" id="userMenu"><button class="user-btn"><img src="https://www.w3schools.com/howto/img_avatar.png"><strong style="font-size:13px">Leonardo</strong></button><div class="user-menu"><a href="../perfil.html">👤 Meu Perfil</a><button onclick="handleLogout()">🚪 Sair</button></div></div>
+    </div>
+  </header>
+
+  <section class="container">
+    <div class="card-panel">
+      <div class="panel-head">
+        <div class="title-sm">Período</div>
+        <div style="display:flex; gap:8px; align-items:center">
+          <button id="btnRange" class="btn">Selecionar</button>
+          <span id="lblRange" style="color:var(--muted); font-weight:800"></span>
+        </div>
+      </div>
+      <div id="legacy-content"><div class="wrap">
+    <header>
+      <div class="title">Reservas - Mercatto Delícia</div>
+      <div class="badge">Calendário & Valores (somente leitura)</div>
+    </header>
+
+    <div class="card">
+      <div class="cal">
+        <div class="cal-head">
+          <div class="toolbar">
+            <button id="prevMonth" class="btn">◀ Mês anterior</button>
+            <button id="todayBtn" class="btn">Hoje</button>
+            <button id="nextMonth" class="btn">Próximo mês ▶</button>
+          </div>
+          <div class="cal-title" id="calTitle">—</div>
+        </div>
+        <div class="cal-grid" id="calDow"></div>
+        <div class="cal-grid" id="calGrid"></div>
+      </div>
+      <div class="summary">
+        <h3 style="margin:0 0 6px 0; color:var(--muted)">Resumo do mês</h3>
+        <div class="summary-grid">
+          <div class="kpi">
+            <div class="label">Antecipado (mês)</div>
+            <div class="value" id="kpiAntecipado">R$ 0,00</div>
+          </div>
+          <div class="kpi">
+            <div class="label">Final pago (mês)</div>
+            <div class="value" id="kpiFinalPago">R$ 0,00</div>
+          </div>
+          <div class="kpi">
+            <div class="label">A receber (mês)</div>
+            <div class="value" id="kpiAReceber">R$ 0,00</div>
+            <div class="sum-note">* "A receber" não entra na soma do mês. A soma mensal considera apenas adiantamento + final pago.</div>
+          </div>
+        </div>
+        <div class="kpi" style="display:flex; align-items:center; justify-content:space-between; margin-top:12px">
+          <div>
+            <div class="label">Pagamento (total do mês)</div>
+            <div class="value" id="kpiTotalMes">R$ 0,00</div>
+          </div>
+          <button id="refreshBtn" class="btn" style="width:auto">Atualizar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal do dia (somente leitura) -->
+  <div class="modal" id="dayModal" aria-hidden="true">
+    <div class="sheet">
+      <h3 id="modalTitle">Reservas do dia</h3>
+      <div class="list" id="modalList"></div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <script>
+    // ===== Config =====
+    const endpoint = "/api/reservas";
+
+    // ===== Helpers =====
+    const $ = (s,el=document)=>el.querySelector(s);
+    const $$ = (s,el=document)=>Array.from(el.querySelectorAll(s));
+    const toast = (msg, ms=3500) => { const el = $("#toast"); el.textContent = msg; el.classList.add("show"); setTimeout(()=>el.classList.remove("show"), ms); };
+    const formatBRL = (num) => Number(num||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+    const parseBRL = v => { if(!v) return 0; const s=v.toString().replace(/[^\d,.-]/g,'').replace(/\./g,'').replace(',', '.'); const n=Number(s); return isNaN(n)?0:n; };
+    const ymd = d=>{ const z=n=>String(n).padStart(2,'0'); return `${d.getFullYear()}-${z(d.getMonth()+1)}-${z(d.getDate())}`; };
+
+    // ===== Estado =====
+    const state = { mes:(new Date()).getMonth(), ano:(new Date()).getFullYear(), reservas:[] };
+
+    // ===== API (somente leitura) =====
+    const api = {
+      async listar(ano, mes){
+        const url = `${endpoint}?acao=listar&ano=${ano}&mes=${mes+1}`;
+        const res = await fetch(url, {method:'GET'});
+        if(!res.ok) throw new Error(`Erro ${res.status}`);
+        const data = await res.json();
+        if(!Array.isArray(data)) throw new Error('Resposta inválida da API.');
+        return data;
+      }
+    };
+
+    // ===== Calendário =====
+    const monthNames = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+    const dow = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+    const calTitle = $('#calTitle'), calDow = $('#calDow'), calGrid = $('#calGrid');
+    calDow.innerHTML = dow.map(d=>`<div class="cal-dow">${d}</div>`).join('');
+
+    function buildCalendar(){
+      const {mes, ano} = state;
+      calTitle.textContent = `${monthNames[mes]} de ${ano}`;
+      calGrid.innerHTML = '';
+      const first = new Date(ano, mes, 1);
+      const start = new Date(first);
+      const startDay = (first.getDay()+7)%7;
+      start.setDate(1 - startDay);
+      for(let i=0;i<42;i++){
+        const d = new Date(start); d.setDate(start.getDate()+i);
+        const inMonth = d.getMonth()===mes;
+        const cell = document.createElement('button');
+        cell.type='button';
+        cell.className = 'cal-day' + (inMonth? '':' out');
+        cell.dataset.date = ymd(d);
+        const items = state.reservas.filter(r=> r.datahora && ymd(new Date(r.datahora))===ymd(d));
+        const pend = items.filter(r=> (r.status||'Pendente')!=='Concluída').length;
+        const done = items.filter(r=> r.status==='Concluída').length;
+        cell.innerHTML = `<div class="num">${d.getDate()}</div>
+          <div class="tags">${items.length? `<span class="tag t-conf">${items.length} reserva(s)</span>`:''}
+            ${pend? `<span class="tag t-pend">Pend: ${pend}</span>`:''}
+            ${done? `<span class="tag t-done">Conc: ${done}</span>`:''}
+          </div>`;
+        cell.addEventListener('click', ()=> openDayModal(d, items));
+        calGrid.appendChild(cell);
+      }
+    }
+
+    // ===== Resumo mensal (somente leitura) =====
+    function sumExtrasFromRecord(r){
+      const keys = Object.keys(r||{}).filter(k=>k.toLowerCase().startsWith('pagamentoextra'));
+      return keys.reduce((acc,k)=> acc + parseBRL(r[k]), 0);
+    }
+    function updateSummary(){
+      const {mes, ano} = state;
+      const inMonth = state.reservas.filter(r=>{ const d=new Date(r.datahora); return d.getMonth()===mes && d.getFullYear()===ano; });
+      const sum = (arr,fn)=> arr.reduce((a,b)=>a+fn(b),0);
+      const adiantado = sum(inMonth, r=> parseBRL(r.pagamentoAntecipado||0) + sumExtrasFromRecord(r));
+      const finalPago = sum(inMonth, r=> parseBRL(r.valorFinalPago||0));
+      const aReceber = sum(inMonth.filter(r=> (r.status||'Pendente')!=='Concluída'), r=> {
+        const estimado = parseBRL(r.valorEstimado||0);
+        const ant = parseBRL(r.pagamentoAntecipado||0) + sumExtrasFromRecord(r);
+        return Math.max(estimado - ant, 0);
+      });
+      const pagamentoTotal = adiantado + finalPago;
+
+      $('#kpiAntecipado').textContent = formatBRL(adiantado);
+      $('#kpiFinalPago').textContent = formatBRL(finalPago);
+      $('#kpiAReceber').textContent = formatBRL(aReceber);
+      $('#kpiTotalMes').textContent = formatBRL(pagamentoTotal);
+    }
+
+    // ===== Modal do dia (somente leitura) =====
+    const dayModal = $('#dayModal');
+    function openDayModal(date, items){
+      $('#modalTitle').textContent = `Reservas de ${date.toLocaleDateString('pt-BR')}`;
+      const list = $('#modalList');
+      if(!items || !items.length){ list.innerHTML = '<div class="meta" style="padding:0 0 14px 0">Nenhuma reserva neste dia.</div>'; }
+      else{
+        list.innerHTML = items.map(r=> renderResItem(r)).join('');
+      }
+      dayModal.classList.add('show');
+    }
+    dayModal.addEventListener('click', (e)=>{ if(e.target===dayModal) dayModal.classList.remove('show'); });
+
+    function renderResItem(r){
+      const hora = new Date(r.datahora).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+      const status = r.status||'Pendente';
+
+      // anexos
+      const anexoKeys = Object.keys(r).filter(k => k.toLowerCase().includes("anexo") && r[k]);
+      const anexos = anexoKeys.map((k,i) => `<a href="${r[k]}" target="_blank">📎 Anexo ${i+1}</a>`).join("<br>");
+
+      // pagamentos adicionais (qualquer campo que contenha "pagamento" e não seja os 3 principais)
+      const pagamentoKeys = Object.keys(r).filter(k=> /pagamento/i.test(k) && !['pagamentoAntecipado','valorFinalPago','valorEstimado'].includes(k));
+      const pagamentos = pagamentoKeys.map((k,i)=> `💵 Pagamento ${i+1}: ${formatBRL(parseBRL(r[k]))}`).join('<br>');
+
+      const adiant = parseBRL(r.pagamentoAntecipado||0) + sumExtrasFromRecord(r);
+      const finalp = parseBRL(r.valorFinalPago||0);
+      const total = adiant + finalp;
+
+      return `<div class="res-item" data-id="${r.id}">
+        <div class="top">
+          <div>
+            <div class="name">${r.nome||'—'}</div>
+            <div class="meta">${hora} • ${r.mesa||'—'} • ${r.pessoas||'0'} pessoa(s)</div>
+          </div>
+          <span class="tag" style="align-self:center">${status}</span>
+        </div>
+        <div class="meta"><b>Email:</b> ${r.email||'—'} • <b>Tel:</b> ${r.telefone||'—'}</div>
+        <div class="meta"><b>Cardápio:</b> ${r.cardapio||'—'} • <b>Banco:</b> ${r.banco||'—'}</div>
+        <div class="meta"><b>Obs:</b> ${r.observacoes||'—'}</div>
+
+        <div class="meta">Estimado: ${formatBRL(parseBRL(r.valorEstimado||0))}</div>
+        <div class="meta"><b>Pagamentos (adiantado):</b> ${formatBRL(adiant)}</div>
+        <div class="meta"><b>Pagamento (total):</b> ${formatBRL(total)}</div>
+
+        ${pagamentos? `<div class="meta">${pagamentos}</div>`:""}
+        ${anexos? `<div class="meta">${anexos}</div>`:""}
+      </div>`;
+    }
+
+    // ===== Navegação mês =====
+    $('#prevMonth').addEventListener('click', ()=>{ const m = new Date(state.ano,state.mes,1); m.setMonth(m.getMonth()-1); state.mes=m.getMonth(); state.ano=m.getFullYear(); refreshAll(); });
+    $('#nextMonth').addEventListener('click', ()=>{ const m = new Date(state.ano,state.mes,1); m.setMonth(m.getMonth()+1); state.mes=m.getMonth(); state.ano=m.getFullYear(); refreshAll(); });
+    $('#todayBtn').addEventListener('click', ()=>{ const t=new Date(); state.mes=t.getMonth(); state.ano=t.getFullYear(); refreshAll(); });
+    $('#refreshBtn').addEventListener('click', ()=> refreshAll());
+
+    async function loadMonth(ano, mes){
+      try{
+        const data = await api.listar(ano, mes);
+        state.reservas = data.map((r,i)=> ({
+          id: r.id || r.ID || `ROW-${i+1}`,
+          nome: r.nome||r.Nome||'', email:r.email||r.Email||'', telefone:r.telefone||r.Fone||'', pessoas:r.pessoas||r.Pessoas||'',
+          mesa:r.mesa||r.Local||'', cardapio:r.cardapio||r.Cardapio||'', observacoes:r.observacoes||r.Obs||'',
+          datahora: r.datahora || r.DataHora || r.data || r.Data || '',
+          valorEstimado: String(r.valorEstimado ?? r.ValorEstimado ?? '0'),
+          pagamentoAntecipado: String(r.pagamentoAntecipado ?? r.Adiantamento ?? '0'),
+          valorFinalPago: String(r.valorFinalPago ?? r.FinalPago ?? '0'),
+          banco: r.banco || r.Banco || '', status: r.status || r.Status || 'Pendente',
+          ...r
+        }));
+      }catch(e){
+        state.reservas = [];
+        toast('⚠️ Erro ao carregar dados da planilha: ' + e.message);
+      }
+      buildCalendar(); updateSummary();
+    }
+
+    function refreshAll(){ buildCalendar(); updateSummary(); loadMonth(state.ano, state.mes); }
+
+    // ===== Inicialização =====
+    window.addEventListener('DOMContentLoaded', ()=>{
+      refreshAll();
+    });
+  </script></div>
+    </div>
+  </section>
+
+  <script src="../assets/ui.js"></script>
+  <script src="../assets/daterange.js"></script>
+  <script>
+    let currentRange=null;
+    window.addEventListener('DOMContentLoaded', ()=>{
+      attachDateRange({
+        button:'#btnRange',
+        label:'#lblRange',
+        onChange:(rng)=>{ currentRange=rng; console.log('Período selecionado', rng); }
+      });
+    });
+  </script>
+</body>
+</html>

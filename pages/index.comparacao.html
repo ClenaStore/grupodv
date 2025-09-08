@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <title>Index.Comparacao</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <link rel="stylesheet" href="../assets/styles.css">
+  <script src="../assets/auth.js"></script>
+</head>
+<body>
+  <header>
+    <div class="head-wrap">
+      <a class="brand" href="../index.html"><img src="https://github.com/ClenaStore/painel-principal/blob/main/img/GRUPO%20DV%20(1).png?raw=true" alt="Logo"><div class="title">Index.Comparacao</div></a>
+      <div class="head-spacer"></div>
+      <a class="icon-btn only-desktop" href="../index.relatorios.html">📄 Relatórios</a>
+      <button id="themeToggle" class="icon-btn" type="button">🌓 Tema</button>
+      <div class="user" id="userMenu"><button class="user-btn"><img src="https://www.w3schools.com/howto/img_avatar.png"><strong style="font-size:13px">Leonardo</strong></button><div class="user-menu"><a href="../perfil.html">👤 Meu Perfil</a><button onclick="handleLogout()">🚪 Sair</button></div></div>
+    </div>
+  </header>
+
+  <section class="container">
+    <div class="card-panel">
+      <div class="panel-head">
+        <div class="title-sm">Período</div>
+        <div style="display:flex; gap:8px; align-items:center">
+          <button id="btnRange" class="btn">Selecionar</button>
+          <span id="lblRange" style="color:var(--muted); font-weight:800"></span>
+        </div>
+      </div>
+      <div id="legacy-content"><header>GRUPO DV • Comparativos com planos de contas</header>
+
+<div class="wrap">
+  <!-- Filtros -->
+  <div class="filters">
+    <label class="chip">Empresa
+      <select id="empresa">
+        <option>MERCATTO DELICIA</option>
+        <option>DELICIA GOURMET</option>
+        <option>VILLA GOURMET</option>
+        <option>M. KIDS</option>
+        <option>PADARIA DELICIA</option>
+      </select>
+    </label>
+    <label class="chip">Mês de referência
+      <input id="periodo" type="month">
+    </label>
+    <button id="aplicar">Aplicar</button>
+  </div>
+
+  <!-- Gráfico -->
+  <div class="charts">
+    <div class="card">
+       <div class="title">Top 10 Planos com maior aumento (R$ atual vs. mês anterior)</div>
+      <canvas id="barTop"></canvas>
+    </div>
+  </div>
+
+  <!-- Planilha -->
+  <div class="card">
+    <div class="title" id="titleTabela">Planos — mês atual × anterior</div>
+    <div class="small">Regra: ≥ 90% do mês anterior fica <b class="danger">vermelho ⚠️</b>. Itens com ≥ 85% ficam <b class="warn">laranja</b>. <u>Excedeu limite</u> aparece como valor negativo (o quanto passou).</div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Plano de Contas</th>
+            <th>Mês anterior</th>
+            <th class="num">Valor mês anterior (R$)</th>
+            <th>Mês atual</th>
+            <th class="num">Valor mês atual (R$)</th>
+            <th class="num">% do mês anterior</th>
+            <th class="num">Falta p/ igualar (R$)</th>
+            <th class="num">Excedeu limite (R$)</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="tbodyPlanos">
+          <tr><td colspan="9" class="small" style="padding:12px">Carregando…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Sem movimentação -->
+  <div class="card">
+    <div class="title">Planos sem movimentação no mês atual</div>
+    <div class="scrollbox">
+      <ul id="listaSemMov"><li class="small">Carregando…</li></ul>
+    </div>
+  </div>
+
+  <a href="javascript:void(0)" onclick="history.back()" class="chip" style="text-decoration:none;margin-top:6px">⬅ Voltar ao Painel</a>
+</div>
+
+<!-- Modal evolução plano -->
+<div id="modal" aria-hidden="true">
+  <div class="backdrop" data-close></div>
+  <div class="panel" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <header>
+      <h3 id="modal-title">Evolução do plano</h3>
+      <button class="close" title="Fechar" aria-label="Fechar" data-close>&times;</button>
+    </header>
+    <canvas id="line-evolucao" style="width:100%;height:260px"></canvas>
+    <div class="small" id="modal-note" style="margin-top:8px"></div>
+  </div>
+</div>
+
+<script>
+/* ===== CONFIG ===== */
+const API_BASE='/api/travas_comparacao';
+
+/* ===== HELPERS ===== */
+const moeda=v=>Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+const parseBR=v=>{
+  if(v==null||v==='') return 0;
+  if(typeof v==='number') return v;
+  const s=String(v).trim().replace(/[^\d\-.,]/g,'').replace(/\.(?=\d{3})/g,'').replace(',','.');
+  const n=Number(s); return isNaN(n)?0:n;
+};
+const norm=s=>String(s||'').normalize('NFD').replace(/\p{Diacritic}/gu,'').replace(/[^A-Za-z0-9 ]/g,'').replace(/\s+/g,' ').trim().toUpperCase();
+function prevMonthStr(ym){
+  if(!/^\d{4}-\d{2}$/.test(ym||'')){ const d=new Date(); return d.toISOString().slice(0,7); }
+  const [y,m]=ym.split('-').map(Number);
+  const d=new Date(y,m-1,1); d.setMonth(d.getMonth()-1);
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+}
+
+/* pega planos */
+function extractPlanos(rec){
+  if (Array.isArray(rec?.planosFonte9) && rec.planosFonte9.length){
+    return rec.planosFonte9.map(p=>({nome:String(p.nome||'—'), valor:Math.abs(parseBR(p.valor))}));
+  }
+  const grid=rec?.grid||rec?.tabela;
+  if(Array.isArray(grid) && Array.isArray(grid[0]) && grid[0].length>=3){
+    const out=[];
+    for(let r=0;r<grid.length;r++){
+      const nome=grid[r][1], val=parseBR(grid[r][2]);
+      if(nome!=null && nome!=='' && !isNaN(val) && val!==0) out.push({nome:String(nome), valor:Math.abs(val)});
+    }
+    if(out.length) return out;
+  }
+  if(Array.isArray(rec?.fonte9Detalhe)){
+    return rec.fonte9Detalhe.map(i=>({nome:String(i.nome||i.planocontas||i.categoria||'—'), valor:Math.abs(parseBR(i.valor||i.total||0))}));
+  }
+  return [];
+}
+function planosToMap(arr){ const m={}; (arr||[]).forEach(p=>{ m[p.nome]=(m[p.nome]||0)+Math.abs(parseBR(p.valor)); }); return m; }
+
+async function fetchJSON(url){
+  const r=await fetch(url,{cache:'no-store'});
+  if(!r.ok) throw new Error(await r.text());
+  return r.json();
+}
+async function getEmpresaPeriodo(emp, periodo){
+  const url=`${API_BASE}?empresa=${encodeURIComponent(emp)}${periodo?`&periodo=${encodeURIComponent(periodo)}`:''}`;
+  const j=await fetchJSON(url);
+  if(j?.empresa) return j;
+  if(Array.isArray(j?.data)) return j.data.find(x=>norm(x.empresa||x.Empresa)===norm(emp))||j.data[0];
+  if(Array.isArray(j)) return j.find(x=>norm(x.empresa||x.Empresa)===norm(emp))||j[0];
+  return j;
+}
+
+/* ===== DOM ===== */
+const selEmpresa=document.getElementById('empresa');
+const inpPeriodo=document.getElementById('periodo');
+const btnAplicar=document.getElementById('aplicar');
+const tbody=document.getElementById('tbodyPlanos');
+const titleTabela=document.getElementById('titleTabela');
+const ulSemMov=document.getElementById('listaSemMov');
+
+let bar=null, lineModal=null;
+
+/* ===== linhas (com excedeu negativo) ===== */
+function buildRows(mapCurr, mapPrev, mesAtual, mesAnt){
+  const nomes=new Set([...Object.keys(mapCurr),...Object.keys(mapPrev)]);
+  const rows=[];
+  nomes.forEach(nome=>{
+    const atual   = mapCurr[nome] || 0;
+    const antes   = mapPrev[nome] || 0;
+    const pct     = antes>0 ? (atual/antes*100) : (atual>0 ? 100 : 0);
+    const falta   = Math.max(antes - atual, 0);
+    const excedeu = (atual>antes) ? -(atual-antes) : 0;   // NEGATIVO quando passou
+
+    let tag='ok', priority=2;
+    if(pct>=90){ tag='red'; priority=0; }
+    else if(pct>=85){ tag='orange'; priority=1; }
+
+    rows.push({ nome, antes, atual, pct, falta, excedeu, mesAnt, mesAtual, tag, priority });
+  });
+
+  rows.sort((a,b)=>{
+    if (a.priority !== b.priority) return a.priority - b.priority;
+    if (b.pct !== a.pct) return b.pct - a.pct;
+    return b.atual - a.atual;
+  });
+
+  return rows;
+}
+
+/* ===== tabela ===== */
+function renderTable(rows){
+  if(!rows.length){
+    tbody.innerHTML=`<tr><td colspan="9" class="small" style="padding:12px">Nada a mostrar para o período.</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = rows.map(r=>{
+    const cls = r.tag==='red' ? 'danger' : (r.tag==='orange' ? 'warn' : 'ok');
+    const status = r.tag==='red' ? '⚠️ Acima de 90%' : (r.tag==='orange' ? '⚠️ 85%+' : 'OK');
+    return `<tr class="clickable" data-plan="${encodeURIComponent(r.nome)}">
+      <td>${r.nome}</td>
+      <td>${r.mesAnt}</td>
+      <td class="num">${moeda(r.antes)}</td>
+      <td>${r.mesAtual}</td>
+      <td class="num">${moeda(r.atual)}</td>
+      <td class="num ${cls}">${r.pct.toFixed(1)}%</td>
+      <td class="num">${moeda(r.falta)}</td>
+      <td class="num ${r.excedeu<0?'neg':''}">${moeda(r.excedeu)}</td>
+      <td class="${cls}">${status}</td>
+    </tr>`;
+  }).join('');
+}
+
+/* clique na TABELA (delegação) => abre modal de linhas */
+tbody.addEventListener('click', (e)=>{
+  const tr = e.target.closest('tr[data-plan]');
+  if(!tr) return;
+  const nome = decodeURIComponent(tr.getAttribute('data-plan'));
+  openPlanModal(nome);
+});
+
+/* ===== gráfico barras (preto x dourado) ===== */
+function renderBar(rows){
+  const top = rows.slice(0,10);
+  const labels = top.map(r=>r.nome);
+  const prev   = top.map(r=>r.antes);
+  const curr   = top.map(r=>r.atual);
+
+  if(bar) bar.destroy();
+  bar=new Chart(document.getElementById('barTop'),{
+    type:'bar',
+    data:{labels, datasets:[
+      {label:'Mês anterior', data:prev, backgroundColor:'#000000', borderColor:'#000000', borderWidth:1, borderRadius:6},
+      {label:'Mês atual',    data:curr, backgroundColor:'#d4af37', borderColor:'#b8891a', borderWidth:1, borderRadius:6}
+    ]},
+    options:{
+      responsive:true,
+      plugins:{
+        legend:{position:'top'},
+        tooltip:{callbacks:{label:(ctx)=> `${ctx.dataset.label}: ${moeda(ctx.parsed.y||0)}`}}
+      },
+      scales:{y:{beginAtZero:true}}
+    }
+  });
+}
+
+/* ===== lista sem movimentação usa união de planos ===== */
+function renderSemMov(mapCurr, mapPrev){
+  const nomes=new Set([...Object.keys(mapPrev), ...Object.keys(mapCurr)]);
+  const itens=[];
+  nomes.forEach(n=>{
+    const atual=mapCurr[n]||0, antes=mapPrev[n]||0;
+    if(atual===0 && antes>0){ itens.push({n,antes}); }
+  });
+  if(!itens.length){ ulSemMov.innerHTML = `<li class="small">Sem itens sem movimentação neste mês.</li>`; return; }
+  ulSemMov.innerHTML = itens
+    .sort((a,b)=>b.antes-a.antes)
+    .map(r=>`<li><b>${r.n}</b> — mês anterior: ${moeda(r.antes)}</li>`)
+    .join('');
+}
+
+/* ===== modal evolução ===== */
+async function buildYearSeries(emp, year, planName){
+  const now=new Date(); const limitMonth = (year===now.getFullYear())? (now.getMonth()+1) : 12;
+  const months = Array.from({length:limitMonth}, (_,k)=> `${year}-${String(k+1).padStart(2,'0')}`);
+  const results = await Promise.all(months.map(m=>getEmpresaPeriodo(emp, m)));
+  const serie = months.map((m,idx)=>{
+    const rec = results[idx]; const planos = extractPlanos(rec);
+    const found = planos.find(p=>norm(p.nome)===norm(planName));
+    return found ? Math.abs(parseBR(found.valor)) : 0;
+  });
+  return {labels: months.map(m=>m.split('-').reverse().join('/')), data: serie};
+}
+function closeModal(){ const m=document.getElementById('modal'); m.style.display='none'; m.setAttribute('aria-hidden','true'); }
+document.addEventListener('click',(e)=>{ if(e.target.matches('#modal [data-close], #modal .backdrop')) closeModal(); });
+
+async function openPlanModal(planName){
+  const emp = selEmpresa.value;
+  const per = (inpPeriodo.value || new Date().toISOString().slice(0,7));
+  const year = Number(per.split('-')[0]);
+
+  document.getElementById('modal-title').textContent = `Evolução — ${planName} (${year})`;
+  document.getElementById('modal-note').textContent  = 'Valores por mês no ano atual para o plano selecionado.';
+
+  const serie = await buildYearSeries(emp, year, planName);
+  const ctx = document.getElementById('line-evolucao').getContext('2d');
+  if(lineModal) { lineModal.destroy(); lineModal=null; }
+  lineModal = new Chart(ctx,{
+    type:'line',
+    data:{
+      labels: serie.labels,
+      datasets:[{
+        label: planName,
+        data: serie.data,
+        tension: .25,
+        borderColor: '#d4af37',        // linha dourada
+        backgroundColor: 'rgba(212, 175, 55, 0.15)', // área suave
+        borderWidth: 2,
+        pointRadius: 6,                // tamanho normal da bolinha
+        pointHoverRadius: 8,           // tamanho no hover
+        pointBackgroundColor: '#d4af37', // cor interna da bolinha
+        pointBorderColor: '#000',      // borda preta
+        pointBorderWidth: 2
+      }]
+    },
+    options:{
+      responsive:true,
+      plugins:{
+        legend:{display:false},
+        tooltip:{ callbacks:{ label:(c)=> moeda(c.parsed.y||0) } }
+      },
+      scales:{ y:{ beginAtZero:true } }
+    }
+  });
+
+  const modal=document.getElementById('modal');
+  modal.style.display='flex';
+  modal.setAttribute('aria-hidden','false');
+}
+
+
+/* ===== fluxo principal ===== */
+async function run(){
+  const emp=selEmpresa.value;
+  const per=inpPeriodo.value || new Date().toISOString().slice(0,7);
+  const ant=prevMonthStr(per);
+
+  titleTabela.textContent=`Planos — ${per.split('-').reverse().join('/')} vs ${ant.split('-').reverse().join('/')}`;
+  tbody.innerHTML=`<tr><td colspan="9" class="small" style="padding:12px">Carregando…</td></tr>`;
+  ulSemMov.innerHTML='<li class="small">Carregando…</li>';
+
+  try{
+    const [curr, old] = await Promise.all([ getEmpresaPeriodo(emp, per), getEmpresaPeriodo(emp, ant) ]);
+    if(!curr || !old){
+      tbody.innerHTML=`<tr><td colspan="9" class="small" style="padding:12px">Sem dados.</td></tr>`;
+      ulSemMov.innerHTML=`<li class="small">Sem dados.</li>`;
+      return;
+    }
+
+    const planosCurr=extractPlanos(curr);
+    const planosPrev=extractPlanos(old);
+    const mapCurr=planosToMap(planosCurr);
+    const mapPrev=planosToMap(planosPrev);
+
+    const mesAtual = per.split('-').reverse().join('/');
+    const mesAnt   = ant.split('-').reverse().join('/');
+
+    const rows = buildRows(mapCurr, mapPrev, mesAtual, mesAnt);
+
+    renderTable(rows);
+    renderBar(rows);
+    renderSemMov(mapCurr, mapPrev);
+
+  }catch(e){
+    console.error(e);
+    tbody.innerHTML=`<tr><td colspan="9" class="small" style="padding:12px">Erro ao carregar. Tente novamente.</td></tr>`;
+    ulSemMov.innerHTML=`<li class="small">Erro ao carregar.</li>`;
+  }
+}
+
+/* init */
+document.getElementById('aplicar').addEventListener('click', run);
+window.addEventListener('DOMContentLoaded', ()=>{
+  const d=new Date();
+  document.getElementById('periodo').value=d.toISOString().slice(0,7); // padrão: mês atual
+  run();
+});
+</script></div>
+    </div>
+  </section>
+
+  <script src="../assets/ui.js"></script>
+  <script src="../assets/daterange.js"></script>
+  <script>
+    let currentRange=null;
+    window.addEventListener('DOMContentLoaded', ()=>{
+      attachDateRange({
+        button:'#btnRange',
+        label:'#lblRange',
+        onChange:(rng)=>{ currentRange=rng; console.log('Período selecionado', rng); }
+      });
+    });
+  </script>
+</body>
+</html>
