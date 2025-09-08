@@ -19,6 +19,13 @@
     .wrap{
       min-height:100dvh; display:grid; place-items:center; padding:14px;
     }
+    .filters{
+  display: grid;
+  grid-template-columns: minmax(180px,1fr) 180px 180px 180px;
+  gap: 12px;
+  align-items: end;
+}
+
     .card{
       width:clamp(280px, 92vw, 420px);
       background:var(--card); border-radius:16px; box-shadow:var(--shadow); padding:18px;
