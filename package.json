@@ -1,9 +1,9 @@
 {
-  "name": "grupodv-whatsapp",
+  "name": "novo-agente",
   "private": true,
-  "type": "module",
-  "engines": { "node": ">=20" },
-  "dependencies": {
-    "openai": "^4.54.0"
+  "version": "1.0.0",
+  "type": "commonjs",
+  "scripts": {
+    "build": "echo \"no build\""
   }
 }
