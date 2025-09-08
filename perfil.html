@@ -116,50 +116,56 @@
       }
     }
   </style>
-<script>
-(function(){
-  const KEY_NAME = 'dv_pwd';
-  async function ensurePassword(){
-    let pwd = localStorage.getItem(KEY_NAME) || '';
-    while(!pwd){
-      pwd = prompt('Digite a senha de acesso:') || '';
-      if(!pwd) continue;
-      try{
-        const r = await fetch('/api/ping', {headers:{'x-api-key': pwd }});
-        if(r.ok){
+
+  <!-- Proteção por senha + interceptador de fetch -->
+  <script>
+  (function(){
+    const KEY_NAME = 'dv_pwd';
+
+    async function ensurePassword(){
+      let pwd = localStorage.getItem(KEY_NAME) || '';
+      while(!pwd){
+        pwd = prompt('Digite a senha de acesso:') || '';
+        if(!pwd) continue;
+        try{
+          const r = await fetch('/api/ping', { headers:{ 'x-api-key': pwd } });
+          if(r.ok){
+            localStorage.setItem(KEY_NAME, pwd);
+            break;
+          }else{
+            alert('Senha incorreta.');
+            pwd = '';
+          }
+        }catch(e){
+          // se não der pra validar agora, ainda assim salva e segue
           localStorage.setItem(KEY_NAME, pwd);
           break;
-        }else{
-          alert('Senha incorreta.');
-          pwd = '';
         }
-      }catch(e){
-        // se não der pra validar agora, ainda assim salva e segue
-        localStorage.setItem(KEY_NAME, pwd);
-        break;
       }
     }
-  }
 
-  // intercepta fetch para anexar a senha automaticamente
-  const _fetch = window.fetch.bind(window);
-  window.fetch = (input, init={})=>{
-    let url = (typeof input === 'string') ? input : (input && input.url) || '';
-    init = init || {};
-    const headers = new Headers(init.headers || ((typeof input !== 'string' && input.headers) || {}));
-    const pwd = localStorage.getItem(KEY_NAME) || '';
-    if(url.startsWith('/api/')){
-      if(pwd) headers.set('x-api-key', pwd);
+    // intercepta fetch para anexar a senha automaticamente
+    const _fetch = window.fetch.bind(window);
+    window.fetch = (input, init={})=>{
+      let url = (typeof input === 'string') ? input : (input && input.url) || '';
+      init = init || {};
+      const headers = new Headers(init.headers || ((typeof input !== 'string' && input.headers) || {}));
+      const pwd = localStorage.getItem(KEY_NAME) || '';
+      if(url.startsWith('/api/')){
+        if(pwd) headers.set('x-api-key', pwd);
+      }
+      return _fetch(input, Object.assign({}, init, { headers }));
+    };
+
+    // pede a senha apenas se ainda não houver
+    if(!localStorage.getItem(KEY_NAME)){
+      ensurePassword();
     }
-    return _fetch(input, Object.assign({}, init, { headers }));
-  };
 
-  // pede a senha apenas se ainda não houver
-  if(!localStorage.getItem(KEY_NAME)){
-    ensurePassword();
-  }
-})();
-</script>
+    // expõe a chave para outros scripts, se precisar
+    window.__DV_PWD_KEY__ = KEY_NAME;
+  })();
+  </script>
 </head>
 <body>
 
@@ -185,8 +191,19 @@
     }
 
     function sair() {
-      alert('Você saiu da conta.');
-      window.location.href = "index.html";
+      // limpa a senha guardada
+      try {
+        localStorage.removeItem('dv_pwd');
+
+        // OPCIONAL: limpar tudo que comece com "dv_"
+        // for (const k of Object.keys(localStorage)) {
+        //   if (/^dv_/i.test(k)) localStorage.removeItem(k);
+        // }
+      } catch(e){}
+
+      alert('Sessão encerrada. Você precisará informar a senha novamente no próximo acesso.');
+      // redireciona e força recarregar para disparar o prompt de senha
+      location.replace('index.html');
     }
   </script>
 
