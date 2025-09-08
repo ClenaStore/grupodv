@@ -78,14 +78,14 @@
     .metas-box{
       background:var(--card); border:1px solid var(--line); border-radius:14px;
       padding:16px; box-shadow:var(--shadow); cursor:pointer; text-align:center;
-      min-height:140px; display:flex; flex-direction:column; align-items:center; justify-content:center;
+      min-height:160px; display:flex; flex-direction:column; align-items:center; justify-content:center;
       transition:.18s transform, .18s box-shadow;
     }
     .metas-box:hover{transform:translateY(-3px); box-shadow:0 8px 24px rgba(0,0,0,.28)}
-    .metas-box h2{margin:0 0 8px; font-size:1.05rem; text-transform:uppercase}
+    .metas-box h2{margin:0 0 6px; font-size:1.05rem; text-transform:uppercase}
     .metas-box p{margin:4px 0; color:var(--muted); font-size:.95rem}
 
-    /* Estados: atingiu / não atingiu */
+    /* Estados quando mês fechado */
     .metas-box.ok{
       border-color: color-mix(in srgb, var(--ok) 65%, var(--line));
       box-shadow: var(--shadow), 0 0 0 2px color-mix(in srgb, var(--ok) 28%, transparent) inset;
@@ -97,7 +97,7 @@
       background: linear-gradient(180deg, color-mix(in srgb, var(--bad) 12%, var(--card)) 0%, var(--card) 100%);
     }
 
-    /* Tooltip no hover (mostra Realizado) */
+    /* Tooltip no hover (extra) */
     .tooltip{position:relative}
     .tooltip:hover::after{
       content:attr(data-tip);
@@ -333,6 +333,17 @@ $('#applyRange').addEventListener('click', ()=>{ updateHint(); closePop(); carre
 rangeBtn.addEventListener('click', (e)=>{ e.stopPropagation(); openPop(); });
 document.addEventListener('click', e=>{ if(!pop.contains(e.target) && e.target!==rangeBtn) closePop(); });
 
+/* ---------- Lógica de “mês fechado” ---------- */
+function isMonthClosed(){
+  if(!range.start || !range.end) return false;
+  const sameMy = (range.start.getFullYear()===range.end.getFullYear()) &&
+                 (range.start.getMonth()===range.end.getMonth());
+  if(!sameMy) return false;
+  const y = range.end.getFullYear(), m = range.end.getMonth();
+  const lastDay = new Date(y, m+1, 0).getDate();
+  return range.end.getDate() === lastDay;
+}
+
 /* ---------- Página ---------- */
 function formatarNumero(v){ return (parseFloat(v)||0).toLocaleString('pt-BR',{minimumFractionDigits:2}); }
 function formatarDataBR(iso){ const [y,m,d]=iso.split('-'); return `${d}/${m}/${y}`; }
@@ -364,6 +375,8 @@ async function carregarMetas(){
       return;
     }
 
+    const monthClosed = isMonthClosed();
+
     metas.forEach(linha=>{
       const previsto = parseFloat(linha["Previsto"]);
       const realizado = parseFloat(String(linha["Realizado"]).replace(',','.'));
@@ -371,9 +384,9 @@ async function carregarMetas(){
       const ok = realizado >= previsto;
 
       const div = document.createElement('div');
-      div.className = `metas-box tooltip ${ok ? 'ok' : 'bad'}`;
+      div.className = `metas-box tooltip ${monthClosed ? (ok ? 'ok' : 'bad') : ''}`;
       div.setAttribute('data-tip', `Realizado: R$ ${formatarNumero(realizado)}`);
-      div.title = `Realizado: R$ ${formatarNumero(realizado)}`; // fallback
+      div.title = `Realizado: R$ ${formatarNumero(realizado)}`;
       div.innerHTML = `
         <h2>${linha["Empresa"]}</h2>
         <p>💰 Previsto: R$ ${formatarNumero(previsto)}</p>
@@ -405,12 +418,13 @@ function mostrarGrafico(metas){
   chart = new Chart(ctx,{
     type:'line',
     data:{labels:dias, datasets:[{label:'Evolução do Faturamento', data:vals, fill:true,
-      borderColor:'#388e3c', backgroundColor:'rgba(56,142,60,.12)', tension:.3, pointRadius:4}]},
+      borderColor:'#388e3c', backgroundColor:'rgba(56,142,60,.12)', tension:.25, pointRadius:5, pointHoverRadius:8, pointHitRadius:28}]},
     options:{
       responsive:true,
-      interaction:{mode:'nearest', axis:'x', intersect:false},
+      interaction:{mode:'nearest', intersect:true},     /* <- só mostra no ponto sob o mouse */
+      events:['mousemove','mouseout','click','touchstart','touchmove','touchend'],
       plugins:{
-        tooltip:{ callbacks:{ label:c=> 'R$ '+(Number(c.parsed.y)||0).toLocaleString('pt-BR',{minimumFractionDigits:2}) } }
+        tooltip:{ intersect:true, callbacks:{ label:c=> 'R$ '+(Number(c.parsed.y)||0).toLocaleString('pt-BR',{minimumFractionDigits:2}) } }
       },
       scales:{ y:{ beginAtZero:true, ticks:{ callback:v=>'R$ '+v.toLocaleString('pt-BR') } } }
     }
@@ -443,12 +457,13 @@ async function abrirEvolucaoEmpresa(empresa){
     chartEmpresa = new Chart(ctx,{
       type:'line',
       data:{labels, datasets:[{label:`${empresa} — Realizado`, data:vals, borderColor:'#2563eb',
-        backgroundColor:'rgba(37,99,235,.12)', fill:true, tension:.25, pointRadius:5}]},
+        backgroundColor:'rgba(37,99,235,.12)', fill:true, tension:.25, pointRadius:5, pointHoverRadius:8, pointHitRadius:28}]},
       options:{
         responsive:true,
-        interaction:{mode:'nearest', axis:'x', intersect:false},
+        interaction:{mode:'nearest', intersect:true},  /* <- valor exatamente no ponto */
+        events:['mousemove','mouseout','click','touchstart','touchmove','touchend'],
         plugins:{
-          tooltip:{ callbacks:{ label:c=> 'R$ '+(Number(c.parsed.y)||0).toLocaleString('pt-BR',{minimumFractionDigits:2}) } }
+          tooltip:{ intersect:true, callbacks:{ label:c=> 'R$ '+(Number(c.parsed.y)||0).toLocaleString('pt-BR',{minimumFractionDigits:2}) } }
         },
         scales:{ y:{ beginAtZero:true, ticks:{ callback:v=>'R$ '+v.toLocaleString('pt-BR') } } }
       }
