@@ -114,9 +114,13 @@
     .modal-h{display:flex; align-items:center; gap:10px; margin-bottom:8px}
     .close{margin-left:auto; cursor:pointer; font-weight:800; color:var(--muted)}
     #modalChart{width:100%!important; height:360px!important}
-    #graficoVendas {
-  max-width: 100%;
-  height: 280px !important; /* ajuste aqui (ex.: 200px, 250px, 300px) */
+/* Altura do gráfico principal (mais estreito pra baixo) */
+#graficoVendas{
+  width: 100%;
+  height: 220px !important;   /* ajuste aqui: 180, 200, 220… */
+}
+@media (max-width: 768px){
+  #graficoVendas{ height: 170px !important; }
 }
 
   </style>
@@ -335,7 +339,7 @@ function filtrarGrafico() {
   const filtrados = getFiltros();
   const agg = {};
   filtrados.forEach(d => {
-    const mes = d.data.slice(0,7);
+    const mes = d.data.slice(0, 7);
     agg[mes] = (agg[mes] || 0) + parseFloat(d.bruto || 0);
   });
 
@@ -362,18 +366,22 @@ function filtrarGrafico() {
     },
     options: {
       responsive: true,
-      interaction:{mode:'nearest', intersect:false, axis:'x'},
+      maintainAspectRatio: false, // ← faz o Chart respeitar a altura definida no CSS
+      interaction: { mode:'nearest', intersect:false, axis:'x' },
       plugins: {
         legend: { display: false },
-        tooltip: { intersect:false, callbacks:{ label:c=>'R$ '+BRL(c.parsed.y) } }
+        tooltip: { intersect:false, callbacks:{ label:c => 'R$ ' + BRL(c.parsed.y) } }
       },
       scales: {
-        y: { beginAtZero: true, ticks: { callback:v=>'R$ '+v.toLocaleString('pt-BR') } }
+        y: { beginAtZero: true, ticks: { callback: v => 'R$ ' + v.toLocaleString('pt-BR') } }
       }
     }
   });
+
+  // toque/clique no mobile para fixar tooltip
   wireTooltipOnClick(chart, 'graficoVendas');
 }
+
 
 function atualizarMediaMensal() {
   const filtrados = getFiltros();
