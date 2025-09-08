@@ -1,251 +1,220 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-BR" data-theme="light">
 <head>
   <meta charset="UTF-8" />
   <title>Vendas Delivery</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: white;
-      margin: 0;
-      padding: 0;
-      font-size: 16px;
+    :root{
+      /* tema escuro (igual ao outro painel) */
+      --bg:#0b1020; --surface:#10172a; --card:#0f172a; --text:#e5e7eb; --muted:#94a3b8;
+      --line:rgba(148,163,184,.25); --icon-bg:rgba(255,255,255,.06);
+      --shadow:0 20px 60px rgba(2,6,23,.35); --brand:#60a5fa; --brand2:#22d3ee;
+      --success:#16a34a; --danger:#dc2626;
     }
-    header {
-      background-color: white;
-      padding: 15px;
-      display: flex;
-      align-items: center;
-      border-bottom: 1px solid #ccc;
-      flex-wrap: wrap;
+    [data-theme="light"]{
+      --bg:#f6f7fb; --surface:#fff; --card:#fff; --text:#0f172a; --muted:#475569;
+      --line:#e5e7eb; --icon-bg:rgba(2,6,23,.06); --shadow:0 16px 36px rgba(15,23,42,.08);
     }
-    header img {
-      height: 50px;
-      margin-right: 15px;
-      flex-shrink: 0;
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; font-family:ui-sans-serif,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+      background:var(--bg); color:var(--text);
     }
-    header h1 {
-      margin: 0;
-      font-size: 1.8em;
-      font-weight: bold;
-      flex: 1;
-      text-align: center;
-    }
-    .container {
-      padding: 20px;
-    }
-    .chart-box, .total-box, .resumo-box {
-      background: white;
-      border-radius: 10px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.05);
-      padding: 20px;
-      margin-bottom: 20px;
-    }
-    .chart-box canvas {
-      max-width: 100%;
-      height: auto;
-    }
-    .total-line {
-      display: flex;
-      justify-content: space-between;
-      padding: 10px 0;
-      font-size: 1.2em;
-    }
-    .filters {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 15px;
-      margin-bottom: 30px;
-    }
-    .filters > div {
-      flex: 1 1 45%;
-    }
-    .filters label {
-      font-weight: bold;
-      display: block;
-      margin-bottom: 6px;
-      font-size: 1.1em;
-    }
-    .filters select {
-      width: 100%;
-      padding: 10px;
-      border-radius: 8px;
-      border: 1px solid #ccc;
-      font-size: 1em;
-    }
-    .resumo-linha {
-      background: white;
-      padding: 15px;
-      border-radius: 10px;
-      margin-bottom: 12px;
-      line-height: 1.6;
-      font-size: 1.05em;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
-      border: 1px solid #eee;
-    }
-    .resumo-linha strong {
-      display: block;
-      font-size: 1.2em;
-      margin-bottom: 6px;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 1.05em;
-    }
-    th, td {
-      padding: 10px;
-      text-align: left;
-      border-bottom: 1px solid #eee;
-    }
-    .btn-whatsapp {
-      background-color: #25D366;
-      color: white;
-      padding: 14px;
-      border-radius: 8px;
-      border: none;
-      font-weight: bold;
-      cursor: pointer;
-      font-size: 1.1em;
-      width: 100%;
-      margin-bottom: 20px;
-    }
-    .ranking-table {
-      font-size: 0.85em;
-    }
-    @media (max-width: 600px) {
-      header h1 {
-        font-size: 1.3em;
-      }
-      .filters > div {
-        flex: 1 1 100%;
-      }
-      .btn-whatsapp {
-        font-size: 1em;
-      }
-    }
+
+    /* Header */
+    header{position:sticky; top:0; z-index:40; backdrop-filter:saturate(160%) blur(8px);
+      background:color-mix(in srgb, var(--surface) 80%, transparent); border-bottom:1px solid var(--line);}
+    .head{max-width:1200px; margin:0 auto; padding:14px 18px; display:flex; align-items:center; gap:12px}
+    .brand{display:flex; align-items:center; gap:10px; text-decoration:none; color:inherit}
+    .brand img{height:42px}
+    .title{font-weight:800; letter-spacing:.2px; font-size:clamp(18px,1.6vw,22px)}
+    .grow{flex:1}
+    .btn{border:1px solid var(--line); background:var(--surface); color:var(--text);
+      padding:10px 12px; border-radius:12px; font-weight:800; cursor:pointer; display:inline-flex; gap:8px; align-items:center}
+    .btn:hover{box-shadow:var(--shadow); transform:translateY(-1px)}
+    .only-desktop{display:inline-flex}
+    @media (max-width:900px){.only-desktop{display:none!important}}
+
+    .user{position:relative}
+    .user-btn{display:flex; align-items:center; gap:10px; border:1px solid var(--line);
+      background:var(--surface); padding:6px 8px; border-radius:999px; cursor:pointer}
+    .user-btn img{width:34px; height:34px; border-radius:50%; object-fit:cover; background:var(--icon-bg)}
+    .user-menu{position:absolute; right:0; top:110%; background:var(--surface); border:1px solid var(--line);
+      border-radius:12px; min-width:200px; padding:6px; box-shadow:var(--shadow); display:none}
+    .user.open .user-menu{display:block}
+    .user-menu a,.user-menu button{display:flex; width:100%; padding:10px 12px; border-radius:10px;
+      border:none; background:transparent; color:var(--text); text-align:left; cursor:pointer; font-weight:600}
+    .user-menu a:hover,.user-menu button:hover{background:var(--icon-bg)}
+
+    /* Página */
+    .container{max-width:1200px; margin:0 auto; padding:20px 18px}
+
+    /* Filtros */
+    .filters{display:grid; grid-template-columns: 1fr 220px 220px 200px; gap:12px; align-items:end}
+    @media (max-width:1000px){ .filters{grid-template-columns:1fr 1fr} }
+    @media (max-width:600px){ .filters{grid-template-columns:1fr} }
+    .field label{display:block; margin:0 0 6px; color:var(--muted); font-weight:800; font-size:.95rem}
+    select{width:100%; border:1px solid var(--line); background:var(--surface); color:var(--text);
+      border-radius:12px; padding:12px 14px; font-weight:700}
+    .btn-whats{background:#25d366; color:#fff; border-color:#21b75a}
+
+    /* Cards/caixas */
+    .card{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:16px; box-shadow:var(--shadow); margin:14px 0}
+    .card h3{margin:0 0 10px}
+    .total-line{display:flex; justify-content:space-between; padding:6px 0; font-weight:800}
+
+    /* Tabelas */
+    table{width:100%; border-collapse:collapse; font-size:.95rem}
+    th,td{padding:10px; border-bottom:1px solid var(--line)}
+    th{color:var(--muted); text-align:left}
+    td:last-child, th:last-child{text-align:right}
+
+    /* Resumo por empresa */
+    .resumo-linha{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:14px; margin-bottom:12px; box-shadow:var(--shadow)}
+    .resumo-linha strong{display:block; margin-bottom:6px}
+
+    /* Loading overlay */
+    .loading{position:fixed; inset:0; background:rgba(0,0,0,.55); display:none; align-items:center; justify-content:center; z-index:60}
+    .loading.show{display:flex}
+    .spinner{width:74px; height:74px; border-radius:50%; border:6px solid rgba(255,255,255,.25); border-top-color:#fff; animation:spin 1s linear infinite}
+    .loading p{color:#fff; font-weight:800; margin-top:12px; text-shadow:0 2px 6px rgba(0,0,0,.3)}
+    @keyframes spin{to{transform:rotate(360deg)}}
   </style>
-<script>
-(function(){
-  const KEY_NAME = 'dv_pwd';
-  async function ensurePassword(){
-    let pwd = localStorage.getItem(KEY_NAME) || '';
-    while(!pwd){
-      pwd = prompt('Digite a senha de acesso:') || '';
-      if(!pwd) continue;
-      try{
-        const r = await fetch('/api/ping', {headers:{'x-api-key': pwd }});
-        if(r.ok){
-          localStorage.setItem(KEY_NAME, pwd);
-          break;
-        }else{
-          alert('Senha incorreta.');
-          pwd = '';
+
+  <!-- proteção por senha + tema + fetch x-api-key -->
+  <script>
+    (function(){
+      const KEY='dv_pwd';
+      const t=localStorage.getItem('dv_theme'); if(t) document.documentElement.setAttribute('data-theme', t);
+
+      window.__toggleTheme = function(){
+        const cur=document.documentElement.getAttribute('data-theme')||'light';
+        const next=(cur==='light')?'dark':'light';
+        document.documentElement.setAttribute('data-theme', next);
+        localStorage.setItem('dv_theme', next);
+      };
+
+      async function ensurePwd(){
+        let pwd=localStorage.getItem(KEY)||'';
+        while(!pwd){
+          pwd=prompt('Digite a senha de acesso:')||'';
+          if(!pwd) continue;
+          try{
+            const r=await fetch('/api/ping',{headers:{'x-api-key':pwd}});
+            if(r.ok){ localStorage.setItem(KEY,pwd); break; }
+            alert('Senha incorreta.'); pwd='';
+          }catch{ localStorage.setItem(KEY,pwd); break; }
         }
-      }catch(e){
-        // se não der pra validar agora, ainda assim salva e segue
-        localStorage.setItem(KEY_NAME, pwd);
-        break;
       }
-    }
-  }
 
-  // intercepta fetch para anexar a senha automaticamente
-  const _fetch = window.fetch.bind(window);
-  window.fetch = (input, init={})=>{
-    let url = (typeof input === 'string') ? input : (input && input.url) || '';
-    init = init || {};
-    const headers = new Headers(init.headers || ((typeof input !== 'string' && input.headers) || {}));
-    const pwd = localStorage.getItem(KEY_NAME) || '';
-    if(url.startsWith('/api/')){
-      if(pwd) headers.set('x-api-key', pwd);
-    }
-    return _fetch(input, Object.assign({}, init, { headers }));
-  };
+      const _f=window.fetch.bind(window);
+      window.fetch=(input,init={})=>{
+        const url=(typeof input==='string')?input:(input&&input.url)||'';
+        const headers=new Headers(init.headers||((typeof input!=='string'&&input.headers)||{}));
+        const pwd=localStorage.getItem(KEY)||'';
+        if(url.startsWith('/api/') && pwd) headers.set('x-api-key', pwd);
+        return _f(input, Object.assign({}, init, {headers}));
+      };
 
-  // pede a senha apenas se ainda não houver
-  if(!localStorage.getItem(KEY_NAME)){
-    ensurePassword();
-  }
-})();
-</script>
+      if(!localStorage.getItem(KEY)) ensurePwd();
+      window.handleLogout = ()=>{ localStorage.removeItem(KEY); location.reload(); }
+    })();
+  </script>
 </head>
 <body>
 
+  <!-- Header -->
   <header>
-    <img src="https://github.com/ClenaStore/painel-principal/blob/main/img/GRUPO%20DV%20(1).png?raw=true" alt="Logo CB Systems">
-    <h1>Vendas Delivery</h1>
+    <div class="head">
+      <a class="brand" href="index.html">
+        <img src="https://github.com/ClenaStore/painel-principal/blob/main/img/GRUPO%20DV%20(1).png?raw=true" alt="Logo">
+        <span class="title">Vendas Delivery</span>
+      </a>
+      <div class="grow"></div>
+      <a class="btn only-desktop" href="index.relatorios.html">📄 Relatórios</a>
+      <button id="themeToggle" class="btn">🌓 Tema</button>
+      <div class="user" id="userMenu">
+        <button class="user-btn" type="button">
+          <img src="https://github.com/ClenaStore/grupodv/blob/main/paste/Imagem%20do%20WhatsApp%20de%202025-09-08%20%C3%A0(s)%2011.54.12_884bebc9.jpg?raw=true" alt="">
+          <strong style="font-size:13px">Leonardo</strong>
+        </button>
+        <div class="user-menu">
+          <a href="perfil.html">👤 Meu Perfil</a>
+          <button onclick="handleLogout()">🚪 Sair</button>
+        </div>
+      </div>
+    </div>
   </header>
 
+  <!-- Loading overlay -->
+  <div id="loading" class="loading" aria-hidden="true">
+    <div style="display:flex; flex-direction:column; align-items:center;">
+      <div class="spinner"></div>
+      <p>Carregando dados...</p>
+    </div>
+  </div>
+
   <div class="container">
+    <!-- Filtros -->
     <div class="filters">
-      <div>
-        <label for="empresaFiltro">Empresa:</label>
-        <select id="empresaFiltro" onchange="atualizarTudo()">
-          <option value="">TODAS</option>
+      <div class="field">
+        <label for="empresaFiltro">Empresa</label>
+        <select id="empresaFiltro"></select>
+      </div>
+      <div class="field">
+        <label for="mesInicio">Mês início</label>
+        <select id="mesInicio">
+          <option value="">Todos</option>
+          <option value="01">Janeiro</option><option value="02">Fevereiro</option><option value="03">Março</option>
+          <option value="04">Abril</option><option value="05">Maio</option><option value="06">Junho</option>
+          <option value="07">Julho</option><option value="08">Agosto</option><option value="09">Setembro</option>
+          <option value="10">Outubro</option><option value="11">Novembro</option><option value="12">Dezembro</option>
         </select>
       </div>
-      <div>
-        <label for="mesInicio">Mês Início:</label>
-        <select id="mesInicio" onchange="atualizarTudo()">
+      <div class="field">
+        <label for="mesFim">Mês fim</label>
+        <select id="mesFim">
           <option value="">Todos</option>
-          <option value="01">Janeiro</option>
-          <option value="02">Fevereiro</option>
-          <option value="03">Março</option>
-          <option value="04">Abril</option>
-          <option value="05">Maio</option>
-          <option value="06">Junho</option>
-          <option value="07">Julho</option>
-          <option value="08">Agosto</option>
-          <option value="09">Setembro</option>
-          <option value="10">Outubro</option>
-          <option value="11">Novembro</option>
-          <option value="12">Dezembro</option>
+          <option value="01">Janeiro</option><option value="02">Fevereiro</option><option value="03">Março</option>
+          <option value="04">Abril</option><option value="05">Maio</option><option value="06">Junho</option>
+          <option value="07">Julho</option><option value="08">Agosto</option><option value="09">Setembro</option>
+          <option value="10">Outubro</option><option value="11">Novembro</option><option value="12">Dezembro</option>
         </select>
       </div>
-      <div>
-        <label for="mesFim">Mês Fim:</label>
-        <select id="mesFim" onchange="atualizarTudo()">
-          <option value="">Todos</option>
-          <option value="01">Janeiro</option>
-          <option value="02">Fevereiro</option>
-          <option value="03">Março</option>
-          <option value="04">Abril</option>
-          <option value="05">Maio</option>
-          <option value="06">Junho</option>
-          <option value="07">Julho</option>
-          <option value="08">Agosto</option>
-          <option value="09">Setembro</option>
-          <option value="10">Outubro</option>
-          <option value="11">Novembro</option>
-          <option value="12">Dezembro</option>
-        </select>
+      <div class="field">
+        <label>&nbsp;</label>
+        <button id="btnWhats" class="btn btn-whats" type="button">📲 WhatsApp</button>
       </div>
     </div>
 
-    <div class="chart-box">
+    <!-- Gráfico -->
+    <div class="card">
       <h3>📈 Vendas Brutas por Mês</h3>
       <canvas id="graficoVendas"></canvas>
     </div>
 
-    <div class="total-box">
+    <!-- Média mensal -->
+    <div class="card">
       <h3>📊 Média por Mês</h3>
-      <div class="total-line">
-        <strong>Média:</strong> <strong id="media-mensal">R$ 0,00</strong>
-      </div>
+      <div class="total-line"><span>Média</span><strong id="media-mensal">R$ 0,00</strong></div>
     </div>
 
-    <div class="total-box">
-      <h3>📊 Totais por Plataforma</h3>
+    <!-- Totais por plataforma -->
+    <div class="card">
+      <h3>🧩 Totais por Plataforma</h3>
       <table>
-        <thead><tr><th>Plataforma</th><th style="text-align:right">Total</th></tr></thead>
+        <thead><tr><th>Plataforma</th><th>Total</th></tr></thead>
         <tbody id="tabela-plataformas"></tbody>
       </table>
     </div>
 
-    <div class="total-box">
+    <!-- Ranking -->
+    <div class="card">
       <h3>🏆 Ranking de Empresas</h3>
       <table class="ranking-table">
         <thead></thead>
@@ -253,189 +222,235 @@
       </table>
     </div>
 
-    <button class="btn-whatsapp" onclick="enviarWhatsapp()">📤 Enviar via WhatsApp</button>
-
-    <div class="resumo-box">
+    <!-- Resumo -->
+    <div class="card">
       <h3>📦 Resumo por Empresa</h3>
       <div id="resumo-empresas"></div>
     </div>
   </div>
 
-  <script>
-    const URL_SCRIPT = "/api/delivery";
-    let dados = [];
-    let chart;
+<script>
+/* ---------- Tema & menu usuário ---------- */
+document.getElementById('themeToggle').addEventListener('click', ()=>window.__toggleTheme && window.__toggleTheme());
+const user = document.getElementById('userMenu');
+user.querySelector('.user-btn').addEventListener('click', ()=>user.classList.toggle('open'));
+window.addEventListener('click', e=>{ if(!user.contains(e.target)) user.classList.remove('open'); });
 
-    async function carregarDados() {
-      const res = await fetch(URL_SCRIPT);
-      dados = await res.json();
-      const empresas = [...new Set(dados.map(d => d.empresa))].sort();
-      const select = document.getElementById("empresaFiltro");
-      empresas.forEach(emp => {
-        const opt = document.createElement("option");
-        opt.value = emp;
-        opt.textContent = emp;
-        select.appendChild(opt);
-      });
-      atualizarTudo();
-    }
+/* ---------- Util ---------- */
+const URL_SCRIPT = "/api/delivery";
+let dados = [];
+let chart;
+const $ = sel => document.querySelector(sel);
+function showLoading(v){ $('#loading').classList.toggle('show', !!v); }
+const BRL = n => (Number(n)||0).toLocaleString('pt-BR',{minimumFractionDigits:2});
 
-    function atualizarTudo() {
-      atualizarResumoEmpresa();
-      filtrarGrafico();
-      atualizarMediaMensal();
-      atualizarTotaisPorPlataforma();
-      atualizarRankingEmpresas();
-    }
+/* ---------- Tooltip via clique/touch (mobile) ---------- */
+function wireTooltipOnClick(chart, canvas){
+  const el = (typeof canvas==='string') ? document.getElementById(canvas) : canvas;
+  function activate(evt){
+    const pts = chart.getElementsAtEventForMode(evt, 'nearest', {intersect:true}, true);
+    if(!pts.length) return;
+    const {datasetIndex, index} = pts[0];
+    const node = chart.getDatasetMeta(datasetIndex).data[index];
+    chart.setActiveElements([{datasetIndex, index}]);
+    chart.tooltip.setActiveElements([{datasetIndex, index}], {x: node.x, y: node.y});
+    chart.update();
+  }
+  el.addEventListener('click', activate, {passive:true});
+  el.addEventListener('touchstart', activate, {passive:true});
+}
 
-    function getFiltros() {
-      const empresa = document.getElementById("empresaFiltro").value;
-      const mesInicio = document.getElementById("mesInicio").value;
-      const mesFim = document.getElementById("mesFim").value;
+/* ---------- Filtros helpers ---------- */
+function getFiltros() {
+  const empresa = $('#empresaFiltro').value;
+  const mesInicio = $('#mesInicio').value;
+  const mesFim = $('#mesFim').value;
 
-      return dados.filter(d => {
-        const mes = d.data.split("-")[1];
-        return (!empresa || d.empresa === empresa) &&
-               (!mesInicio || mes >= mesInicio) &&
-               (!mesFim || mes <= mesFim);
-      });
-    }
+  return dados.filter(d => {
+    const mes = d.data.split("-")[1];
+    return (!empresa || d.empresa === empresa) &&
+           (!mesInicio || mes >= mesInicio) &&
+           (!mesFim || mes <= mesFim);
+  });
+}
 
-    function filtrarGrafico() {
-      const filtrados = getFiltros();
-      const agrupado = {};
-      filtrados.forEach(d => {
-        const mes = d.data.slice(0, 7);
-        agrupado[mes] = (agrupado[mes] || 0) + parseFloat(d.bruto || 0);
-      });
+/* ---------- Atualizações ---------- */
+function atualizarTudo(){
+  atualizarResumoEmpresa();
+  filtrarGrafico();
+  atualizarMediaMensal();
+  atualizarTotaisPorPlataforma();
+  atualizarRankingEmpresas();
+}
 
-      const labels = Object.keys(agrupado).sort();
-      const valores = labels.map(l => agrupado[l]);
+function filtrarGrafico() {
+  const filtrados = getFiltros();
+  const agg = {};
+  filtrados.forEach(d => {
+    const mes = d.data.slice(0,7);
+    agg[mes] = (agg[mes] || 0) + parseFloat(d.bruto || 0);
+  });
 
-      if (chart) chart.destroy();
-      chart = new Chart(document.getElementById("graficoVendas"), {
-        type: 'line',
-        data: {
-          labels: labels,
-          datasets: [{
-            label: 'Bruto por Mês',
-            data: valores,
-            borderColor: '#2c3e50',
-            backgroundColor: 'rgba(44, 62, 80, 0.2)',
-            fill: true,
-            tension: 0.3
-          }]
-        },
-        options: {
-          responsive: true,
-          plugins: { legend: { display: false } }
+  const labels = Object.keys(agg).sort();
+  const valores = labels.map(l => agg[l]);
+
+  if (chart) chart.destroy();
+  chart = new Chart($('#graficoVendas'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Bruto por Mês',
+        data: valores,
+        borderColor: '#60a5fa',
+        backgroundColor: 'rgba(96,165,250,.18)',
+        borderWidth: 3,
+        pointRadius: 5,
+        pointHoverRadius: 8,
+        pointHitRadius: 28,
+        tension: .25,
+        fill: true
+      }]
+    },
+    options: {
+      responsive: true,
+      interaction:{mode:'nearest', intersect:false, axis:'x'},
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          intersect:false,
+          callbacks:{ label:c=>'R$ '+BRL(c.parsed.y) }
         }
-      });
-    }
-
-    function atualizarMediaMensal() {
-      const filtrados = getFiltros();
-      const agrupado = {};
-      filtrados.forEach(d => {
-        const mes = d.data.slice(0,7);
-        agrupado[mes] = (agrupado[mes] || 0) + parseFloat(d.bruto || 0);
-      });
-      const valores = Object.values(agrupado);
-      const media = valores.length ? valores.reduce((a,b) => a + b, 0) / valores.length : 0;
-      document.getElementById("media-mensal").textContent = "R$ " + media.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
-    }
-
-    function atualizarTotaisPorPlataforma() {
-      const filtrados = getFiltros();
-      const totais = {};
-      filtrados.forEach(d => {
-        totais[d.plataforma] = (totais[d.plataforma] || 0) + parseFloat(d.bruto || 0);
-      });
-      const el = document.getElementById("tabela-plataformas");
-      el.innerHTML = '';
-      Object.entries(totais).forEach(([plat, val]) => {
-        el.innerHTML += `<tr><td>${plat}</td><td style="text-align:right">R$ ${val.toLocaleString('pt-BR')}</td></tr>`;
-      });
-    }
-
-    function atualizarRankingEmpresas() {
-      const filtrados = getFiltros();
-      const dadosMesEmpresa = {};
-
-      filtrados.forEach(d => {
-        const mes = d.data.slice(0, 7);
-        const empresa = d.empresa;
-        const valor = parseFloat(d.bruto || 0);
-        if (!dadosMesEmpresa[mes]) dadosMesEmpresa[mes] = {};
-        if (!dadosMesEmpresa[mes][empresa]) dadosMesEmpresa[mes][empresa] = 0;
-        dadosMesEmpresa[mes][empresa] += valor;
-      });
-
-      function traduzMes(mesAno) {
-        const [ano, mes] = mesAno.split("-");
-        const nomes = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
-        return `${nomes[parseInt(mes) - 1]}/${ano}`;
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: { callback:v=>'R$ '+v.toLocaleString('pt-BR') }
+        }
       }
-
-      const mesesOrdenados = Object.keys(dadosMesEmpresa).sort().reverse();
-      const todasEmpresas = [...new Set(filtrados.map(d => d.empresa))].sort();
-
-      const corpo = document.getElementById("tabela-ranking");
-      const thead = corpo.parentElement.querySelector('thead');
-      thead.innerHTML = `<tr><th>Mês</th>${todasEmpresas.map(emp => `<th style="text-align:right">${emp}</th>`).join('')}</tr>`;
-      corpo.innerHTML = '';
-
-      mesesOrdenados.forEach(mes => {
-        const valores = todasEmpresas.map(emp => dadosMesEmpresa[mes][emp] || 0);
-        const max = Math.max(...valores);
-
-        const linha = [`<td>${traduzMes(mes)}</td>`];
-        todasEmpresas.forEach(emp => {
-          const valor = dadosMesEmpresa[mes][emp] || 0;
-          const destaque = valor === max ? ' style="text-align:right; color:green; font-weight:bold"' : ' style="text-align:right"';
-          linha.push(`<td${destaque}>R$ ${valor.toLocaleString('pt-BR')}</td>`);
-        });
-
-        corpo.innerHTML += `<tr>${linha.join('')}</tr>`;
-      });
     }
+  });
+  wireTooltipOnClick(chart, 'graficoVendas');
+}
 
-    function atualizarResumoEmpresa() {
-      const filtrados = getFiltros();
-      const resumo = {};
-      filtrados.forEach(d => {
-        const chave = `${d.empresa} | ${d.plataforma}`;
-        if (!resumo[chave]) resumo[chave] = { bruto: 0, liquido: 0, taxa: 0 };
-        resumo[chave].bruto += parseFloat(d.bruto || 0);
-        resumo[chave].liquido += parseFloat(d.liquido || 0);
-        resumo[chave].taxa += parseFloat(d.taxa || 0);
-      });
+function atualizarMediaMensal() {
+  const filtrados = getFiltros();
+  const agg = {};
+  filtrados.forEach(d => {
+    const mes = d.data.slice(0,7);
+    agg[mes] = (agg[mes] || 0) + parseFloat(d.bruto || 0);
+  });
+  const valores = Object.values(agg);
+  const media = valores.length ? valores.reduce((a,b)=>a+b,0)/valores.length : 0;
+  $('#media-mensal').textContent = 'R$ ' + BRL(media);
+}
 
-      const div = document.getElementById("resumo-empresas");
-      div.innerHTML = '';
-      Object.entries(resumo).sort().forEach(([chave, valores]) => {
-        const [empresa, plataforma] = chave.split(" | ");
-        const perc = (valores.taxa / valores.bruto) * 100 || 0;
-        div.innerHTML += `
-          <div class="resumo-linha">
-            <strong>${empresa} - ${plataforma}</strong>
-            💰 Bruto: R$ ${valores.bruto.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}<br>
-            💵 Líquido: R$ ${valores.liquido.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}<br>
-            📉 Investimento (${perc.toFixed(2)}%): R$ ${valores.taxa.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-          </div>
-        `;
-      });
-    }
+function atualizarTotaisPorPlataforma() {
+  const filtrados = getFiltros();
+  const totais = {};
+  filtrados.forEach(d => {
+    totais[d.plataforma] = (totais[d.plataforma] || 0) + parseFloat(d.bruto || 0);
+  });
+  const el = $('#tabela-plataformas');
+  el.innerHTML = '';
+  Object.entries(totais).forEach(([plat, val]) => {
+    el.innerHTML += `<tr><td>${plat}</td><td>R$ ${BRL(val)}</td></tr>`;
+  });
+}
 
-    function enviarWhatsapp() {
-      const empresa = document.getElementById("empresaFiltro").value || "TODAS";
-      const media = document.getElementById("media-mensal").textContent;
-      const msg = `📊 Resumo de Vendas Delivery\n🏢 Empresa: ${empresa}\n📈 Média: ${media}`;
-      const url = `https://wa.me/557799999999?text=${encodeURIComponent(msg)}`;
-      window.open(url, "_blank");
-    }
+function atualizarRankingEmpresas() {
+  const filtrados = getFiltros();
+  const dadosMesEmpresa = {};
+  filtrados.forEach(d => {
+    const mes = d.data.slice(0,7);
+    const emp = d.empresa;
+    const val = parseFloat(d.bruto || 0);
+    if(!dadosMesEmpresa[mes]) dadosMesEmpresa[mes]={};
+    if(!dadosMesEmpresa[mes][emp]) dadosMesEmpresa[mes][emp]=0;
+    dadosMesEmpresa[mes][emp]+=val;
+  });
 
-    carregarDados();
-  </script>
+  const nomesMes = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+  const meses = Object.keys(dadosMesEmpresa).sort().reverse();
+  const empresas = [...new Set(filtrados.map(d=>d.empresa))].sort();
+
+  const tbody = $('#tabela-ranking');
+  const thead = tbody.parentElement.querySelector('thead');
+  thead.innerHTML = `<tr><th>Mês</th>${empresas.map(e=>`<th>${e}</th>`).join('')}</tr>`;
+  tbody.innerHTML='';
+
+  meses.forEach(m=>{
+    const [ano,mm]=m.split('-');
+    const linha=[`<td>${nomesMes[+mm-1]}/${ano}</td>`];
+    const vals = empresas.map(e=>dadosMesEmpresa[m][e]||0);
+    const max = Math.max(...vals);
+    empresas.forEach((e,i)=>{
+      const v = vals[i];
+      const strong = v===max ? ` style="color:var(--success); font-weight:800"` : '';
+      linha.push(`<td${strong}>R$ ${BRL(v)}</td>`);
+    });
+    tbody.innerHTML += `<tr>${linha.join('')}</tr>`;
+  });
+}
+
+function atualizarResumoEmpresa() {
+  const filtrados = getFiltros();
+  const resumo = {};
+  filtrados.forEach(d => {
+    const chave = `${d.empresa} | ${d.plataforma}`;
+    if (!resumo[chave]) resumo[chave] = { bruto: 0, liquido: 0, taxa: 0 };
+    resumo[chave].bruto += parseFloat(d.bruto || 0);
+    resumo[chave].liquido += parseFloat(d.liquido || 0);
+    resumo[chave].taxa += parseFloat(d.taxa || 0);
+  });
+
+  const box = $('#resumo-empresas'); box.innerHTML='';
+  Object.entries(resumo).sort().forEach(([k,v])=>{
+    const [empresa, plataforma] = k.split(' | ');
+    const perc = (v.taxa / (v.bruto||1)) * 100;
+    box.innerHTML += `
+      <div class="resumo-linha">
+        <strong>${empresa} — ${plataforma}</strong>
+        💰 Bruto: R$ ${BRL(v.bruto)}<br>
+        💵 Líquido: R$ ${BRL(v.liquido)}<br>
+        📉 Investimento (${perc.toFixed(2)}%): R$ ${BRL(v.taxa)}
+      </div>
+    `;
+  });
+}
+
+/* ---------- WhatsApp ---------- */
+document.getElementById('btnWhats').addEventListener('click', ()=>{
+  const empresa = $('#empresaFiltro').value || 'TODAS';
+  const media = $('#media-mensal').textContent;
+  const msg = `📊 Resumo de Vendas Delivery\n🏢 Empresa: ${empresa}\n📈 Média: ${media}`;
+  const url = `https://wa.me/557799999999?text=${encodeURIComponent(msg)}`;
+  window.open(url,'_blank');
+});
+
+/* ---------- Carregamento inicial ---------- */
+async function carregarDados(){
+  showLoading(true);
+  try{
+    const res = await fetch(URL_SCRIPT);
+    dados = await res.json();
+    // popular empresas
+    const empresas = [...new Set(dados.map(d=>d.empresa))].sort();
+    const sel = $('#empresaFiltro'); sel.innerHTML = `<option value="">TODAS</option>`;
+    empresas.forEach(emp=>{
+      const o=document.createElement('option'); o.value=emp; o.textContent=emp; sel.appendChild(o);
+    });
+    // reagir a mudanças
+    ['empresaFiltro','mesInicio','mesFim'].forEach(id=>document.getElementById(id).onchange = atualizarTudo);
+    atualizarTudo();
+  }catch(e){
+    console.error(e);
+    alert('Erro ao carregar dados do delivery.');
+  }finally{
+    showLoading(false);
+  }
+}
+carregarDados();
+</script>
 </body>
 </html>
