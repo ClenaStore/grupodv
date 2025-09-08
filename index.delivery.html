@@ -8,11 +8,9 @@
 
   <style>
     :root{
-      /* tema escuro (igual ao outro painel) */
       --bg:#0b1020; --surface:#10172a; --card:#0f172a; --text:#e5e7eb; --muted:#94a3b8;
-      --line:rgba(148,163,184,.25); --icon-bg:rgba(255,255,255,.06);
-      --shadow:0 20px 60px rgba(2,6,23,.35); --brand:#60a5fa; --brand2:#22d3ee;
-      --success:#16a34a; --danger:#dc2626;
+      --line:rgba(148,163,184,.25); --icon-bg:rgba(255,255,255,.06); --shadow:0 20px 60px rgba(2,6,23,.35);
+      --brand:#60a5fa; --brand2:#22d3ee; --success:#16a34a; --danger:#dc2626; --orange:#f59e0b;
     }
     [data-theme="light"]{
       --bg:#f6f7fb; --surface:#fff; --card:#fff; --text:#0f172a; --muted:#475569;
@@ -74,8 +72,16 @@
     th{color:var(--muted); text-align:left}
     td:last-child, th:last-child{text-align:right}
 
-    /* Resumo por empresa */
-    .resumo-linha{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:14px; margin-bottom:12px; box-shadow:var(--shadow)}
+    /* Tabela rolável no ranking */
+    .table-scroll{overflow-x:auto; -webkit-overflow-scrolling:touch}
+    .ranking-table{white-space:nowrap; min-width:720px}
+
+    /* Resumo por empresa (cards clicáveis) */
+    .resumo-linha{background:var(--card); border:2px solid var(--line); border-radius:12px; padding:14px; margin-bottom:12px; box-shadow:var(--shadow);
+      transition:.18s transform, .18s box-shadow, .18s border-color; cursor:pointer}
+    .resumo-linha:hover{transform:translateY(-2px)}
+    .plat-ifood{border-color: color-mix(in srgb, var(--danger) 70%, var(--line))}
+    .plat-much{border-color: color-mix(in srgb, var(--orange) 70%, var(--line))}
     .resumo-linha strong{display:block; margin-bottom:6px}
 
     /* Loading overlay */
@@ -84,6 +90,15 @@
     .spinner{width:74px; height:74px; border-radius:50%; border:6px solid rgba(255,255,255,.25); border-top-color:#fff; animation:spin 1s linear infinite}
     .loading p{color:#fff; font-weight:800; margin-top:12px; text-shadow:0 2px 6px rgba(0,0,0,.3)}
     @keyframes spin{to{transform:rotate(360deg)}}
+
+    /* Modal evolução por modalidade */
+    .modal{position:fixed; inset:0; background:rgba(0,0,0,.6); display:none; align-items:center; justify-content:center; z-index:55; padding:18px}
+    .modal.open{display:flex}
+    .modal-card{background:var(--surface); border:1px solid var(--line); border-radius:14px; width:min(1100px,96vw); max-height:92vh;
+      box-shadow:var(--shadow); padding:16px; overflow:auto}
+    .modal-h{display:flex; align-items:center; gap:10px; margin-bottom:8px}
+    .close{margin-left:auto; cursor:pointer; font-weight:800; color:var(--muted)}
+    #modalChart{width:100%!important; height:360px!important}
   </style>
 
   <!-- proteção por senha + tema + fetch x-api-key -->
@@ -213,19 +228,32 @@
       </table>
     </div>
 
-    <!-- Ranking -->
+    <!-- Ranking (rolável) -->
     <div class="card">
       <h3>🏆 Ranking de Empresas</h3>
-      <table class="ranking-table">
-        <thead></thead>
-        <tbody id="tabela-ranking"></tbody>
-      </table>
+      <div class="table-scroll">
+        <table class="ranking-table">
+          <thead></thead>
+          <tbody id="tabela-ranking"></tbody>
+        </table>
+      </div>
     </div>
 
     <!-- Resumo -->
     <div class="card">
       <h3>📦 Resumo por Empresa</h3>
       <div id="resumo-empresas"></div>
+    </div>
+  </div>
+
+  <!-- Modal evolução (empresa + modalidade) -->
+  <div id="modal" class="modal" aria-hidden="true">
+    <div class="modal-card">
+      <div class="modal-h">
+        <h3 id="modalTitle" style="margin:0">Evolução</h3>
+        <span id="closeModal" class="close">✕</span>
+      </div>
+      <canvas id="modalChart"></canvas>
     </div>
   </div>
 
@@ -239,14 +267,14 @@ window.addEventListener('click', e=>{ if(!user.contains(e.target)) user.classLis
 /* ---------- Util ---------- */
 const URL_SCRIPT = "/api/delivery";
 let dados = [];
-let chart;
+let chart, modalChart;
 const $ = sel => document.querySelector(sel);
 function showLoading(v){ $('#loading').classList.toggle('show', !!v); }
 const BRL = n => (Number(n)||0).toLocaleString('pt-BR',{minimumFractionDigits:2});
 
-/* ---------- Tooltip via clique/touch (mobile) ---------- */
-function wireTooltipOnClick(chart, canvas){
-  const el = (typeof canvas==='string') ? document.getElementById(canvas) : canvas;
+/* Tooltip via clique/touch (mobile) */
+function wireTooltipOnClick(chart, canvasId){
+  const el = document.getElementById(canvasId);
   function activate(evt){
     const pts = chart.getElementsAtEventForMode(evt, 'nearest', {intersect:true}, true);
     if(!pts.length) return;
@@ -317,16 +345,10 @@ function filtrarGrafico() {
       interaction:{mode:'nearest', intersect:false, axis:'x'},
       plugins: {
         legend: { display: false },
-        tooltip: {
-          intersect:false,
-          callbacks:{ label:c=>'R$ '+BRL(c.parsed.y) }
-        }
+        tooltip: { intersect:false, callbacks:{ label:c=>'R$ '+BRL(c.parsed.y) } }
       },
       scales: {
-        y: {
-          beginAtZero: true,
-          ticks: { callback:v=>'R$ '+v.toLocaleString('pt-BR') }
-        }
+        y: { beginAtZero: true, ticks: { callback:v=>'R$ '+v.toLocaleString('pt-BR') } }
       }
     }
   });
@@ -375,7 +397,7 @@ function atualizarRankingEmpresas() {
   const empresas = [...new Set(filtrados.map(d=>d.empresa))].sort();
 
   const tbody = $('#tabela-ranking');
-  const thead = tbody.parentElement.querySelector('thead');
+  const thead = tbody.parentElement.parentElement.querySelector('thead');
   thead.innerHTML = `<tr><th>Mês</th>${empresas.map(e=>`<th>${e}</th>`).join('')}</tr>`;
   tbody.innerHTML='';
 
@@ -408,16 +430,59 @@ function atualizarResumoEmpresa() {
   Object.entries(resumo).sort().forEach(([k,v])=>{
     const [empresa, plataforma] = k.split(' | ');
     const perc = (v.taxa / (v.bruto||1)) * 100;
-    box.innerHTML += `
-      <div class="resumo-linha">
-        <strong>${empresa} — ${plataforma}</strong>
-        💰 Bruto: R$ ${BRL(v.bruto)}<br>
-        💵 Líquido: R$ ${BRL(v.liquido)}<br>
-        📉 Investimento (${perc.toFixed(2)}%): R$ ${BRL(v.taxa)}
-      </div>
+    const plat = plataforma.toLowerCase();
+    const classePlat = plat.includes('ifood') ? 'plat-ifood' : (plat.includes('much') ? 'plat-much' : '');
+
+    const div = document.createElement('div');
+    div.className = `resumo-linha ${classePlat}`;
+    div.dataset.empresa = empresa;
+    div.dataset.plataforma = plataforma;
+    div.innerHTML = `
+      <strong>${empresa} — ${plataforma}</strong>
+      💰 Bruto: R$ ${BRL(v.bruto)}<br>
+      💵 Líquido: R$ ${BRL(v.liquido)}<br>
+      📉 Investimento (${perc.toFixed(2)}%): R$ ${BRL(v.taxa)}
     `;
+    div.addEventListener('click', ()=>abrirModalEvolucao(empresa, plataforma));
+    box.appendChild(div);
   });
 }
+
+/* ---------- Modal: evolução empresa + modalidade ---------- */
+function abrirModalEvolucao(empresa, plataforma){
+  const filtrados = getFiltros().filter(d=> d.empresa===empresa && d.plataforma===plataforma);
+  const agg = {};
+  filtrados.forEach(d=>{
+    const mes = d.data.slice(0,7);
+    agg[mes] = (agg[mes]||0) + parseFloat(d.bruto||0);
+  });
+  const labels = Object.keys(agg).sort();
+  const valores = labels.map(l=>agg[l]);
+
+  $('#modalTitle').textContent = `Evolução — ${empresa} — ${plataforma}`;
+  $('#modal').classList.add('open');
+
+  const border = plataforma.toLowerCase().includes('ifood') ? '#dc2626' :
+                 plataforma.toLowerCase().includes('much') ? '#f59e0b' : '#2563eb';
+  const fill = plataforma.toLowerCase().includes('ifood') ? 'rgba(220,38,38,.15)' :
+               plataforma.toLowerCase().includes('much') ? 'rgba(245,158,11,.15)' : 'rgba(37,99,235,.15)';
+
+  if(modalChart) modalChart.destroy();
+  modalChart = new Chart(document.getElementById('modalChart'),{
+    type:'line',
+    data:{labels, datasets:[{label:`${plataforma}`, data:valores, borderColor:border, backgroundColor:fill,
+      borderWidth:3, pointRadius:5, pointHoverRadius:8, pointHitRadius:28, tension:.25, fill:true}]},
+    options:{
+      responsive:true,
+      interaction:{mode:'nearest', intersect:false, axis:'x'},
+      plugins:{ tooltip:{intersect:false, callbacks:{label:c=>'R$ '+BRL(c.parsed.y)}}},
+      scales:{ y:{ beginAtZero:true, ticks:{ callback:v=>'R$ '+v.toLocaleString('pt-BR') } } }
+    }
+  });
+  wireTooltipOnClick(modalChart, 'modalChart');
+}
+document.getElementById('closeModal').addEventListener('click', ()=>document.getElementById('modal').classList.remove('open'));
+document.getElementById('modal').addEventListener('click', e=>{ if(e.target.id==='modal') document.getElementById('modal').classList.remove('open'); });
 
 /* ---------- WhatsApp ---------- */
 document.getElementById('btnWhats').addEventListener('click', ()=>{
