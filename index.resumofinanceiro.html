@@ -1,47 +1,117 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-BR" data-theme="light">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
   <title>Resumo de Entradas</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
   <style>
     :root{
-      --bg:#f7f7f7; --card:#fff; --line:#e5e7eb; --text:#0f172a;
-      --accent:#1e1e2f; --good:#16a34a; --warn:#b45309; --bad:#dc2626;
+      /* Tema escuro (padrão) – igual ao index */
+      --bg: #0b1020;
+      --surface: #10172a;
+      --card: #0f172a;
+      --text: #e5e7eb;
+      --muted: #94a3b8;
+      --line: rgba(148,163,184,.25);
+      --brand: #60a5fa;
+      --brand-2: #22d3ee;
+      --ring: rgba(99,102,241,.35);
+      --shadow: 0 20px 60px rgba(2,6,23,.35);
+      --chip-bg:#0b1220;
+      --chip-active:#111827;
+      --chip-text:#cbd5e1;
+      --icon-bg: rgba(255,255,255,.06);
+      --grad: linear-gradient(135deg, var(--brand), var(--brand-2));
     }
+    /* Tema claro – igual ao index */
+    [data-theme="light"]{
+      --bg: #f6f7fb;
+      --surface: #ffffff;
+      --card: #ffffff;
+      --text: #0f172a;
+      --muted: #475569;
+      --line: #e5e7eb;
+      --chip-bg:#eef2ff;
+      --chip-active:#1f2937;
+      --chip-text:#111827;
+      --icon-bg: rgba(2,6,23,.06);
+      --shadow: 0 16px 36px rgba(15,23,42,.08);
+    }
+
     *{ box-sizing:border-box }
-    html, body{ height:100%; }
+    html, body{ height:100% }
     body{
-      font-family: Arial, sans-serif;
+      margin:0;
+      font-family: ui-sans-serif, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
       background: var(--bg);
       color: var(--text);
-      margin: 0; padding: 0;
-      font-size: 14px;
-      overflow-x: hidden;
+      font-size:14px;
+      overflow-x:hidden;
     }
 
+    /* ===== Header unificado (igual index) ===== */
     header{
-      position: sticky; top: 0; z-index: 10;
-      background: #fff;
-      padding: 16px 24px;
-      display: flex; align-items: center; gap: 16px;
-      border-bottom: 1px solid #ccc;
+      position: sticky; top:0; z-index: 50;
+      backdrop-filter: saturate(160%) blur(8px);
+      background: color-mix(in srgb, var(--surface) 80%, transparent);
+      border-bottom: 1px solid var(--line);
     }
-    header img{ height: 56px; max-width: 100%; }
-    header h1{
-      margin: 0;
-      font-size: clamp(1.2rem, 1vw + 1rem, 1.8rem);
-      font-weight: bold;
-      text-align: center;
-      flex: 1;
+    .head-wrap{
+      max-width: 1200px; margin: 0 auto; padding: 14px 18px;
+      display:flex; align-items:center; gap:12px;
     }
+    .brand{
+      display:flex; align-items:center; gap:10px; text-decoration:none; color:inherit;
+    }
+    .brand img{ height:42px }
+    .title{
+      font-weight: 800; letter-spacing:.2px;
+      font-size: clamp(18px, 1.6vw, 22px);
+    }
+    .head-spacer{ flex:1 }
+    .icon-btn{
+      border:1px solid var(--line); background: var(--surface);
+      color: var(--text); padding:10px 12px; border-radius: 12px;
+      font-weight:800; cursor:pointer; transition:.2s transform, .2s box-shadow;
+      text-decoration:none; display:inline-flex; align-items:center; gap:8px;
+    }
+    .icon-btn:hover{ transform: translateY(-2px); box-shadow: var(--shadow) }
+    .only-desktop { display: inline-flex; }
+    @media (max-width: 900px) { .only-desktop { display: none !important; } }
 
+    /* User menu */
+    .user{ position: relative; }
+    .user-btn{
+      display:flex; align-items:center; gap:10px; cursor:pointer;
+      border:1px solid var(--line); background: var(--surface);
+      padding:6px 8px; border-radius: 999px;
+    }
+    .user-btn img{
+      width:34px; height:34px; border-radius:50%; object-fit:cover;
+      background: var(--icon-bg);
+    }
+    .user-menu{
+      position:absolute; right:0; top:110%;
+      background: var(--surface); border:1px solid var(--line);
+      border-radius:12px; box-shadow: var(--shadow); min-width:200px;
+      padding:6px; display:none;
+    }
+    .user.open .user-menu{ display:block }
+    .user-menu a, .user-menu button{
+      display:flex; width:100%; background:transparent; color:var(--text);
+      border:none; text-align:left; padding:10px 12px; border-radius:10px; cursor:pointer;
+      text-decoration:none; font-weight:600;
+    }
+    .user-menu a:hover, .user-menu button:hover{ background: var(--icon-bg) }
+
+    /* ===== Conteúdo original (mantido) com variáveis do tema ===== */
     .conteudo{
       width: 100%;
-      max-width: 100%;
-      padding: 20px 24px 32px;
+      max-width: 1200px;
+      padding: 20px 18px 32px;
       margin: 0 auto;
     }
 
@@ -52,14 +122,17 @@
       margin-bottom: 20px;
       align-items: end;
     }
-    .filtros label{ font-weight: bold; font-size: 0.95em; display:block; margin-bottom: 6px; }
+    .filtros label{ font-weight: 800; font-size: .95em; display:block; margin-bottom: 6px; color: var(--muted); }
     .filtros input, .filtros select{
-      padding: 10px; border-radius: 8px; border: 1px solid #ccc; width: 100%; font-size: 0.95em; background: #fff;
+      padding: 10px; border-radius: 8px; border: 1px solid var(--line); width: 100%;
+      font-size: .95em; background: var(--surface); color: var(--text);
     }
     .filtros button{
-      padding: 10px 16px; border: none; border-radius: 8px; background: var(--accent); color: #fff;
-      font-weight: bold; cursor: pointer; font-size: 0.95em; width: 100%;
+      padding: 10px 16px; border: 1px solid var(--line); border-radius: 8px;
+      background: var(--surface); color: var(--text);
+      font-weight: 800; cursor: pointer; font-size: .95em; width: 100%;
     }
+    .filtros button:hover{ box-shadow: var(--shadow); transform: translateY(-1px); }
 
     #painel{
       display: grid;
@@ -72,18 +145,18 @@
       border: 1px solid var(--line);
       border-radius: 12px;
       padding: 16px;
-      box-shadow: 0 6px 18px rgba(0,0,0,.05);
+      box-shadow: var(--shadow);
       font-size: 0.95em;
       overflow: hidden;
     }
     .empresa-box h2{
       margin: 0 0 10px;
       font-size: clamp(1.05rem, .7vw + 1rem, 1.25rem);
-      color: #2c3e50;
+      color: var(--text);
       word-break: break-word; overflow-wrap: anywhere;
     }
     .empresa-box ul{ list-style: none; padding-left: 0; margin: 0 }
-    .empresa-box li{ margin-bottom: 6px }
+    .empresa-box li{ margin-bottom: 6px; color: var(--muted) }
 
     .grafico-desktop{
       margin-top: 12px;
@@ -96,7 +169,7 @@
     .grafico-desktop::after{
       content: "Clique para ver a evolução anual";
       position: absolute; right: 10px; bottom: 8px;
-      font-size: 12px; color: #6b7280;
+      font-size: 12px; color: var(--muted);
     }
     .grafico-desktop canvas{
       width: 100% !important;
@@ -106,6 +179,7 @@
 
     .legend{
       display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px;
+      color: var(--muted);
     }
     .legend span{
       display: inline-flex; align-items: center; gap: 6px; font-size: 0.85em; white-space: nowrap;
@@ -124,45 +198,45 @@
     .modal.open{ display: flex; }
     .modal-card{
       width: min(1100px, 96vw);
-      background: #fff; border-radius: 14px; box-shadow: 0 20px 60px rgba(0,0,0,.2);
+      background: var(--surface); border-radius: 14px; box-shadow: var(--shadow);
+      border:1px solid var(--line);
       padding: 18px;
-      max-height: 92vh; overflow: auto;
+      max-height: 92vh; overflow: auto; color: var(--text);
     }
     .modal-header{
       display:flex; align-items:center; gap:12px; margin-bottom:10px;
     }
     .modal-header h3{ margin:0; font-size:1.1rem }
-    .close-x{ margin-left:auto; cursor:pointer; font-weight:bold; font-size:20px; line-height:1; color:#374151 }
+    .close-x{ margin-left:auto; cursor:pointer; font-weight:bold; font-size:20px; line-height:1; color:var(--muted) }
     .kpi-row{
       display:grid; gap:10px; grid-template-columns: repeat(3, minmax(0,1fr));
       margin:10px 0 14px;
     }
     .kpi-badge{
-      border:1px solid var(--line); border-radius:12px; padding:12px; background:#fafafa;
+      border:1px solid var(--line); border-radius:12px; padding:12px; background: color-mix(in srgb, var(--surface) 90%, #fff);
     }
-    .kpi-badge h4{ margin:0 0 6px; font-size:.9rem; color:#374151 }
+    .kpi-badge h4{ margin:0 0 6px; font-size:.9rem; color:var(--muted) }
     .kpi-badge p{ margin:0; font-size:1.15rem; font-weight:800 }
-    .kpi-badge small{ display:block; color:#6b7280; margin-top:2px }
+    .kpi-badge small{ display:block; color:var(--muted); margin-top:2px }
     .kpi-bonus { border-left:6px solid #f59e0b; }
     .kpi-socio { border-left:6px solid #3b82f6; }
     .kpi-erro  { border-left:6px solid #ef4444; }
 
-    /* layout do gráfico + painel de comparação */
-    .anual-grid{
-      display:grid; grid-template-columns: 1fr 280px; gap:12px; align-items:start;
-    }
+    .anual-grid{ display:grid; grid-template-columns: 1fr 280px; gap:12px; align-items:start; }
     #graficoAnualWrap{ height: 380px; border:1px solid var(--line); border-radius:12px; padding:10px }
     #graficoAnual{ width:100% !important; height:100% !important; }
 
     .compare-panel{
-      border:1px solid var(--line); border-radius:12px; padding:10px; background:#fafafa;
+      border:1px solid var(--line); border-radius:12px; padding:10px; background: color-mix(in srgb, var(--surface) 90%, #fff);
       max-height: 380px; overflow:auto;
     }
     .compare-panel h4{ margin:0 0 8px; font-size:.95rem }
     .compare-actions{ display:flex; gap:6px; margin-bottom:8px; flex-wrap:wrap }
     .mini-btn{
-      border:none; background:#111827; color:#fff; padding:6px 10px; border-radius:8px; font-weight:700; cursor:pointer; font-size:.8rem
+      border:1px solid var(--line); background: var(--surface); color:var(--text);
+      padding:6px 10px; border-radius:8px; font-weight:700; cursor:pointer; font-size:.8rem
     }
+    .mini-btn:hover{ box-shadow: var(--shadow); transform: translateY(-1px); }
     .checklist{ display:grid; grid-template-columns: 1fr; gap:6px }
     .check-item{ display:flex; gap:8px; align-items:center; font-size:.92rem }
 
@@ -183,123 +257,169 @@
       .kpi-row{ grid-template-columns: 1fr; }
     }
   </style>
-<script>
-(function(){
-  const KEY_NAME = 'dv_pwd';
-  async function ensurePassword(){
-    let pwd = localStorage.getItem(KEY_NAME) || '';
-    while(!pwd){
-      pwd = prompt('Digite a senha de acesso:') || '';
-      if(!pwd) continue;
-      try{
-        const r = await fetch('/api/ping', {headers:{'x-api-key': pwd }});
-        if(r.ok){
+
+  <!-- Proteção por senha + tema sincronizado com o index + interceptador de fetch -->
+  <script>
+  (function(){
+    const KEY_NAME = 'dv_pwd';
+
+    /* === Tema sincronizado com o index === */
+    const savedTheme = localStorage.getItem('dv_theme');
+    if(savedTheme){ document.documentElement.setAttribute('data-theme', savedTheme); }
+
+    // Intercepta o toggle do botão (caso exista) para manter padrão entre telas
+    window.__toggleTheme = function(){
+      const cur = document.documentElement.getAttribute('data-theme') || 'light';
+      const next = (cur==='light') ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('dv_theme', next);
+    };
+
+    /* === Senha === */
+    async function ensurePassword(){
+      let pwd = localStorage.getItem(KEY_NAME) || '';
+      while(!pwd){
+        pwd = prompt('Digite a senha de acesso:') || '';
+        if(!pwd) continue;
+        try{
+          const r = await fetch('/api/ping', { headers:{ 'x-api-key': pwd } });
+          if(r.ok){ localStorage.setItem(KEY_NAME, pwd); break; }
+          else { alert('Senha incorreta.'); pwd = ''; }
+        }catch(e){
+          // se não der pra validar agora, ainda assim salva e segue
           localStorage.setItem(KEY_NAME, pwd);
           break;
-        }else{
-          alert('Senha incorreta.');
-          pwd = '';
         }
-      }catch(e){
-        // se não der pra validar agora, ainda assim salva e segue
-        localStorage.setItem(KEY_NAME, pwd);
-        break;
       }
     }
-  }
 
-  // intercepta fetch para anexar a senha automaticamente
-  const _fetch = window.fetch.bind(window);
-  window.fetch = (input, init={})=>{
-    let url = (typeof input === 'string') ? input : (input && input.url) || '';
-    init = init || {};
-    const headers = new Headers(init.headers || ((typeof input !== 'string' && input.headers) || {}));
-    const pwd = localStorage.getItem(KEY_NAME) || '';
-    if(url.startsWith('/api/')){
-      if(pwd) headers.set('x-api-key', pwd);
-    }
-    return _fetch(input, Object.assign({}, init, { headers }));
-  };
+    // intercepta fetch para anexar a senha
+    const _fetch = window.fetch.bind(window);
+    window.fetch = (input, init={})=>{
+      let url = (typeof input === 'string') ? input : (input && input.url) || '';
+      init = init || {};
+      const headers = new Headers(init.headers || ((typeof input !== 'string' && input.headers) || {}));
+      const pwd = localStorage.getItem(KEY_NAME) || '';
+      if(url.startsWith('/api/') && pwd){ headers.set('x-api-key', pwd); }
+      return _fetch(input, Object.assign({}, init, { headers }));
+    };
 
-  // pede a senha apenas se ainda não houver
-  if(!localStorage.getItem(KEY_NAME)){
-    ensurePassword();
-  }
-})();
-</script>
+    if(!localStorage.getItem(KEY_NAME)){ ensurePassword(); }
+    window.__DV_PWD_KEY__ = KEY_NAME;
+  })();
+  </script>
 </head>
 <body>
-<header>
-  <img src="https://github.com/ClenaStore/painel-principal/blob/main/img/GRUPO%20DV%20(1).png?raw=true" alt="Logo CB Systems">
-  <h1>Entradas</h1>
-</header>
 
-<div class="conteudo">
-  <div class="filtros">
-    <div>
-      <label for="dataInicio">Data Início</label>
-      <input type="date" id="dataInicio" />
-    </div>
-    <div>
-      <label for="dataFim">Data Fim</label>
-      <input type="date" id="dataFim" />
-    </div>
-    <div>
-      <label for="empresaFiltro">Empresa</label>
-      <select id="empresaFiltro"><option value="">Todas</option></select>
-    </div>
-    <div><button onclick="aplicarFiltro()">Filtrar</button></div>
-    <div><button onclick="exportarPDF()">📄 Exportar PDF</button></div>
-    <div><button id="enviarWhatsapp">📲 Enviar pelo WhatsApp</button></div>
-  </div>
+  <!-- ===== Header unificado (igual index) ===== -->
+  <header>
+    <div class="head-wrap">
+      <a class="brand" href="index.html" aria-label="Início">
+        <img src="https://github.com/ClenaStore/painel-principal/blob/main/img/GRUPO%20DV%20(1).png?raw=true" alt="Logo">
+        <div class="title">Entradas</div>
+      </a>
+      <div class="head-spacer"></div>
 
-  <div id="painel"></div>
-</div>
+      <a class="icon-btn only-desktop" href="index.relatorios.html" title="Relatório Consolidado">📄 Relatórios</a>
+      <button id="themeToggle" class="icon-btn" type="button" title="Alternar tema">🌓 Tema</button>
 
-<!-- Modal Evolução Anual -->
-<div class="modal" id="modalAnual">
-  <div class="modal-card">
-    <div class="modal-header">
-      <h3 id="tituloAnual">Evolução Anual</h3>
-      <span class="close-x" id="fecharModal">&times;</span>
-    </div>
-    <div class="kpi-row">
-      <div class="kpi-badge kpi-bonus">
-        <h4>Bonificação</h4>
-        <p id="kpiBonusAno">R$ 0,00</p>
-        <small id="kpiBonusMes">Mês atual: R$ 0,00</small>
-      </div>
-      <div class="kpi-badge kpi-socio">
-        <h4>Consumo Sócio</h4>
-        <p id="kpiSocioAno">R$ 0,00</p>
-        <small id="kpiSocioMes">Mês atual: R$ 0,00</small>
-      </div>
-      <div class="kpi-badge kpi-erro">
-        <h4>Erro de garçons</h4>
-        <p id="kpiErroAno">R$ 0,00</p>
-        <small id="kpiErroMes">Mês atual: R$ 0,00</small>
-      </div>
-    </div>
-
-    <!-- grade com gráfico + painel de comparação -->
-    <div class="anual-grid">
-      <div id="graficoAnualWrap">
-        <canvas id="graficoAnual"></canvas>
-      </div>
-
-      <aside class="compare-panel">
-        <h4>Comparar empresas</h4>
-        <div class="compare-actions">
-          <button class="mini-btn" id="btnCompareAll">Marcar todas</button>
-          <button class="mini-btn" id="btnCompareNone">Limpar</button>
+      <div class="user" id="userMenu">
+        <button class="user-btn" type="button" title="Perfil">
+          <img src="https://github.com/ClenaStore/grupodv/blob/main/paste/Imagem%20do%20WhatsApp%20de%202025-09-08%20%C3%A0(s)%2011.54.12_884bebc9.jpg?raw=true" alt="Usuário">
+          <strong style="font-size:13px">Leonardo</strong>
+        </button>
+        <div class="user-menu">
+          <a href="perfil.html">👤 Meu Perfil</a>
+          <button onclick="handleLogout()">🚪 Sair</button>
         </div>
-        <div id="compareList" class="checklist"></div>
-      </aside>
+      </div>
+    </div>
+  </header>
+
+  <!-- ===== Conteúdo original (mantido) ===== -->
+  <div class="conteudo">
+    <div class="filtros">
+      <div>
+        <label for="dataInicio">Data Início</label>
+        <input type="date" id="dataInicio" />
+      </div>
+      <div>
+        <label for="dataFim">Data Fim</label>
+        <input type="date" id="dataFim" />
+      </div>
+      <div>
+        <label for="empresaFiltro">Empresa</label>
+        <select id="empresaFiltro"><option value="">Todas</option></select>
+      </div>
+      <div><button onclick="aplicarFiltro()">Filtrar</button></div>
+      <div><button onclick="exportarPDF()">📄 Exportar PDF</button></div>
+      <div><button id="enviarWhatsapp">📲 Enviar pelo WhatsApp</button></div>
+    </div>
+
+    <div id="painel"></div>
+  </div>
+
+  <!-- ===== Modal Evolução Anual (mantido) ===== -->
+  <div class="modal" id="modalAnual">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 id="tituloAnual">Evolução Anual</h3>
+        <span class="close-x" id="fecharModal">&times;</span>
+      </div>
+      <div class="kpi-row">
+        <div class="kpi-badge kpi-bonus">
+          <h4>Bonificação</h4>
+          <p id="kpiBonusAno">R$ 0,00</p>
+          <small id="kpiBonusMes">Mês atual: R$ 0,00</small>
+        </div>
+        <div class="kpi-badge kpi-socio">
+          <h4>Consumo Sócio</h4>
+          <p id="kpiSocioAno">R$ 0,00</p>
+          <small id="kpiSocioMes">Mês atual: R$ 0,00</small>
+        </div>
+        <div class="kpi-badge kpi-erro">
+          <h4>Erro de garçons</h4>
+          <p id="kpiErroAno">R$ 0,00</p>
+          <small id="kpiErroMes">Mês atual: R$ 0,00</small>
+        </div>
+      </div>
+
+      <div class="anual-grid">
+        <div id="graficoAnualWrap">
+          <canvas id="graficoAnual"></canvas>
+        </div>
+
+        <aside class="compare-panel">
+          <h4>Comparar empresas</h4>
+          <div class="compare-actions">
+            <button class="mini-btn" id="btnCompareAll">Marcar todas</button>
+            <button class="mini-btn" id="btnCompareNone">Limpar</button>
+          </div>
+          <div id="compareList" class="checklist"></div>
+        </aside>
+      </div>
     </div>
   </div>
-</div>
 
-<script>
+  <script>
+  /* === Sincroniza tema com o botão do header === */
+  document.getElementById('themeToggle').addEventListener('click', ()=> window.__toggleTheme && window.__toggleTheme());
+
+  // User menu (igual index)
+  const user = document.getElementById('userMenu');
+  user.querySelector('.user-btn').addEventListener('click', ()=> user.classList.toggle('open'));
+  window.addEventListener('click', (e)=>{ if(!user.contains(e.target)) user.classList.remove('open'); });
+
+  // Logout limpa a senha e recarrega (igual index)
+  function handleLogout(){
+    try{ localStorage.removeItem('dv_pwd'); }catch(e){}
+    location.reload();
+  }
+  window.handleLogout = handleLogout;
+  </script>
+
+  <!-- ====== SEU JS ORIGINAL (mantido) ====== -->
+  <script>
 const url = '/api/resumo_financeiro';
 
 // ========= Ajustes globais Chart.js (bolinha maior + raio de alcance + touch) =========
@@ -389,7 +509,6 @@ function aplicarFiltro() {
     const dadosEmpresa = dadosFiltrados.filter(i => i.Empresa === emp);
     const agrupado = {};
     dadosEmpresa.forEach(item => {
-      // Normaliza e mapeia PREJUÍZO/DESPERDÍCIO -> ERROS DE GARÇONS
       let cat = normalize(item.Categoria);
       if (cat === 'PREJUIZO' || cat === 'DESPERDICIO') cat = 'ERROS DE GARCONS';
       const valor = parseFloat(item.Valor) || 0;
@@ -438,7 +557,7 @@ function aplicarFiltro() {
   });
 
   if (empresas.length === 0)
-    painel.innerHTML = "<p style='text-align:center'>Nenhum dado encontrado para os filtros selecionados.</p>";
+    painel.innerHTML = "<p style='text-align:center; color: var(--muted)'>Nenhum dado encontrado para os filtros selecionados.</p>";
 }
 
 function desenharGrafico(canvas, agrupado) {
@@ -500,7 +619,7 @@ function abrirEvolucaoAnual(empresa){
     if (m>=0 && m<12) porMes[m] += valor;
   });
 
-  // Destaques: Bonificação, Consumo Sócio, Erro de garçons
+  // Destaques
   const isBonus = c => normalize(c) === 'BONIFICACAO';
   const isSocio = c => normalize(c) === 'CONSUMO SOCIO';
   const isErro  = c => ['ERROS DE GARCONS','PREJUIZO','DESPERDICIO'].includes(normalize(c));
@@ -518,7 +637,7 @@ function abrirEvolucaoAnual(empresa){
     if (isErro(cat))  { erroAno  += v; if (m===mesAtualIdx)  erroMes  += v; }
   });
 
-  // Preenche cabeçalho & KPIs
+  // KPIs
   document.getElementById('tituloAnual').textContent = `Evolução Anual — ${empresa} (${ano})`;
   document.getElementById('kpiBonusAno').textContent = `R$ ${BRL(bonusAno)}`;
   document.getElementById('kpiBonusMes').textContent = `Mês atual (${MONTHS[mesAtualIdx]}): R$ ${BRL(bonusMes)}`;
@@ -527,10 +646,8 @@ function abrirEvolucaoAnual(empresa){
   document.getElementById('kpiErroAno').textContent  = `R$ ${BRL(erroAno)}`;
   document.getElementById('kpiErroMes').textContent  = `Mês atual (${MONTHS[mesAtualIdx]}): R$ ${BRL(erroMes)}`;
 
-  // Monta checklist de empresas para comparação
+  // Comparador
   montarChecklistComparacao(empresa);
-
-  // Render inicial do gráfico (empresa única → barras)
   renderGraficoComparacao(ano);
 
   document.getElementById('modalAnual').classList.add('open');
@@ -576,7 +693,6 @@ function renderGraficoComparacao(ano){
   if (graficoAnualRef) { graficoAnualRef.destroy(); graficoAnualRef = null; }
 
   if (marcas.length <= 1){
-    // gráfico de barras da empresa foco (ou única marcada)
     const emp = marcas[0] || empresaFoco;
     const porMes = totaisMensaisPorEmpresa(emp, ano);
     graficoAnualRef = new Chart(ctx, {
@@ -607,7 +723,6 @@ function renderGraficoComparacao(ano){
       }
     });
   } else {
-    // gráfico de linhas comparativo
     const datasets = marcas.map((emp, i)=>({
       label: emp,
       data: totaisMensaisPorEmpresa(emp, ano),
@@ -642,12 +757,11 @@ function renderGraficoComparacao(ano){
 }
 
 function fecharModal(){
-  // fecha modal e limpa tudo
   document.getElementById('modalAnual').classList.remove('open');
   if (graficoAnualRef){ graficoAnualRef.destroy(); graficoAnualRef = null; }
-  selecionadas.clear();                   // limpa filtros de comparação
-  document.getElementById('compareList').innerHTML = ''; // limpa UI de checks
-  empresaFoco = null;                    // zera foco; ao abrir novamente virá da empresa clicada
+  selecionadas.clear();
+  document.getElementById('compareList').innerHTML = '';
+  empresaFoco = null;
 }
 
 /* ===== Exportar PDF ===== */
@@ -720,7 +834,6 @@ document.getElementById("enviarWhatsapp").addEventListener("click", () => {
   const link = `https://wa.me/${numero}?text=` + encodeURIComponent(mensagem.trim());
   window.open(link, "_blank");
 });
-</script>
-
+  </script>
 </body>
 </html>
