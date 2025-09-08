@@ -5,153 +5,159 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
   <title>Metas de Receita - Grupo DV</title>
 
-  <!-- Respeita o tema salvo no index -->
-  <script>try{var t=localStorage.getItem('dv_theme'); if(t){document.documentElement.setAttribute('data-theme', t);}}catch(e){}</script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
   <style>
     :root{
-      /* Tema escuro (padrão visual unificado) */
-      --bg:#0b1020; --surface:#10172a; --card:#0f172a; --text:#e5e7eb;
-      --muted:#94a3b8; --line:rgba(148,163,184,.25); --shadow:0 20px 60px rgba(2,6,23,.35);
-      --icon-bg: rgba(255,255,255,.06);
+      /* Tema escuro (padrão) — igual ao index */
+      --bg:#0b1020; --surface:#10172a; --card:#0f172a; --text:#e5e7eb; --muted:#94a3b8;
+      --line:rgba(148,163,184,.25); --brand:#60a5fa; --brand2:#22d3ee; --shadow:0 20px 60px rgba(2,6,23,.35);
+      --icon-bg:rgba(255,255,255,.06); --grad:linear-gradient(135deg,var(--brand),var(--brand2));
+      --ring:rgba(99,102,241,.35);
     }
     [data-theme="light"]{
-      --bg:#f6f7fb; --surface:#ffffff; --card:#ffffff; --text:#0f172a;
-      --muted:#475569; --line:#e5e7eb; --shadow:0 16px 36px rgba(15,23,42,.08);
-      --icon-bg: rgba(2,6,23,.06);
+      --bg:#f6f7fb; --surface:#ffffff; --card:#ffffff; --text:#0f172a; --muted:#475569;
+      --line:#e5e7eb; --icon-bg:rgba(2,6,23,.06); --shadow:0 16px 36px rgba(15,23,42,.08);
     }
 
     *{ box-sizing:border-box }
     html,body{ height:100% }
     body{
-      margin:0;
-      font-family: ui-sans-serif, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      background: var(--bg); color: var(--text);
+      margin:0; font-family:ui-sans-serif, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background:var(--bg); color:var(--text); overflow-x:hidden; font-size:14px;
     }
 
-    /* ===== Header unificado (com Tema + Perfil) ===== */
+    /* ===== Header unificado ===== */
     header{
-      position: sticky; top:0; z-index:50;
-      backdrop-filter: saturate(160%) blur(8px);
+      position:sticky; top:0; z-index:50; backdrop-filter:saturate(160%) blur(8px);
       background: color-mix(in srgb, var(--surface) 80%, transparent);
       border-bottom:1px solid var(--line);
     }
     .head-wrap{
-      max-width:1200px; margin:0 auto; padding:14px 18px;
-      display:flex; align-items:center; gap:12px;
+      max-width:100%; /* tela cheia no desktop */
+      margin:0 auto; padding:14px 18px; display:flex; align-items:center; gap:12px;
     }
     .brand{ display:flex; align-items:center; gap:10px; text-decoration:none; color:inherit }
     .brand img{ height:42px }
-    .title{ font-weight:800; letter-spacing:.2px; font-size: clamp(18px,1.6vw,22px) }
+    .title{ font-weight:800; letter-spacing:.2px; font-size:clamp(18px,1.6vw,22px) }
     .head-spacer{ flex:1 }
     .icon-btn{
-      border:1px solid var(--line); background: var(--surface); color: var(--text);
+      border:1px solid var(--line); background:var(--surface); color:var(--text);
       padding:10px 12px; border-radius:12px; font-weight:800; cursor:pointer;
-      transition:.2s transform,.2s box-shadow; text-decoration:none; display:inline-flex; align-items:center; gap:8px;
+      display:inline-flex; align-items:center; gap:8px; text-decoration:none;
+      transition:.2s transform, .2s box-shadow;
     }
-    .icon-btn:hover{ transform: translateY(-2px); box-shadow: var(--shadow) }
+    .icon-btn:hover{ transform:translateY(-2px); box-shadow:var(--shadow) }
+    .only-desktop{ display:inline-flex }
+    @media (max-width:900px){ .only-desktop{ display:none !important } }
 
-    /* User menu */
     .user{ position:relative }
     .user-btn{
       display:flex; align-items:center; gap:10px; cursor:pointer;
-      border:1px solid var(--line); background: var(--surface);
-      padding:6px 8px; border-radius:999px;
+      border:1px solid var(--line); background:var(--surface); padding:6px 8px; border-radius:999px;
     }
-    .user-btn img{
-      width:34px; height:34px; border-radius:50%; object-fit:cover; background: var(--icon-bg);
-    }
+    .user-btn img{ width:34px; height:34px; border-radius:50%; object-fit:cover; background:var(--icon-bg) }
     .user-menu{
-      position:absolute; right:0; top:110%;
-      background: var(--surface); border:1px solid var(--line);
-      border-radius:12px; box-shadow: var(--shadow); min-width:200px; padding:6px; display:none;
+      position:absolute; right:0; top:110%; background:var(--surface); border:1px solid var(--line);
+      border-radius:12px; box-shadow:var(--shadow); min-width:200px; padding:6px; display:none;
     }
     .user.open .user-menu{ display:block }
-    .user-menu a, .user-menu button{
-      display:flex; width:100%; background:transparent; color:var(--text);
-      border:none; text-align:left; padding:10px 12px; border-radius:10px; cursor:pointer;
-      text-decoration:none; font-weight:600;
+    .user-menu a,.user-menu button{
+      display:flex; width:100%; background:transparent; color:var(--text); border:none;
+      text-align:left; padding:10px 12px; border-radius:10px; cursor:pointer; text-decoration:none; font-weight:600;
     }
-    .user-menu a:hover, .user-menu button:hover{ background: var(--icon-bg) }
+    .user-menu a:hover,.user-menu button:hover{ background:var(--icon-bg) }
 
-    /* ===== Container ===== */
-    .container{ padding:20px; max-width:1200px; margin:auto }
+    /* ===== Área de filtros + cards ===== */
+    .container{
+      max-width:100%; /* tela cheia no desktop */
+      margin:0 auto; padding:18px;
+    }
 
-    /* ===== Filtros (com calendário estilo Resumo) ===== */
     .filters{
-      display:grid; grid-template-columns: repeat(6, minmax(0,1fr));
-      gap:12px; margin-bottom:16px; align-items:end;
+      display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:12px;
     }
-    .filters .block{ min-width:220px }
-    .label{ display:block; font-weight:800; color:var(--muted); margin-bottom:6px; font-size:.95em }
-
-    .field, .select, .btn{
-      width:100%; padding:10px 12px; border-radius:8px; border:1px solid var(--line);
-      background: var(--surface); color: var(--text); font-weight:600;
+    .btn{
+      border:1px solid var(--line); background:var(--surface); color:var(--text);
+      padding:10px 12px; border-radius:12px; font-weight:800; cursor:pointer;
     }
-    .btn{ cursor:pointer }
-    .btn:hover{ box-shadow: var(--shadow) }
+    .btn.dark{ background:#111827; color:#fff; border-color:#111827 }
+    .btn:disabled{ opacity:.6; cursor:not-allowed }
+    .muted{ color:var(--muted) }
 
-    /* Botão que exibe o período selecionado */
-    .range-button{
-      display:flex; align-items:center; justify-content:space-between; gap:10px;
-      font-weight:800;
+    .pill{ border:1px solid var(--line); border-radius:999px; padding:8px 12px; background:var(--surface); font-weight:800 }
+
+    .cards{
+      display:grid; gap:12px;
+      grid-template-columns: repeat(12, minmax(0, 1fr));
     }
-    .range-button small{ color: var(--muted); font-weight:600 }
-
-    /* Popover do calendário */
-    .range-popover{
-      position: absolute; z-index: 60; background: var(--surface); color: var(--text);
-      border:1px solid var(--line); border-radius:12px; box-shadow: var(--shadow);
-      padding:12px; display:none; width: min(420px, 96vw);
+    .meta-card{
+      grid-column: span 3 / span 3;
+      background:var(--card); border:1px solid var(--line); border-radius:14px; padding:14px; box-shadow:var(--shadow);
     }
-    .range-popover.open{ display:block }
-    .range-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px }
-    .range-actions{ display:flex; gap:8px; flex-wrap:wrap; margin-top:10px }
-    .chip{ border:1px solid var(--line); background: var(--surface); color: var(--text);
-      padding:8px 10px; border-radius:999px; cursor:pointer; font-weight:700; }
-    .chip:hover{ box-shadow: var(--shadow) }
-    .range-footer{ display:flex; gap:10px; justify-content:flex-end; margin-top:10px }
-
-    /* Cards / gráfico */
-    .metas-box{
-      background: var(--card); border:1px solid var(--line); border-radius:10px;
-      padding:20px; margin-bottom:16px; box-shadow: var(--shadow);
+    .meta-card h3{ margin:0 0 6px; font-size:16px }
+    .meta-card .row{ display:grid; grid-template-columns: 1fr auto; gap:8px; margin:6px 0 }
+    .meta-card .label{ color:var(--muted) }
+    .badge{
+      display:inline-flex; align-items:center; gap:6px; padding:4px 8px; border-radius:999px; border:1px solid var(--line);
+      font-size:12px; color:var(--muted);
     }
-    .metas-box h2{ margin:0 0 10px; font-size:1.1em; font-weight:800 }
-    .metas-box p{ margin:4px 0; font-size:.95em }
+    .kpi{ font-weight:800 }
 
-    .chart-box{
-      background: var(--card); border:1px solid var(--line); border-radius:10px;
-      box-shadow: var(--shadow); padding:20px; margin-top:16px;
+    @media (max-width:1160px){ .meta-card{ grid-column: span 4 / span 4 } }
+    @media (max-width:760px){ .meta-card{ grid-column: span 12 / span 12 } }
+
+    /* ===== Popover calendário ===== */
+    .overlay{ position:fixed; inset:0; background:transparent; display:none; z-index:40 }
+    .popover{
+      position:fixed; z-index:50; display:none; background:var(--surface);
+      border:1px solid var(--line); border-radius:14px; box-shadow:var(--shadow);
+      padding:10px; width:min(94vw,360px); max-height:80vh; overflow:auto;
     }
+    .cal .cal-head{ display:flex; align-items:center; justify-content:space-between; padding:6px 8px }
+    .cal .title{ font-weight:800 }
+    .cal .grid{ display:grid; grid-template-columns:repeat(7,1fr); gap:6px; padding:8px }
+    .cal .dow{ text-align:center; color:var(--muted); font-size:12px }
+    .cal .day{
+      height:34px; border-radius:10px; display:flex; align-items:center; justify-content:center; cursor:pointer;
+      border:1px solid transparent; font-weight:700; user-select:none;
+    }
+    .cal .day:hover{ background: color-mix(in srgb, var(--surface) 85%, #fff) }
+    .cal .day.out{ opacity:.35 }
+    .cal .day.sel{ background: var(--brand); color:#fff }
+    .cal .day.range{ background: color-mix(in srgb, var(--brand) 20%, transparent); }
+    .cal .foot{ display:flex; justify-content:flex-end; gap:8px; padding:8px }
 
-    /* Overlay de carregamento */
+    /* ===== Loading overlay ===== */
     #loading{
-      position: fixed; inset:0; display:none; align-items:center; justify-content:center; flex-direction:column;
-      background: rgba(2,6,23,.60); color:#fff; font-weight:800; z-index:2000;
+      position:fixed; inset:0; background:rgba(2,6,23,.45); display:none; z-index:70;
+      align-items:center; justify-content:center; color:#fff; font-weight:900; letter-spacing:.5px;
     }
-    #loading.show{ display:flex }
-    .spinner{ width:44px; height:44px; border:4px solid rgba(255,255,255,.25); border-top-color:#fff; border-radius:50%;
-      animation:spin 1s linear infinite; margin-bottom:10px }
-    @keyframes spin{ to{ transform: rotate(360deg) } }
-
-    @media (max-width: 900px){ .filters{ grid-template-columns: 1fr 1fr } }
-    @media (max-width: 640px){ .filters{ grid-template-columns: 1fr } .range-popover{ position: fixed; inset:auto 12px 12px 12px } }
+    #loading .box{
+      background:rgba(17,24,39,.9); padding:14px 16px; border:1px solid rgba(255,255,255,.1);
+      border-radius:12px; box-shadow:var(--shadow);
+    }
   </style>
 
-  <!-- Proteção por senha + interceptador -->
+  <!-- Proteção por senha + tema sincronizado + interceptador fetch -->
   <script>
   (function(){
-    const KEY_NAME = 'dv_pwd';
+    const KEY_NAME='dv_pwd';
+    const savedTheme = localStorage.getItem('dv_theme');
+    if(savedTheme){ document.documentElement.setAttribute('data-theme', savedTheme); }
+
+    window.__toggleTheme = function(){
+      const cur = document.documentElement.getAttribute('data-theme') || 'light';
+      const next = (cur==='light')?'dark':'light';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('dv_theme', next);
+    };
+
     async function ensurePassword(){
       let pwd = localStorage.getItem(KEY_NAME) || '';
       while(!pwd){
         pwd = prompt('Digite a senha de acesso:') || '';
         if(!pwd) continue;
         try{
-          const r = await fetch('/api/ping', {headers:{'x-api-key': pwd }});
+          const r = await fetch('/api/ping', { headers:{'x-api-key': pwd} });
           if(r.ok){ localStorage.setItem(KEY_NAME, pwd); break; }
           else { alert('Senha incorreta.'); pwd=''; }
         }catch(e){
@@ -159,20 +165,26 @@
         }
       }
     }
+
     const _fetch = window.fetch.bind(window);
     window.fetch = (input, init={})=>{
       let url = (typeof input === 'string') ? input : (input && input.url) || '';
       init = init || {};
-      const headers = new Headers(init.headers || ((typeof input !== 'string' && input.headers) || {}));
+      const headers = new Headers(init.headers || ((typeof input!=='string' && input.headers) || {}));
       const pwd = localStorage.getItem(KEY_NAME) || '';
       if(url.startsWith('/api/') && pwd){ headers.set('x-api-key', pwd); }
       return _fetch(input, Object.assign({}, init, { headers }));
     };
+
     if(!localStorage.getItem(KEY_NAME)){ ensurePassword(); }
+    window.__DV_PWD_KEY__ = KEY_NAME;
   })();
   </script>
 </head>
 <body>
+
+  <!-- Loading -->
+  <div id="loading"><div class="box">⏳ Carregando…</div></div>
 
   <!-- Header -->
   <header>
@@ -183,6 +195,7 @@
       </a>
       <div class="head-spacer"></div>
 
+      <a class="icon-btn only-desktop" href="index.relatorios.html" title="Relatório Consolidado">📄 Relatórios</a>
       <button id="themeToggle" class="icon-btn" type="button" title="Alternar tema">🌓 Tema</button>
 
       <div class="user" id="userMenu">
@@ -199,338 +212,285 @@
   </header>
 
   <div class="container">
-
     <!-- Filtros -->
     <div class="filters">
+      <button id="btnPeriodo" class="btn"><span>Período:</span> <span id="lblPeriodo" class="pill">—</span></button>
+      <button id="btnUlt7" class="btn">↺ Últimos 7 dias</button>
 
-      <!-- Controle de período (estilo Resumo) -->
-      <div class="block" style="position:relative">
-        <label class="label">Período</label>
-        <button id="btnRange" class="btn range-button" type="button">
-          <span id="rangeLabel">Selecione…</span>
-          <small>📅</small>
-        </button>
+      <label class="muted" style="font-weight:800">Empresa:</label>
+      <select id="empresaFiltro" class="btn" style="min-width:220px"></select>
 
-        <div id="rangePopover" class="range-popover" role="dialog" aria-modal="true">
-          <div class="range-grid">
-            <div>
-              <label class="label">Data Início</label>
-              <input class="field" type="date" id="dataInicio">
-            </div>
-            <div>
-              <label class="label">Data Fim</label>
-              <input class="field" type="date" id="dataFim">
-            </div>
-          </div>
-
-          <div class="range-actions">
-            <button class="chip" data-range="hoje">Hoje</button>
-            <button class="chip" data-range="ontem">Ontem</button>
-            <button class="chip" data-range="7">Últimos 7 dias</button>
-            <button class="chip" data-range="mes">Este mês</button>
-            <button class="chip" data-range="limpar">Limpar</button>
-          </div>
-
-          <div class="range-footer">
-            <button class="btn" id="rangeCancel" type="button">Cancelar</button>
-            <button class="btn" id="rangeApply" type="button">Aplicar</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Empresa (mantido) -->
-      <div class="block">
-        <label class="label">Empresa</label>
-        <select id="empresaFiltro" class="select">
-          <option value="">Todas</option>
-        </select>
-      </div>
-
-      <!-- Botão Filtrar (mantido) -->
-      <div class="block" style="align-self:end">
-        <label class="label" style="opacity:0">.</label>
-        <button class="btn" onclick="carregarMetas()">Filtrar</button>
-      </div>
+      <button id="btnAplicar" class="btn dark">Aplicar</button>
     </div>
 
-    <button id="btnWhats" class="btn" style="background:#25d366; color:#fff; border-color:#25d366">📲 Enviar via WhatsApp</button>
-
-    <div id="painelMetas"></div>
-
-    <div class="chart-box" id="graficoContainer" style="display:none">
-      <h3>📈 Evolução do Faturamento</h3>
-      <canvas id="graficoFaturamento"></canvas>
-    </div>
+    <!-- Cards -->
+    <div class="cards" id="cards"></div>
   </div>
 
-  <!-- Loading -->
-  <div id="loading">
-    <div class="spinner"></div>
-    <div id="loadingText">Carregando…</div>
-  </div>
+  <!-- Popover calendário -->
+  <div class="overlay" id="overlay"></div>
+  <div class="popover" id="popPeriodo"></div>
 
   <script>
-  /* ===== Tema sincronizado ===== */
-  const themeBtn = document.getElementById('themeToggle');
-  themeBtn.addEventListener('click', ()=>{
-    const cur = document.documentElement.getAttribute('data-theme') || 'light';
-    const next = (cur==='light') ? 'dark' : 'light';
-    document.documentElement.setAttribute('data-theme', next);
-    try{ localStorage.setItem('dv_theme', next); }catch(e){}
-  });
-
-  /* ===== Menu usuário ===== */
+  /* ===== Tema & usuário ===== */
+  document.getElementById('themeToggle')?.addEventListener('click', ()=> window.__toggleTheme && window.__toggleTheme());
   const user = document.getElementById('userMenu');
   user.querySelector('.user-btn').addEventListener('click', ()=> user.classList.toggle('open'));
   window.addEventListener('click', (e)=>{ if(!user.contains(e.target)) user.classList.remove('open'); });
   function handleLogout(){ try{ localStorage.removeItem('dv_pwd'); }catch(e){} location.reload(); }
   window.handleLogout = handleLogout;
 
-  /* ===== Calendário estilo Resumo ===== */
-  const btnRange = document.getElementById('btnRange');
-  const pop = document.getElementById('rangePopover');
-  const rangeLabel = document.getElementById('rangeLabel');
-  const di = document.getElementById('dataInicio');
-  const df = document.getElementById('dataFim');
+  /* ===== Utils ===== */
+  const $ = s=>document.querySelector(s);
+  const BRL = n => (Number(n)||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+  const pad2 = n => String(n).padStart(2,'0');
+  const toISO = d => `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
+  const parseISO = s => { const [y,m,d]=String(s).split('-').map(Number); return new Date(y, (m||1)-1, d||1); };
+  const diffDaysInc = (a,b)=> Math.floor((b - a)/(24*3600*1000)) + 1;
+  const daysInMonth = (y,m)=> new Date(y,m+1,0).getDate(); // m: 0-11
 
-  function openPop(){ pop.classList.add('open'); positionPop(); }
-  function closePop(){ pop.classList.remove('open'); }
-  function positionPop(){
-    const r = btnRange.getBoundingClientRect();
-    pop.style.left = r.left + 'px';
-    pop.style.top = (r.bottom + 6 + window.scrollY) + 'px';
+  /* ===== Estado ===== */
+  const API = '/api/meta';
+  let dados = [];                  // registros brutos
+  let rangeIni, rangeFim;          // datas (Date)
+  let empresaSel = '';             // filtro empresa
+
+  /* ===== Calendário / Popover ===== */
+  const pop = $('#popPeriodo'), overlay = $('#overlay');
+  let calState = { cursor: new Date(), start: null, end: null };
+
+  function openPopover(){
+    buildCalendar(pop, calState, (start,end)=>{
+      rangeIni = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+      rangeFim = new Date(end.getFullYear(), end.getMonth(), end.getDate());
+      updatePeriodoLabel();
+      closePopover();
+    }, closePopover);
+    placePopover(pop, $('#btnPeriodo'));
   }
-
-  btnRange.addEventListener('click', (e)=>{ e.stopPropagation(); (pop.classList.contains('open')?closePop():openPop()); });
-  window.addEventListener('resize', ()=>{ if(pop.classList.contains('open')) positionPop(); });
-  window.addEventListener('click', (e)=>{ if(!pop.contains(e.target) && e.target!==btnRange) closePop(); });
-  window.addEventListener('keydown', (e)=>{ if(e.key==='Escape') closePop(); });
-
-  function formatISO(d){ return new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,10); }
-  function br(iso){ if(!iso) return ''; const [y,m,dd]=iso.split('-'); return `${dd}/${m}/${y}`; }
-  function updateRangeLabel(){
-    const a = di.value, b = df.value;
-    rangeLabel.textContent = (a && b) ? `${br(a)} — ${br(b)}` : (a||b) ? (br(a||b)) : 'Selecione…';
+  function closePopover(){ pop.style.display='none'; overlay.style.display='none'; }
+  function placePopover(popover, anchor){
+    popover.style.display='block'; overlay.style.display='block';
+    const r = anchor.getBoundingClientRect(); const PAD=8; const w = Math.min(window.innerWidth*0.94, 360);
+    popover.style.width = w+'px';
+    let left = r.left, top = r.bottom + 6;
+    if(left + w > window.innerWidth - PAD) left = window.innerWidth - w - PAD;
+    if(left < PAD) left = PAD;
+    popover.style.position='fixed'; popover.style.left = left+'px'; popover.style.top = top+'px';
   }
+  overlay.addEventListener('click', closePopover);
 
-  document.querySelectorAll('.chip[data-range]').forEach(btn=>{
-    btn.addEventListener('click', ()=>{
-      const val = btn.getAttribute('data-range');
-      const hoje = new Date();
-      const ontem = new Date(); ontem.setDate(hoje.getDate()-1);
+  function buildCalendar(container, state, onApply, onCancel){
+    container.innerHTML='';
+    const root = document.createElement('div'); root.className='cal';
+    const head = document.createElement('div'); head.className='cal-head';
 
-      if(val==='hoje'){
-        di.value = formatISO(hoje); df.value = formatISO(hoje);
-      }else if(val==='ontem'){
-        di.value = formatISO(ontem); df.value = formatISO(ontem);
-      }else if(val==='7'){
-        const d7 = new Date(); d7.setDate(hoje.getDate()-6);
-        di.value = formatISO(d7); df.value = formatISO(hoje);
-      }else if(val==='mes'){
-        const first = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
-        di.value = formatISO(first); df.value = formatISO(hoje);
-      }else if(val==='limpar'){
-        di.value = ''; df.value = '';
-      }
-      updateRangeLabel();
-    });
-  });
+    const prev = document.createElement('button'); prev.className='btn'; prev.textContent='‹';
+    const next = document.createElement('button'); next.className='btn'; next.textContent='›';
+    const title = document.createElement('div'); title.className='title';
 
-  document.getElementById('rangeApply').addEventListener('click', ()=>{ updateRangeLabel(); closePop(); carregarMetas(); });
-  document.getElementById('rangeCancel').addEventListener('click', ()=> closePop());
+    const updTitle = ()=> title.textContent = state.cursor.toLocaleString('pt-BR',{month:'long',year:'numeric'});
+    prev.onclick = ()=>{ state.cursor = new Date(state.cursor.getFullYear(), state.cursor.getMonth()-1, 1); drawGrid(); updTitle(); placePopover(container, $('#btnPeriodo')); };
+    next.onclick = ()=>{ state.cursor = new Date(state.cursor.getFullYear(), state.cursor.getMonth()+1, 1); drawGrid(); updTitle(); placePopover(container, $('#btnPeriodo')); };
 
-  /* ===== Chart.js melhorias (mantido) ===== */
-  Chart.defaults.elements.point.radius = 6;
-  Chart.defaults.elements.point.hoverRadius = 10;
-  Chart.defaults.elements.point.hitRadius = 28;
-  Chart.defaults.interaction.mode = 'nearest';
-  Chart.defaults.interaction.intersect = false;
-  Chart.defaults.events = ['mousemove','mouseout','click','touchstart','touchmove','touchend'];
+    head.appendChild(prev); head.appendChild(title); head.appendChild(next);
+    root.appendChild(head);
 
-  /* ===== Overlay loading ===== */
-  function showLoading(msg){ const el=document.getElementById('loading'); document.getElementById('loadingText').textContent=msg||'Carregando…'; el.classList.add('show'); }
-  function hideLoading(){ document.getElementById('loading').classList.remove('show'); }
+    const grid = document.createElement('div'); grid.className='grid';
+    "DSTQQSS".split('').forEach(l=>{ const d=document.createElement('div'); d.className='dow'; d.textContent=l; grid.appendChild(d); });
 
-  /* ======== FUNÇÕES ORIGINAIS (mantidas) ======== */
-  const urlBase = '/api/meta';
-  let chart;
-
-  function formatarNumero(valor) {
-    return parseFloat(valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
-  }
-
-  function formatarDataBR(dataISO) {
-    const [y, m, d] = dataISO.split("-");
-    return `${d}/${m}/${y}`;
-  }
-
-  function preencherDataOntem() {
-    const hoje = new Date();
-    const ontem = new Date(hoje);
-    ontem.setDate(hoje.getDate() - 1);
-    const dataFormatada = new Date(ontem.getTime()-ontem.getTimezoneOffset()*60000).toISOString().split('T')[0];
-    di.value = dataFormatada;
-    df.value = dataFormatada;
-    updateRangeLabel();
-  }
-
-  window.onload = () => {
-    preencherDataOntem();
-    carregarMetas();
-  };
-
-  async function carregarMetas() {
-    showLoading('Carregando metas…');
-    const painel = document.getElementById("painelMetas");
-    painel.innerHTML = "";
-
-    const dataInicio = di.value;
-    const dataFim = df.value;
-    const empresa = document.getElementById("empresaFiltro").value;
-
-    let diasCorridosNoMes = 30;
-    let diasCorridosAteData = 30;
-
-    if (dataFim) {
-      const dataRef = new Date(dataFim + 'T00:00:00');
-      const mesRef = dataRef.getMonth();
-      const anoRef = dataRef.getFullYear();
-      const hoje = new Date();
-
-      const ultimoDiaMesRef = new Date(anoRef, mesRef + 1, 0);
-      diasCorridosNoMes = ultimoDiaMesRef.getDate();
-
-      if (anoRef === hoje.getFullYear() && mesRef === hoje.getMonth()) {
-        diasCorridosAteData = hoje.getDate();
-      } else {
-        diasCorridosAteData = dataRef.getDate();
-      }
+    function sameYMD(a,b){ return a&&b && a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate(); }
+    function inSel(d){
+      if(!state.start || !state.end) return false;
+      const dd = new Date(d.getFullYear(),d.getMonth(),d.getDate());
+      const s = new Date(state.start.getFullYear(),state.start.getMonth(),state.start.getDate());
+      const e = new Date(state.end.getFullYear(),state.end.getMonth(),state.end.getDate());
+      return dd>=s && dd<=e;
     }
 
-    const params = new URLSearchParams();
-    if (dataInicio) params.append("dataInicio", dataInicio);
-    if (dataFim) params.append("dataFim", dataFim);
-    if (empresa) params.append("empresa", empresa);
-
-    try {
-      const resposta = await fetch(`${urlBase}?${params.toString()}`);
-      const metas = await resposta.json();
-
-      // popula empresas uma única vez
-      const empresas = [...new Set(metas.map(m => m.Empresa))];
-      const select = document.getElementById("empresaFiltro");
-      if (select.options.length <= 1) {
-        empresas.forEach(e => {
-          const opt = document.createElement("option");
-          opt.value = e; opt.textContent = e;
-          select.appendChild(opt);
-        });
-      }
-
-      painel.innerHTML = "";
-      if (metas.length === 0) {
-        painel.innerHTML = "<p style='text-align:center; color:var(--muted)'>Nenhum dado encontrado.</p>";
-        esconderGrafico();
-        hideLoading();
-        return;
-      }
-
-      metas.forEach(linha => {
-        const previsto = parseFloat(linha["Previsto"]);
-        const realizado = parseFloat(linha["Realizado"].toString().replace(",", "."));
-        const atingido = previsto > 0 ? (realizado / previsto) * 100 : 0;
-        const mediaDiaria = realizado / (diasCorridosAteData || 1);
-        const previsaoFinal = mediaDiaria * (diasCorridosNoMes || 30);
-        const previsaoPercentual = previsto > 0 ? (previsaoFinal / previsto) * 100 : 0;
-
-        const div = document.createElement("div");
-        div.className = "metas-box";
-        div.innerHTML = `
-          <h2>${linha["Empresa"]}</h2>
-          <p>💰 Previsto: R$ ${formatarNumero(previsto)}</p>
-          <p>✅ Realizado: R$ ${formatarNumero(realizado)}</p>
-          <p>📊 Atingido: ${formatarNumero(atingido)}%</p>
-          <p>📅 Média por dia: R$ ${formatarNumero(mediaDiaria)}</p>
-          <p>📈 Previsão: R$ ${formatarNumero(previsaoFinal)} (${formatarNumero(previsaoPercentual)}%)</p>
-        `;
-        painel.appendChild(div);
-      });
-
-      if (empresa) mostrarGrafico(metas);
-      else esconderGrafico();
-
-    } catch (e) {
-      console.error(e);
-      painel.innerHTML = "Erro ao carregar dados.";
-    }
-    hideLoading();
-  }
-
-  function mostrarGrafico(metas) {
-    const box = document.getElementById('graficoContainer');
-    box.style.display = 'block';
-
-    const ctx = document.getElementById('graficoFaturamento').getContext('2d');
-    metas.sort((a, b) => new Date(a.Data) - new Date(b.Data));
-    const dias = metas.map(m => m["Data"]?.split("-").reverse().join("/"));
-    const valores = metas.map(m => parseFloat(m["Realizado"].toString().replace(",", ".")));
-
-    if (chart) chart.destroy();
-
-    chart = new Chart(ctx, {
-      type: 'line',
-      data: {
-        labels: dias,
-        datasets: [{
-          label: 'Evolução do Faturamento',
-          data: valores,
-          fill: true,
-          borderColor: '#388e3c',
-          backgroundColor: 'rgba(56, 142, 60, 0.1)',
-          tension: 0.3,
-          pointRadius: 6,
-          pointHoverRadius: 10,
-          pointHitRadius: 28
-        }]
-      },
-      options: {
-        responsive: true,
-        interaction: { mode: 'nearest', intersect: false },
-        plugins: { legend: { display: true }, title: { display: false } },
-        scales: {
-          y: {
-            beginAtZero: true,
-            ticks: { callback: (v)=> 'R$ ' + Number(v).toLocaleString('pt-BR') }
+    function drawGrid(){
+      grid.querySelectorAll('.day').forEach(n=>n.remove());
+      const y=state.cursor.getFullYear(), m=state.cursor.getMonth();
+      const first=new Date(y,m,1); const startDay=(first.getDay()+6)%7; const days=new Date(y,m+1,0).getDate();
+      for(let i=0;i<startDay;i++){ const x=document.createElement('div'); x.className='day out'; grid.appendChild(x); }
+      for(let d=1; d<=days; d++){
+        const date=new Date(y,m,d);
+        const el=document.createElement('div'); el.className='day'; el.textContent=d;
+        if(sameYMD(date,state.start)||sameYMD(date,state.end)) el.classList.add('sel');
+        else if(inSel(date)) el.classList.add('range');
+        el.onclick = ()=>{
+          if(!state.start || (state.start && state.end)){ state.start=date; state.end=null; }
+          else{
+            if(date < state.start){ state.end = state.start; state.start = date; }
+            else { state.end = date; }
           }
-        }
+          drawGrid();
+        };
+        grid.appendChild(el);
+      }
+    }
+    root.appendChild(grid);
+
+    const foot = document.createElement('div'); foot.className='cal foot';
+    const cancel = document.createElement('button'); cancel.className='btn'; cancel.textContent='Cancelar';
+    const apply = document.createElement('button'); apply.className='btn dark'; apply.textContent='Aplicar';
+    cancel.onclick = onCancel;
+    apply.onclick = ()=>{ if(state.start && !state.end) state.end = state.start; if(state.start && state.end) onApply(state.start, state.end); };
+    foot.appendChild(cancel); foot.appendChild(apply);
+    root.appendChild(foot);
+
+    container.appendChild(root);
+    updTitle(); drawGrid();
+  }
+
+  /* ===== Página (dados + cálculo) ===== */
+  const cards = $('#cards');
+  const selEmpresa = $('#empresaFiltro');
+
+  function setLoading(on){ $('#loading').style.display = on ? 'flex' : 'none'; }
+
+  function updatePeriodoLabel(){
+    $('#lblPeriodo').textContent = `${fmtBR(rangeIni)} → ${fmtBR(rangeFim)}`;
+    // atualiza calendário para mês da data inicial
+    calState = { cursor: new Date(rangeIni.getFullYear(), rangeIni.getMonth(), 1), start: rangeIni, end: rangeFim };
+  }
+  function fmtBR(d){ return d.toLocaleDateString('pt-BR'); }
+
+  function setUltimos7(){
+    const hoje = new Date(); const fim = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate()-1);
+    const ini = new Date(fim.getFullYear(), fim.getMonth(), fim.getDate()-6);
+    rangeIni = ini; rangeFim = fim; updatePeriodoLabel();
+  }
+
+  async function carregar(){
+    setLoading(true);
+    try{
+      // Busca inicial
+      const r = await fetch(API);
+      dados = await r.json();
+      // Empresas no select
+      const empresas = [...new Set(dados.map(x=>x.Empresa))].sort();
+      selEmpresa.innerHTML = `<option value="">Todas</option>` + empresas.map(e=>`<option>${e}</option>`).join('');
+      // Default período: últimos 7 dias
+      setUltimos7();
+      render();
+    }catch(e){
+      console.error(e);
+      cards.innerHTML = `<div class="meta-card" style="grid-column:1/-1"><h3>Não foi possível carregar os dados agora.</h3></div>`;
+    }finally{
+      setLoading(false);
+    }
+  }
+
+  function aplicar(){
+    setLoading(true);
+    setTimeout(()=>{ render(); setLoading(false); }, 30);
+  }
+
+  function render(){
+    empresaSel = selEmpresa.value || '';
+    // filtra por range
+    const iniISO = toISO(rangeIni), fimISO = toISO(rangeFim);
+    const porEmpresa = new Map(); // emp -> registros ordenados por data (dentro do range)
+    dados.forEach(row=>{
+      const emp = row.Empresa || '';
+      const data = String(row.Data||'');
+      if(data >= iniISO && data <= fimISO){
+        if(empresaSel && emp !== empresaSel) return;
+        if(!porEmpresa.has(emp)) porEmpresa.set(emp, []);
+        porEmpresa.get(emp).push(row);
       }
     });
-  }
 
-  function esconderGrafico() {
-    if (chart) { chart.destroy(); chart = null; }
-    document.getElementById('graficoContainer').style.display = 'none';
-  }
+    // monta cards
+    const itens = [];
+    porEmpresa.forEach((lista, emp)=>{
+      lista.sort((a,b)=> new Date(a.Data) - new Date(b.Data));
+      const first = lista[0], last = lista[lista.length-1];
 
-  // WhatsApp (mantido)
-  document.getElementById("btnWhats").addEventListener("click", () => {
-    const a = di.value, b = df.value;
-    const periodo = (a && b) ? `${a.split('-').reverse().join('/')} - ${b.split('-').reverse().join('/')}` : "Período não informado";
-    const blocos = document.querySelectorAll(".metas-box");
-    if (!blocos.length) return alert("Nenhum dado para enviar.");
+      // campos
+      const prev   = parseFloat(String(last?.Previsto??first?.Previsto??0).toString().replace(',', '.')) || 0;
+      const rFirst = parseFloat(String(first?.Realizado??0).toString().replace(',', '.')) || 0;
+      const rLast  = parseFloat(String(last?.Realizado??0).toString().replace(',', '.')) || 0;
 
-    let mensagem = `📆 Resumo da meta de receitas ${periodo}\n\n`;
-    blocos.forEach(box => {
-      const titulo = box.querySelector("h2").innerText;
-      const linhas = [...box.querySelectorAll("p")].map(p => p.innerText).join("\n");
-      mensagem += `*${titulo}*\n${linhas}\n\n`;
+      // Resultado do período = último - primeiro (exatamente como você pediu)
+      const resultado = rLast - rFirst;
+
+      const diasPeriodo = Math.max(1, diffDaysInc(rangeIni, rangeFim)); // inclusivo
+      const mediaDia = resultado / diasPeriodo;
+
+      // dias do mês da data final
+      const y = rangeFim.getFullYear(), m = rangeFim.getMonth();
+      const diasMes = daysInMonth(y, m);
+      const previsaoMes = mediaDia * diasMes;
+
+      const percMeta = prev > 0 ? (resultado/prev)*100 : 0;
+
+      itens.push({
+        emp, prev, resultado, percMeta, mediaDia, previsaoMes
+      });
     });
 
-    const numero = "5577999761436";
-    const link = `https://wa.me/${numero}?text=${encodeURIComponent(mensagem.trim())}`;
-    window.open(link, "_blank");
-  });
-  </script>
+    // ordena por maior resultado desc
+    itens.sort((a,b)=> b.resultado - a.resultado);
 
+    // render
+    if(itens.length === 0){
+      cards.innerHTML = `<div class="meta-card" style="grid-column:1/-1"><h3>Nenhum dado no período.</h3></div>`;
+      return;
+    }
+    cards.innerHTML = itens.map(x=>cardHTML(x)).join('');
+  }
+
+  function cardHTML(x){
+    return `
+      <div class="meta-card">
+        <div class="badge">Empresa</div>
+        <h3>${x.emp}</h3>
+
+        <div class="row">
+          <div class="label">Resultado no período</div>
+          <div class="kpi">${BRL(x.resultado)}</div>
+        </div>
+
+        <div class="row">
+          <div class="label">% da meta (Previsto)</div>
+          <div class="kpi">${(x.percMeta||0).toLocaleString('pt-BR',{maximumFractionDigits:2})}%</div>
+        </div>
+
+        <div class="row">
+          <div class="label">Média por dia</div>
+          <div class="kpi">${BRL(x.mediaDia)}</div>
+        </div>
+
+        <div class="row">
+          <div class="label">Previsão do mês</div>
+          <div class="kpi">${BRL(x.previsaoMes)}</div>
+        </div>
+
+        <div class="row">
+          <div class="label">Meta mensal (Previsto)</div>
+          <div class="kpi">${BRL(x.prev)}</div>
+        </div>
+      </div>
+    `;
+  }
+
+  /* ===== Eventos ===== */
+  $('#btnPeriodo').addEventListener('click', openPopover);
+  $('#btnUlt7').addEventListener('click', ()=>{ setUltimos7(); aplicar(); });
+  $('#btnAplicar').addEventListener('click', aplicar);
+
+  // inicia período padrão (ontem e últimos 7) e carrega
+  (function initPeriodo(){
+    const hoje = new Date(); const fim = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate()-1);
+    const ini = new Date(fim.getFullYear(), fim.getMonth(), fim.getDate()-6);
+    rangeIni=ini; rangeFim=fim;
+    updatePeriodoLabel();
+    // calendário começa no mês do início
+    calState = { cursor:new Date(rangeIni.getFullYear(), rangeIni.getMonth(), 1), start: rangeIni, end: rangeFim };
+  })();
+  carregar();
+  </script>
 </body>
 </html>
