@@ -47,176 +47,72 @@
       color: var(--text);
     }
 
-    /* ===== Tela de senha (única coisa visível até liberar) ===== */
-    #gate{
-      position:fixed; inset:0; z-index:9999;
-      display:flex; align-items:center; justify-content:center;
-      background: var(--bg);
-    }
-    #gate .box{
-      width:min(92vw, 380px);
-      background: var(--surface);
-      border:1px solid var(--line);
-      border-radius:16px;
-      padding:22px 18px;
-      box-shadow: var(--shadow);
-      text-align:center;
-      animation: fadeIn .25s ease;
-    }
+    /* ===== Tela de senha ===== */
+    #gate{position:fixed; inset:0; z-index:9999; display:flex; align-items:center; justify-content:center; background: var(--bg);}
+    #gate .box{width:min(92vw, 380px); background: var(--surface); border:1px solid var(--line); border-radius:16px; padding:22px 18px; box-shadow: var(--shadow); text-align:center; animation: fadeIn .25s ease;}
     #gate img{ width:84px; height:84px; object-fit:contain; margin-bottom:10px }
     #gate h1{ margin:8px 0 4px; font-size:20px }
     #gate p{ margin:0 0 14px; color:var(--muted); font-size:13px }
-    #gate input{
-      width:100%; padding:12px;
-      border:1px solid var(--line); border-radius:12px;
-      background: var(--card); color: var(--text);
-      font-size:15px;
-    }
-    #gate button{
-      margin-top:10px; width:100%; padding:12px; border:none;
-      border-radius:12px; font-weight:800; cursor:pointer;
-      background: var(--brand); color:#fff;
-    }
+    #gate input{width:100%; padding:12px; border:1px solid var(--line); border-radius:12px; background: var(--card); color: var(--text); font-size:15px;}
+    #gate button{margin-top:10px; width:100%; padding:12px; border:none; border-radius:12px; font-weight:800; cursor:pointer; background: var(--brand); color:#fff;}
     #gate .err{color:#dc2626; font-size:13px; margin-top:8px; display:none}
     @keyframes fadeIn{from{opacity:0; transform:translateY(6px)}to{opacity:1; transform:none}}
 
-    /* ===== Header e layout do app (só aparece após login) ===== */
-    header{
-      position: sticky; top:0; z-index: 50;
-      backdrop-filter: saturate(160%) blur(8px);
-      background: color-mix(in srgb, var(--surface) 80%, transparent);
-      border-bottom: 1px solid var(--line);
-    }
-    .head-wrap{
-      max-width: 1200px; margin: 0 auto; padding: 14px 18px;
-      display:flex; align-items:center; gap:12px;
-    }
-    .brand{
-      display:flex; align-items:center; gap:10px; text-decoration:none; color:inherit;
-    }
+    /* ===== Header e layout ===== */
+    header{position: sticky; top:0; z-index: 50; backdrop-filter: saturate(160%) blur(8px); background: color-mix(in srgb, var(--surface) 80%, transparent); border-bottom: 1px solid var(--line);}
+    .head-wrap{max-width: 1200px; margin: 0 auto; padding: 14px 18px; display:flex; align-items:center; gap:12px;}
+    .brand{display:flex; align-items:center; gap:10px; text-decoration:none; color:inherit;}
     .brand img{ height:42px }
-    .title{
-      font-weight: 800; letter-spacing:.2px;
-      font-size: clamp(18px, 1.6vw, 22px);
-    }
+    .title{font-weight: 800; letter-spacing:.2px; font-size: clamp(18px, 1.6vw, 22px);}
     .head-spacer{ flex:1 }
-    .icon-btn{
-      border:1px solid var(--line); background: var(--surface);
-      color: var(--text); padding:10px 12px; border-radius: 12px;
-      font-weight:800; cursor:pointer; transition:.2s transform, .2s box-shadow;
-      text-decoration:none; display:inline-flex; align-items:center; gap:8px;
-    }
+    .icon-btn{border:1px solid var(--line); background: var(--surface); color: var(--text); padding:10px 12px; border-radius: 12px; font-weight:800; cursor:pointer; transition:.2s transform, .2s box-shadow; text-decoration:none; display:inline-flex; align-items:center; gap:8px;}
     .icon-btn:hover{ transform: translateY(-2px); box-shadow: var(--shadow) }
     .only-desktop { display: inline-flex; }
     @media (max-width: 900px) { .only-desktop { display: none !important; } }
 
-    /* Ajuste para o botão do Agente IA caber bem no mobile */
-    .label-sm{ display:inline }
-    @media (max-width: 420px){
-      .icon-btn{ padding:8px 10px; }
-      .label-sm{ display:none } /* fica só o 🤖 */
-    }
-
     .user{ position: relative; }
-    .user-btn{
-      display:flex; align-items:center; gap:10px; cursor:pointer;
-      border:1px solid var(--line); background: var(--surface);
-      padding:6px 8px; border-radius: 999px;
-    }
-    .user-btn img{
-      width:34px; height:34px; border-radius:50%; object-fit:cover;
-      background: var(--icon-bg);
-    }
-    .user-menu{
-      position:absolute; right:0; top:110%;
-      background: var(--surface); border:1px solid var(--line);
-      border-radius:12px; box-shadow: var(--shadow); min-width:200px;
-      padding:6px; display:none;
-    }
+    .user-btn{display:flex; align-items:center; gap:10px; cursor:pointer; border:1px solid var(--line); background: var(--surface); padding:6px 8px; border-radius: 999px;}
+    .user-btn img{width:34px; height:34px; border-radius:50%; object-fit:cover; background: var(--icon-bg);}
+    .user-menu{position:absolute; right:0; top:110%; background: var(--surface); border:1px solid var(--line); border-radius:12px; box-shadow: var(--shadow); min-width:200px; padding:6px; display:none;}
     .user.open .user-menu{ display:block }
-    .user-menu a, .user-menu button{
-      display:flex; width:100%; background:transparent; color:var(--text);
-      border:none; text-align:left; padding:10px 12px; border-radius:10px; cursor:pointer;
-      text-decoration:none; font-weight:600;
-    }
+    .user-menu a, .user-menu button{display:flex; width:100%; background:transparent; color: var(--text); border:none; text-align:left; padding:10px 12px; border-radius:10px; cursor:pointer; text-decoration:none; font-weight:600;}
     .user-menu a:hover, .user-menu button:hover{ background: var(--icon-bg) }
 
-    .hero{
-      max-width:1200px; margin:16px auto 0; padding: 0 18px 18px;
-    }
+    .hero{max-width:1200px; margin:16px auto 0; padding: 0 18px 18px;}
     .hero h2{ margin:8px 0 12px; font-size: clamp(18px,1.4vw,20px); color: var(--muted) }
     .tools{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
     .search{ flex:1; position:relative; }
-    .search input{
-      width:100%; border:1px solid var(--line); background: var(--surface);
-      color: var(--text); border-radius:12px; padding:12px 14px 12px 40px; outline:none;
-      box-shadow: inset 0 1px 0 rgba(255,255,255,.04);
-    }
+    .search input{width:100%; border:1px solid var(--line); background: var(--surface); color: var(--text); border-radius:12px; padding:12px 14px 12px 40px; outline:none; box-shadow: inset 0 1px 0 rgba(255,255,255,.04);}
     .search .magnify{ position:absolute; left:12px; top:50%; transform: translateY(-50%); opacity:.6; }
     .chips{ display:flex; gap:8px; flex-wrap:wrap }
-    .chip{
-      border:1px solid var(--line); background: var(--chip-bg); color: var(--chip-text);
-      padding:8px 12px; border-radius:999px; font-weight:700; cursor:pointer; user-select:none;
-    }
+    .chip{border:1px solid var(--line); background: var(--chip-bg); color: var(--chip-text); padding:8px 12px; border-radius:999px; font-weight:700; cursor:pointer; user-select:none;}
     .chip.active{ background: var(--grad); color:#fff; border-color:transparent }
 
-    .grid{
-      max-width:1200px; margin: 6px auto 28px; padding: 0 18px;
-      display:grid; gap:14px;
-      grid-template-columns: repeat(12, minmax(0,1fr));
-    }
+    .grid{max-width:1200px; margin: 6px auto 28px; padding: 0 18px; display:grid; gap:14px; grid-template-columns: repeat(12, minmax(0,1fr));}
     @media (max-width: 1160px){ .grid{ grid-template-columns: repeat(8, 1fr); } }
     @media (max-width: 760px){ .grid{ grid-template-columns: repeat(4, 1fr); } }
 
-    .section-title{
-      grid-column: 1 / -1; margin: 18px 0 6px; color: var(--muted); font-weight:800;
-      letter-spacing:.2px;
-    }
-    .card{
-      grid-column: span 3 / span 3;
-      background: var(--card);
-      border:1px solid var(--line);
-      border-radius:16px; text-decoration:none; color:inherit;
-      padding:16px; display:flex; gap:12px; align-items:center;
-      transition:.15s transform, .15s box-shadow, .15s border-color;
-      position:relative; overflow:hidden;
-    }
+    .section-title{grid-column: 1 / -1; margin: 18px 0 6px; color: var(--muted); font-weight:800; letter-spacing:.2px;}
+    .card{grid-column: span 3 / span 3; background: var(--card); border:1px solid var(--line); border-radius:16px; text-decoration:none; color:inherit; padding:16px; display:flex; gap:12px; align-items:center; transition:.15s transform, .15s box-shadow, .15s border-color; position:relative; overflow:hidden;}
     @media (max-width: 1160px){ .card{ grid-column: span 4 / span 4; } }
     @media (max-width: 760px){ .card{ grid-column: span 4 / span 4; } }
-    .card::before{
-      content:""; position:absolute; inset:0 0 auto 0; height:4px;
-      background: var(--grad); opacity:.9;
-    }
+    .card::before{content:""; position:absolute; inset:0 0 auto 0; height:4px; background: var(--grad); opacity:.9;}
     .card:hover{ transform: translateY(-4px); box-shadow: var(--shadow); border-color: transparent; }
-    .card .icon{
-      width:46px; height:46px; border-radius:12px; display:grid; place-items:center;
-      background: var(--icon-bg); font-size:22px; font-weight:800;
-    }
+    .card .icon{width:46px; height:46px; border-radius:12px; display:grid; place-items:center; background: var(--icon-bg); font-size:22px; font-weight:800;}
     .card h3{ margin:0 0 3px; font-size:16px }
     .card p{ margin:0; color: var(--muted); font-size:13px }
-    .badge{
-      position:absolute; right:12px; top:12px; font-size:11px; font-weight:800;
-      padding:4px 8px; border-radius:999px; border:1px solid var(--line); color: var(--muted);
-      background: color-mix(in srgb, var(--surface) 90%, transparent);
-    }
+    .badge{position:absolute; right:12px; top:12px; font-size:11px; font-weight:800; padding:4px 8px; border-radius:999px; border:1px solid var(--line); color: var(--muted); background: color-mix(in srgb, var(--surface) 90%, transparent);}
 
-    footer{
-      max-width:1200px; margin: 10px auto 30px; padding: 0 18px;
-      color: var(--muted); font-size:12px; display:flex; justify-content:space-between; gap:12px;
-      border-top:1px dashed var(--line); padding-top:12px;
-    }
+    footer{max-width:1200px; margin: 10px auto 30px; padding: 0 18px; color: var(--muted); font-size:12px; display:flex; justify-content:space-between; gap:12px; border-top:1px dashed var(--line); padding-top:12px;}
   </style>
 
   <!-- Interceptador + Gate de senha -->
   <script>
   (function(){
     const KEY = 'dv_pwd';
-
-    // aplica tema salvo antes de pintar
     const t = localStorage.getItem('dv_theme');
     if(t) document.documentElement.setAttribute('data-theme', t);
 
-    // intercepta fetch para anexar x-api-key
     const _f = window.fetch.bind(window);
     window.fetch = (input, init={})=>{
       const url = (typeof input === 'string') ? input : (input && input.url) || '';
@@ -226,21 +122,10 @@
       return _f(input, Object.assign({}, init, {headers}));
     };
 
-    // gate logic
     async function tryUnlockWith(pwd){
       if(!pwd) return false;
-      try{
-        const r = await fetch('/api/ping', {headers:{'x-api-key':pwd}});
-        if(r.ok){
-          localStorage.setItem(KEY, pwd);
-          return true;
-        }
-        return false;
-      }catch{
-        // offline: permite seguir mesmo assim (mesmo comportamento anterior)
-        localStorage.setItem(KEY, pwd);
-        return true;
-      }
+      try{ const r = await fetch('/api/ping', {headers:{'x-api-key':pwd}}); if(r.ok){ localStorage.setItem(KEY, pwd); return true; } return false; }
+      catch{ localStorage.setItem(KEY, pwd); return true; }
     }
 
     async function ensureGate(){
@@ -252,295 +137,96 @@
       async function submit(){
         err.style.display='none';
         const ok = await tryUnlockWith((input.value||'').trim());
-        if(ok){
-          gate.style.display='none';
-          app.hidden = false; // revela TODO o app
-          hydrateUserFromStorage(); // preenche avatar/nome se houver perfil salvo
-        }else{
-          err.textContent='Senha incorreta.';
-          err.style.display='block';
-          input.select();
-        }
+        if(ok){ gate.style.display='none'; app.hidden = false; hydrateUserFromStorage(); }
+        else{ err.textContent='Senha incorreta.'; err.style.display='block'; input.select(); }
       }
 
       document.getElementById('pwdBtn').addEventListener('click', submit);
       input.addEventListener('keydown', (e)=>{ if(e.key==='Enter'){ e.preventDefault(); submit(); } });
 
-      // se já tem senha salva, tenta liberar sem mostrar nada além do gate
       const saved = localStorage.getItem(KEY);
-      if(saved){
-        const ok = await tryUnlockWith(saved);
-        if(ok){
-          gate.style.display='none';
-          app.hidden = false;
-          hydrateUserFromStorage();
-        }else{
-          // limpa senha inválida e pede novamente
-          localStorage.removeItem(KEY);
-          gate.style.display='flex';
-          setTimeout(()=>input.focus(), 50);
-        }
-      }else{
-        gate.style.display='flex';
-        setTimeout(()=>input.focus(), 50);
-      }
+      if(saved){ const ok = await tryUnlockWith(saved); if(ok){ gate.style.display='none'; app.hidden = false; hydrateUserFromStorage(); } else{ localStorage.removeItem(KEY); gate.style.display='flex'; setTimeout(()=>input.focus(), 50); } }
+      else{ gate.style.display='flex'; setTimeout(()=>input.focus(), 50); }
     }
-
     window.addEventListener('DOMContentLoaded', ensureGate);
 
-    // Expor logout
-    window.handleLogout = function(){
-      try{ localStorage.removeItem(KEY); }catch{}
-      location.reload(); // volta para o gate
-    };
-
-    // Função usada após liberar para preencher avatar/nome se houver perfil salvo
-    window.hydrateUserFromStorage = function(){
-      try{
-        const p = JSON.parse(localStorage.getItem('dv_profile')||'{}');
-        if(p && (p.nome || p.foto)){
-          if(p.foto) document.getElementById('userAvatar').src = p.foto;
-          if(p.nome) document.getElementById('userName').textContent = p.nome;
-        }
-      }catch(e){}
-    };
+    window.handleLogout = function(){ try{ localStorage.removeItem(KEY); }catch{} location.reload(); };
+    window.hydrateUserFromStorage = function(){ try{ const p = JSON.parse(localStorage.getItem('dv_profile')||'{}'); if(p && (p.nome || p.foto)){ if(p.foto) document.getElementById('userAvatar').src = p.foto; if(p.nome) document.getElementById('userName').textContent = p.nome; } }catch(e){} };
   })();
   </script>
 </head>
 <body>
 
-  <!-- ===== Gate de senha (único visível até autenticar) ===== -->
-  <div id="gate" role="dialog" aria-modal="true" aria-labelledby="pwdTitle" style="display:none">
+  <!-- Gate -->
+  <div id="gate" role="dialog" aria-modal="true" style="display:none">
     <div class="box">
       <img src="https://github.com/ClenaStore/painel-principal/blob/main/img/GRUPO%20DV%20(1).png?raw=true" alt="Grupo DV">
-      <h1 id="pwdTitle">Grupo DV</h1>
+      <h1>Grupo DV</h1>
       <p>Digite a senha de acesso para entrar</p>
-      <input id="pwdInput" type="password" placeholder="Senha" autocomplete="current-password">
+      <input id="pwdInput" type="password" placeholder="Senha">
       <button id="pwdBtn" type="button">Entrar</button>
       <div id="pwdErr" class="err"></div>
     </div>
   </div>
 
-  <!-- ===== App inteiro (escondido até autenticar) ===== -->
+  <!-- App -->
   <div id="app" hidden>
-    <!-- Header -->
     <header>
       <div class="head-wrap">
-        <a class="brand" href="index.html" aria-label="Início">
-          <img src="https://github.com/ClenaStore/painel-principal/blob/main/img/GRUPO%20DV%20(1).png?raw=true" alt="Logo">
-          <div class="title">Análise Financeira</div>
-        </a>
+        <a class="brand" href="index.html"><img src="https://github.com/ClenaStore/painel-principal/blob/main/img/GRUPO%20DV%20(1).png?raw=true"><div class="title">Análise Financeira</div></a>
         <div class="head-spacer"></div>
-
-        <!-- Botão do Agente IA: agora visível em desktop e mobile -->
-        <a class="icon-btn" href="index.agente.html" title="Agente IA">🤖 <span class="label-sm">Agente IA</span></a>
-
-        <!-- Continua apenas no desktop -->
-        <a class="icon-btn only-desktop" href="index.relatorios.html" title="Relatório Consolidado">📄 Relatórios</a>
-        <button id="themeToggle" class="icon-btn" type="button" title="Alternar tema">🌓 Tema</button>
-
+        <a class="icon-btn only-desktop" href="index.relatorios.html">📄 Relatórios</a>
+        <button id="themeToggle" class="icon-btn" type="button">🌓 Tema</button>
         <div class="user" id="userMenu">
-          <button class="user-btn" type="button" title="Perfil">
-            <img id="userAvatar" src="https://github.com/ClenaStore/grupodv/blob/main/paste/Imagem%20do%20WhatsApp%20de%202025-09-08%20%C3%A0(s)%2011.54.12_884bebc9.jpg?raw=true" alt="Usuário">
-            <strong id="userName" style="font-size:13px">Leonardo</strong>
-          </button>
-          <div class="user-menu">
-            <a href="perfil.html">👤 Meu Perfil</a>
-            <button onclick="handleLogout()">🚪 Sair</button>
-          </div>
+          <button class="user-btn" type="button"><img id="userAvatar" src="https://github.com/ClenaStore/grupodv/blob/main/paste/Imagem%20do%20WhatsApp%20de%202025-09-08%20%C3%A0(s)%2011.54.12_884bebc9.jpg?raw=true"><strong id="userName" style="font-size:13px">Leonardo</strong></button>
+          <div class="user-menu"><a href="perfil.html">👤 Meu Perfil</a><button onclick="handleLogout()">🚪 Sair</button></div>
         </div>
       </div>
     </header>
 
-    <!-- Hero / Filtros -->
     <section class="hero">
       <h2>Selecione um painel ou filtre pelo nome</h2>
       <div class="tools">
-        <div class="search" style="min-width:240px">
-          <span class="magnify">🔎</span>
-          <input id="searchInput" type="search" placeholder="Buscar (atalho: / )" autocomplete="off" />
-        </div>
-        <div class="chips" id="chips">
-          <span class="chip active" data-cat="all">Todos</span>
-          <span class="chip" data-cat="financeiro">Financeiro</span>
-          <span class="chip" data-cat="vendas">Vendas</span>
-          <span class="chip" data-cat="operacoes">Operações</span>
-          <span class="chip" data-cat="qualidade">Qualidade</span>
-        </div>
+        <div class="search" style="min-width:240px"><span class="magnify">🔎</span><input id="searchInput" type="search" placeholder="Buscar (atalho: / )"></div>
+        <div class="chips" id="chips"><span class="chip active" data-cat="all">Todos</span><span class="chip" data-cat="financeiro">Financeiro</span><span class="chip" data-cat="vendas">Vendas</span><span class="chip" data-cat="operacoes">Operações</span><span class="chip" data-cat="qualidade">Qualidade</span></div>
       </div>
     </section>
 
-    <!-- Grid -->
     <main class="grid" id="grid">
-
-      <!-- Financeiro -->
       <div class="section-title">Financeiro</div>
-      <a class="card" data-cat="financeiro" data-title="resumo financeiro" href="index.resumofinanceiro.html" aria-label="Resumo Financeiro">
-        <div class="icon">📈</div>
-        <div>
-          <h3>Resumo Financeiro</h3>
-          <p>Entradas por categoria, consolidação diária e WhatsApp</p>
-        </div>
-        <span class="badge">Financeiro</span>
-      </a>
+      <a class="card" data-cat="financeiro" href="index.resumofinanceiro.html"><div class="icon">📈</div><div><h3>Resumo Financeiro</h3><p>Entradas por categoria, consolidação diária e WhatsApp</p></div><span class="badge">Financeiro</span></a>
+      <a class="card" data-cat="financeiro" href="index.conciliacao.html"><div class="icon">💳</div><div><h3>Conciliações</h3><p>Comparativo de recebíveis e bandeiras</p></div><span class="badge">Financeiro</span></a>
+      <a class="card" data-cat="financeiro" href="index.meta.html"><div class="icon">🎯</div><div><h3>Meta de Faturamento</h3><p>Acompanhamento mensal por loja</p></div><span class="badge">Financeiro</span></a>
 
-      <div class="section-title">Agente IA</div>
-      <a class="card" data-cat="financeiro" data-title="Agente" href="index.agente.html" aria-label="Agente de IA">
-        <div class="icon">🤖</div>
-        <div>
-          <h3>AGENTE DE IA</h3>
-          <p>Agente em fase de testes</p>
-        </div>
-        <span class="badge">Financeiro</span>
-      </a>
-
-      <a class="card" data-cat="financeiro" data-title="conciliações cartões conciliaçao conciliacao" href="index.conciliacao.html" aria-label="Conciliações">
-        <div class="icon">💳</div>
-        <div>
-          <h3>Conciliações</h3>
-          <p>Comparativo de recebíveis e bandeiras</p>
-        </div>
-        <span class="badge">Financeiro</span>
-      </a>
-
-      <a class="card" data-cat="financeiro" data-title="meta faturamento metas" href="index.meta.html" aria-label="Meta de Faturamento">
-        <div class="icon">🎯</div>
-        <div>
-          <h3>Meta de Faturamento</h3>
-          <p>Acompanhamento mensal por loja</p>
-        </div>
-        <span class="badge">Financeiro</span>
-      </a>
-
-      <!-- Vendas -->
       <div class="section-title">Vendas</div>
-      <a class="card" data-cat="vendas" data-title="delivery vendas ifood much" href="index.delivery.html" aria-label="Vendas Delivery">
-        <div class="icon">🚚</div>
-        <div>
-          <h3>Vendas Delivery</h3>
-          <p>Performance por canal e período</p>
-        </div>
-        <span class="badge">Vendas</span>
-      </a>
+      <a class="card" data-cat="vendas" href="index.delivery.html"><div class="icon">🚚</div><div><h3>Vendas Delivery</h3><p>Performance por canal e período</p></div><span class="badge">Vendas</span></a>
+      <a class="card" data-cat="vendas" href="index.abc.html"><div class="icon">abc</div><div><h3>ABC de Vendas</h3><p>Itens classe A/B/C e evolução</p></div><span class="badge">Vendas</span></a>
 
-      <a class="card" data-cat="vendas" data-title="abc vendas pareto" href="index.abc.html" aria-label="ABC de Vendas">
-        <div class="icon">abc</div>
-        <div>
-          <h3>ABC de Vendas</h3>
-          <p>Itens classe A/B/C e evolução</p>
-        </div>
-        <span class="badge">Vendas</span>
-      </a>
-
-      <!-- Operações -->
       <div class="section-title">Operações</div>
-      <a class="card" data-cat="operacoes" data-title="travas bloqueios comparações" href="index.travas.html" aria-label="Travas">
-        <div class="icon">🔒</div>
-        <div>
-          <h3>Travas</h3>
-          <p>Regras e bloqueios operacionais</p>
-        </div>
-        <span class="badge">Operações</span>
-      </a>
+      <a class="card" data-cat="operacoes" href="index.travas.html"><div class="icon">🔒</div><div><h3>Travas</h3><p>Regras e bloqueios operacionais</p></div><span class="badge">Operações</span></a>
+      <a class="card" data-cat="operacoes" href="index.couvert.html"><div class="icon">🎤</div><div><h3>Couvert</h3><p>Arrecadação x pagamentos, histórico e a pagar</p></div><span class="badge">Operações</span></a>
+      <a class="card" data-cat="operacoes" href="index.reservas.html"><div class="icon">🗓️</div><div><h3>Reservas Mercatto</h3><p>Agenda e capacidade</p></div><span class="badge">Operações</span></a>
 
-      <a class="card" data-cat="operacoes" data-title="couvert arrecadação pagamentos" href="index.couvert.html" aria-label="Couvert">
-        <div class="icon">🎤</div>
-        <div>
-          <h3>Couvert</h3>
-          <p>Arrecadação x pagamentos, histórico e a pagar</p>
-        </div>
-        <span class="badge">Operações</span>
-      </a>
-
-      <a class="card" data-cat="operacoes" data-title="reservas mercatto" href="index.reservas.html" aria-label="Reservas Mercatto">
-        <div class="icon">🗓️</div>
-        <div>
-          <h3>Reservas Mercatto</h3>
-          <p>Agenda e capacidade</p>
-        </div>
-        <span class="badge">Operações</span>
-      </a>
-
-      <!-- Qualidade -->
       <div class="section-title">Qualidade</div>
-      <a class="card" data-cat="qualidade" data-title="cancelamentos" href="index.cancelamentos.html" aria-label="Cancelamentos">
-        <div class="icon">❌</div>
-        <div>
-          <h3>Cancelamentos</h3>
-          <p>Motivos e impacto no período</p>
-        </div>
-        <span class="badge">Qualidade</span>
-      </a>
-
-      <a class="card" data-cat="qualidade" data-title="pesquisa satisfação avaliações" href="index.avaliacoes.html" aria-label="Pesquisa de satisfação">
-        <div class="icon">🔎</div>
-        <div>
-          <h3>Pesquisa de satisfação</h3>
-          <p>Notas, comentários e tendências</p>
-        </div>
-        <span class="badge">Qualidade</span>
-      </a>
+      <a class="card" data-cat="qualidade" href="index.cancelamentos.html"><div class="icon">❌</div><div><h3>Cancelamentos</h3><p>Motivos e impacto no período</p></div><span class="badge">Qualidade</span></a>
+      <a class="card" data-cat="qualidade" href="index.avaliacoes.html"><div class="icon">🔎</div><div><h3>Pesquisa de satisfação</h3><p>Notas, comentários e tendências</p></div><span class="badge">Qualidade</span></a>
     </main>
 
-    <footer>
-      <div>© Grupo DV • Painel</div>
-      <div>Atalho: pressione <strong>/</strong> para buscar</div>
-    </footer>
+    <footer><div>© Grupo DV • Painel</div><div>Atalho: pressione <strong>/</strong> para buscar</div></footer>
   </div>
 
-  <!-- Scripts do app (executam mesmo escondido; só mostram ao liberar) -->
   <script>
-    // Busca & filtros
     const searchInput = document.getElementById('searchInput');
     const chips = document.getElementById('chips');
     const cards = Array.from(document.querySelectorAll('.card'));
     let activeCat = 'all';
-
-    function applyFilters(){
-      if(!cards.length) return;
-      const q = (searchInput?.value || '').toLowerCase().trim();
-      cards.forEach(card=>{
-        const cat = card.getAttribute('data-cat');
-        const text = (card.getAttribute('data-title') || '').toLowerCase();
-        const matchCat = (activeCat==='all') || (cat===activeCat);
-        const matchText = !q || text.includes(q);
-        card.style.display = (matchCat && matchText) ? '' : 'none';
-      });
-    }
-
-    chips?.addEventListener('click', (e)=>{
-      const chip = e.target.closest('.chip');
-      if(!chip) return;
-      chips.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));
-      chip.classList.add('active');
-      activeCat = chip.getAttribute('data-cat');
-      applyFilters();
-    });
-
+    function applyFilters(){if(!cards.length) return; const q = (searchInput?.value || '').toLowerCase().trim(); cards.forEach(card=>{const cat = card.getAttribute('data-cat'); const text = (card.getAttribute('data-title') || '').toLowerCase(); const matchCat = (activeCat==='all') || (cat===activeCat); const matchText = !q || text.includes(q); card.style.display = (matchCat && matchText) ? '' : 'none';});}
+    chips?.addEventListener('click', (e)=>{const chip = e.target.closest('.chip'); if(!chip) return; chips.querySelectorAll('.chip').forEach(c=>c.classList.remove('active')); chip.classList.add('active'); activeCat = chip.getAttribute('data-cat'); applyFilters();});
     searchInput?.addEventListener('input', applyFilters);
-
-    // Atalho "/" = foco na busca
-    window.addEventListener('keydown', (e)=>{
-      if(e.key === '/' && document.activeElement !== searchInput && !document.getElementById('app').hidden){
-        e.preventDefault(); searchInput?.focus();
-      }
-    });
-
-    // Tema
-    const themeBtn = document.getElementById('themeToggle');
-    function toggleTheme(){
-      const cur = document.documentElement.getAttribute('data-theme') || 'light';
-      const next = (cur==='light') ? 'dark' : 'light';
-      document.documentElement.setAttribute('data-theme', next);
-      localStorage.setItem('dv_theme', next);
-      if(themeBtn) themeBtn.textContent = '🌓 Tema';
-    }
+    window.addEventListener('keydown', (e)=>{if(e.key === '/' && document.activeElement !== searchInput && !document.getElementById('app').hidden){e.preventDefault(); searchInput?.focus();}});
+    const themeBtn = document.getElementById('themeToggle'); function toggleTheme(){const cur = document.documentElement.getAttribute('data-theme') || 'light'; const next = (cur==='light') ? 'dark' : 'light'; document.documentElement.setAttribute('data-theme', next); localStorage.setItem('dv_theme', next); if(themeBtn) themeBtn.textContent = '🌓 Tema';}
     themeBtn?.addEventListener('click', toggleTheme);
-
-    // Menu usuário
-    const user = document.getElementById('userMenu');
-    user?.querySelector('.user-btn')?.addEventListener('click', ()=> user.classList.toggle('open'));
-    window.addEventListener('click', (e)=>{ if(user && !user.contains(e.target)) user.classList.remove('open'); });
+    const user = document.getElementById('userMenu'); user?.querySelector('.user-btn')?.addEventListener('click', ()=> user.classList.toggle('open')); window.addEventListener('click', (e)=>{ if(user && !user.contains(e.target)) user.classList.remove('open'); });
   </script>
 </body>
 </html>
