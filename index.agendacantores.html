@@ -3,108 +3,69 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-  <title>Análise Agenda Financeira</title>
+  <title>Análise Couvert x Músicos</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
   <style>
     :root{
       --bg:#0b1020; --surface:#10172a; --card:#0f172a; --text:#e5e7eb;
       --muted:#94a3b8; --line:rgba(148,163,184,.25);
       --shadow:0 20px 60px rgba(2,6,23,.35);
-      --brand:#60a5fa; --ok:#16a34a; --bad:#dc2626;
+      --ok:#16a34a; --bad:#dc2626;
     }
-    body{margin:0; font-family:ui-sans-serif,Segoe UI,Roboto,Arial,sans-serif; background:var(--bg); color:var(--text);}
+    body{margin:0;font-family:ui-sans-serif,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--text);}
 
-    /* Header unificado (igual painel metas) */
-    header{position:sticky; top:0; z-index:40; backdrop-filter:saturate(160%) blur(8px);
-      background:color-mix(in srgb, var(--surface) 90%, transparent); border-bottom:1px solid var(--line);}
-    .head{max-width:1200px; margin:0 auto; padding:14px 18px; display:flex; align-items:center; gap:12px}
-    .brand{display:flex; align-items:center; gap:10px; text-decoration:none; color:inherit}
+    /* Cabeçalho unificado */
+    header{position:sticky;top:0;z-index:40;backdrop-filter:saturate(160%) blur(8px);
+      background:color-mix(in srgb, var(--surface) 92%, transparent);border-bottom:1px solid var(--line);}
+    .head{max-width:1200px;margin:0 auto;padding:14px 18px;display:flex;align-items:center;gap:12px}
+    .brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit}
     .brand img{height:42px}
-    .title{font-weight:800; font-size:clamp(18px,1.6vw,22px)}
+    .title{font-weight:800;font-size:clamp(18px,1.6vw,22px)}
     .grow{flex:1}
-    .btn{border:1px solid var(--line); background:var(--surface); color:var(--text);
-      padding:10px 12px; border-radius:12px; font-weight:800; cursor:pointer}
-    .btn:hover{box-shadow:var(--shadow); transform:translateY(-1px)}
 
-    .container{max-width:1200px; margin:0 auto; padding:20px 18px}
+    .container{max-width:1200px;margin:0 auto;padding:20px 18px}
 
     /* Cards */
-    #painel{display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:16px; margin-top:16px}
-    .card{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:16px; text-align:center; cursor:pointer; transition:.2s}
-    .card:hover{transform:translateY(-2px); box-shadow:var(--shadow)}
-    .card h2{margin:0 0 6px; font-size:1.1rem}
-    .card p{margin:3px 0; color:var(--muted); font-size:.95rem}
+    #painel{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin-top:16px}
+    .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;cursor:pointer;
+      transition:.2s;text-align:center}
+    .card:hover{transform:translateY(-2px);box-shadow:var(--shadow)}
+    .card h2{margin:0 0 6px;font-size:1rem;color:var(--muted)}
+    .card p{margin:4px 0;font-size:.95rem}
+    .lucro{border-left:6px solid var(--ok);}
+    .prejuizo{border-left:6px solid var(--bad);}
 
     /* Modal */
-    .modal{position:fixed; inset:0; background:rgba(0,0,0,.7); display:none; align-items:center; justify-content:center; z-index:50; padding:18px}
+    .modal{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center;z-index:50;padding:18px}
     .modal.open{display:flex}
-    .modal-card{background:var(--surface); border:1px solid var(--line); border-radius:14px; width:min(1000px,96vw); max-height:92vh; overflow:auto; padding:16px}
-    .modal-h{display:flex; align-items:center; margin-bottom:12px}
+    .modal-card{background:var(--surface);border:1px solid var(--line);border-radius:14px;width:min(800px,96vw);max-height:92vh;overflow:auto;padding:16px}
+    .modal-h{display:flex;align-items:center;margin-bottom:12px}
     .modal-h h3{margin:0}
-    .close{margin-left:auto; cursor:pointer; color:var(--muted)}
-
-    table{width:100%; border-collapse:collapse; margin-top:10px}
-    th,td{padding:10px; border-bottom:1px solid var(--line); text-align:left}
-    th{background:var(--card); color:var(--muted)}
-
-    .chart-box{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:16px; margin-top:20px}
-
-    /* Popover calendário */
-    .popover{position:absolute; z-index:50; background:var(--surface); color:var(--text);
-      border:1px solid var(--line); border-radius:14px; box-shadow:var(--shadow); padding:14px; width:min(380px,94vw); display:none}
-    .popover.open{display:block}
-    .cal-head{display:flex; align-items:center; justify-content:space-between; padding:0 4px 8px}
-    .cal-nav{border:1px solid var(--line); background:var(--surface); border-radius:10px; width:34px; height:34px; display:grid; place-items:center; cursor:pointer}
-    .dow{display:grid; grid-template-columns:repeat(7,1fr); gap:6px; padding:6px 4px; color:var(--muted); font-weight:800}
-    .grid{display:grid; grid-template-columns:repeat(7,1fr); gap:6px; padding:0 4px 8px}
-    .day{height:40px; border-radius:12px; display:grid; place-items:center; cursor:pointer; user-select:none; background:color-mix(in srgb, var(--surface) 90%, #fff)}
-    .day.muted{opacity:.45}
-    .day.sel{background:#2563eb; color:#fff}
-    .day.in{background:color-mix(in srgb, #2563eb 18%, var(--surface))}
-    .cal-actions{display:flex; gap:8px; justify-content:flex-end; padding-top:6px}
-    .btn-sm{border:1px solid var(--line); background:var(--surface); color:var(--text); padding:8px 12px; border-radius:10px; font-weight:800; cursor:pointer}
+    .close{margin-left:auto;cursor:pointer;color:var(--muted)}
+    table{width:100%;border-collapse:collapse;margin-top:10px}
+    th,td{padding:10px;border-bottom:1px solid var(--line);text-align:left}
+    th{background:var(--card);color:var(--muted)}
   </style>
 </head>
 <body>
-
-  <!-- Header -->
+  <!-- Cabeçalho -->
   <header>
     <div class="head">
       <a class="brand" href="#">
         <img src="https://github.com/ClenaStore/painel-principal/blob/main/img/GRUPO%20DV%20(1).png?raw=true" alt="Logo">
-        <span class="title">Análise Agenda Financeira</span>
+        <span class="title">Análise Couvert x Músicos</span>
       </a>
       <div class="grow"></div>
-      <button id="rangeBtn" class="btn">🗓️ Período</button>
-      <div id="rangeHint" style="color:var(--muted); font-weight:800"></div>
+      <button id="reloadBtn" class="btn">🔄 Atualizar</button>
     </div>
   </header>
 
+  <!-- Conteúdo -->
   <div class="container">
     <div id="painel"></div>
-    <div id="graficoContainer" class="chart-box" style="display:none">
-      <h3>📈 Evolução</h3>
-      <canvas id="grafico"></canvas>
-    </div>
   </div>
 
-  <!-- Popover calendário -->
-  <div id="rangePop" class="popover">
-    <div class="cal-head">
-      <button id="prevM" class="cal-nav" type="button">‹</button>
-      <strong id="monthLabel"></strong>
-      <button id="nextM" class="cal-nav" type="button">›</button>
-    </div>
-    <div class="dow"><span>D</span><span>S</span><span>T</span><span>Q</span><span>Q</span><span>S</span><span>S</span></div>
-    <div id="daysGrid" class="grid"></div>
-    <div class="cal-actions">
-      <button id="cancelRange" class="btn-sm" type="button">Cancelar</button>
-      <button id="applyRange" class="btn-sm" type="button">Aplicar</button>
-    </div>
-  </div>
-
-  <!-- Modal detalhes -->
+  <!-- Modal -->
   <div id="modal" class="modal">
     <div class="modal-card">
       <div class="modal-h">
@@ -112,86 +73,85 @@
         <span id="closeModal" class="close">✕</span>
       </div>
       <table>
-        <thead><tr><th>Data</th><th>Cantor</th><th>Hora</th><th>Valor</th></tr></thead>
+        <thead><tr><th>Cantor</th><th>Pagamento</th></tr></thead>
         <tbody id="modalTable"></tbody>
       </table>
+      <p id="modalCouvert" style="margin-top:14px;font-weight:700"></p>
+      <p id="modalResultado" style="margin-top:6px"></p>
     </div>
   </div>
 
 <script>
-const API_URL="https://script.google.com/macros/s/AKfycbxJwRXw2lr2kK58EoHv-oUagd2FV2hvTHXRDJ5mFcNo5eZp3QlX7wX2KdrujAE5zPU-/exec";
-let todos=[], chart=null;
+const API_AGENDA = "https://script.google.com/macros/s/AKfycbxJwRXw2lr2kK58EoHv-oUagd2FV2hvTHXRDJ5mFcNo5eZp3QlX7wX2KdrujAE5zPU-/exec";
+const API_COUVERT = "https://script.google.com/macros/s/AKfycbxxv-9kLzyqS9Qy8WX_qPp7UG8He3OaEbIxZMV3HoRaSpdBfRYqZZZODLQlIJZDufso/exec";
+
+let dadosAgenda=[], dadosCouvert=[];
 const painel=document.getElementById("painel");
-const modal=document.getElementById("modal"), modalTable=document.getElementById("modalTable"), modalTitle=document.getElementById("modalTitle");
+const modal=document.getElementById("modal"), modalTitle=document.getElementById("modalTitle"),
+      modalTable=document.getElementById("modalTable"), modalCouvert=document.getElementById("modalCouvert"),
+      modalResultado=document.getElementById("modalResultado");
+
 const BRL=n=>(Number(n)||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
-const fmtData=iso=>new Date(iso).toLocaleDateString('pt-BR');
-const fmtHora=h=>h?.toString().substring(0,5);
+const fmtData=d=>new Date(d).toLocaleDateString('pt-BR');
 
-const range={start:null,end:null,view:new Date(new Date().getFullYear(),new Date().getMonth(),1)};
-const hint=document.getElementById("rangeHint");
-
-function updateHint(){hint.textContent=(range.start&&range.end)? fmtData(range.start)+" → "+fmtData(range.end):"";}
-function strip(d){return new Date(d.getFullYear(),d.getMonth(),d.getDate());}
-function sameDay(a,b){return a&&b&&a.getFullYear()==b.getFullYear()&&a.getMonth()==b.getMonth()&&a.getDate()==b.getDate();}
-
-function renderMonth(){
-  const y=range.view.getFullYear(), m=range.view.getMonth();
-  document.getElementById("monthLabel").textContent=new Date(y,m,1).toLocaleDateString('pt-BR',{month:'long',year:'numeric'});
-  const grid=document.getElementById("daysGrid"); grid.innerHTML="";
-  const firstDow=new Date(y,m,1).getDay(), daysInMonth=new Date(y,m+1,0).getDate();
-  for(let i=0;i<firstDow;i++) grid.appendChild(Object.assign(document.createElement("div"),{className:"day muted"}));
-  for(let d=1;d<=daysInMonth;d++){
-    const cur=new Date(y,m,d);const el=document.createElement("div");el.className="day";el.textContent=d;
-    const inSel=range.start&&range.end&&+cur>=+strip(range.start)&&+cur<=+strip(range.end);
-    const isStart=sameDay(cur,range.start), isEnd=sameDay(cur,range.end);
-    if(inSel) el.classList.add("in"); if(isStart||isEnd) el.classList.add("sel");
-    el.onclick=()=>pickDay(cur); grid.appendChild(el);
+async function carregar(){
+  painel.innerHTML="<p>Carregando...</p>";
+  try{
+    const [r1,r2] = await Promise.all([fetch(API_AGENDA), fetch(API_COUVERT)]);
+    dadosAgenda = await r1.json();
+    dadosCouvert = await r2.json();
+    render();
+  }catch(e){
+    console.error(e);
+    painel.innerHTML="<p>Erro ao carregar dados</p>";
   }
 }
-let firstPick=true;
-function pickDay(date){
-  if(firstPick){range.start=date;range.end=date;firstPick=false;}
-  else{if(date<range.start){range.end=range.start;range.start=date;}else range.end=date;firstPick=true;}
-  renderMonth();
-}
-document.getElementById("prevM").onclick=()=>{range.view=new Date(range.view.getFullYear(),range.view.getMonth()-1,1);renderMonth();}
-document.getElementById("nextM").onclick=()=>{range.view=new Date(range.view.getFullYear(),range.view.getMonth()+1,1);renderMonth();}
-document.getElementById("cancelRange").onclick=()=>document.getElementById("rangePop").classList.remove("open");
-document.getElementById("applyRange").onclick=()=>{updateHint();document.getElementById("rangePop").classList.remove("open");render();}
-document.getElementById("rangeBtn").onclick=(e)=>{e.stopPropagation();document.getElementById("rangePop").classList.add("open");renderMonth();}
-window.onclick=(e)=>{if(!document.getElementById("rangePop").contains(e.target)&&e.target.id!=="rangeBtn")document.getElementById("rangePop").classList.remove("open");}
 
-async function carregar(){const r=await fetch(API_URL);todos=await r.json();render();}
 function render(){
   painel.innerHTML="";
-  let dados=todos;
-  if(range.start&&range.end){
-    dados=dados.filter(d=>{const dt=new Date(d.data);return dt>=strip(range.start)&&dt<=strip(range.end);});
-  }
-  const porEmpresa={};
-  dados.forEach(d=>{porEmpresa[d.empresa]??={total:0,itens:[]};porEmpresa[d.empresa].total+=+d.valor||0;porEmpresa[d.empresa].itens.push(d);});
-  Object.entries(porEmpresa).forEach(([empresa,info])=>{
-    const div=document.createElement("div");div.className="card";
-    div.innerHTML=`<h2>${empresa}</h2><p>Total: <strong>${BRL(info.total)}</strong></p><p>Eventos: ${info.itens.length}</p>`;
-    div.onclick=()=>abrirModal(empresa,info.itens);painel.appendChild(div);
+  // Agrupar agenda por empresa+data
+  const grupos={};
+  dadosAgenda.forEach(ev=>{
+    const key=ev.empresa+"|"+ev.data.split("T")[0];
+    if(!grupos[key]) grupos[key]={empresa:ev.empresa,data:ev.data.split("T")[0],pagamentos:[],totalPago:0};
+    grupos[key].pagamentos.push({cantor:ev.cantor,valor:+ev.valor||0});
+    grupos[key].totalPago+=+ev.valor||0;
   });
-  if(Object.keys(porEmpresa).length===1) mostrarGrafico(Object.values(porEmpresa)[0].itens); else hideGrafico();
+
+  // Mapear couvert
+  const couvertMap={};
+  (dadosCouvert.registros||[]).forEach(c=>{
+    const key=c.empresa+"|"+c.data;
+    couvertMap[key]=+c.total_dia||0;
+  });
+
+  // Criar cards
+  Object.values(grupos).forEach(gr=>{
+    const couvert=couvertMap[gr.empresa+"|"+gr.data]||0;
+    const resultado=couvert-gr.totalPago;
+    const card=document.createElement("div");
+    card.className="card "+(resultado>=0?"lucro":"prejuizo");
+    card.innerHTML=`
+      <h2>${gr.empresa} – ${fmtData(gr.data)}</h2>
+      <p>🎤 Pago músicos: <b>${BRL(gr.totalPago)}</b></p>
+      <p>🎟️ Couvert: <b>${BRL(couvert)}</b></p>
+      <p>${resultado>=0?"✅ Lucro":"❌ Prejuízo"}: <b>${BRL(resultado)}</b></p>
+    `;
+    card.onclick=()=>abrirModal(gr, couvert, resultado);
+    painel.appendChild(card);
+  });
 }
-function abrirModal(empresa,itens){
-  modalTitle.textContent="Detalhes — "+empresa;
-  modalTable.innerHTML=itens.map(d=>`<tr><td>${fmtData(d.data)}</td><td>${d.cantor}</td><td>${fmtHora(d.hora)}</td><td>${BRL(d.valor)}</td></tr>`).join("");
+
+function abrirModal(gr, couvert, resultado){
+  modalTitle.textContent=`${gr.empresa} – ${fmtData(gr.data)}`;
+  modalTable.innerHTML=gr.pagamentos.map(p=>`<tr><td>${p.cantor}</td><td>${BRL(p.valor)}</td></tr>`).join("");
+  modalCouvert.textContent="🎟️ Couvert arrecadado: "+BRL(couvert);
+  modalResultado.textContent=(resultado>=0?"✅ Lucro: ":"❌ Prejuízo: ")+BRL(resultado);
+  modalResultado.style.color=resultado>=0?"var(--ok)":"var(--bad)";
   modal.classList.add("open");
 }
-document.querySelector(".close").onclick=()=>modal.classList.remove("open");
-
-function mostrarGrafico(dados){
-  document.getElementById("graficoContainer").style.display="block";
-  dados.sort((a,b)=>new Date(a.data)-new Date(b.data));
-  const labels=dados.map(d=>fmtData(d.data)), vals=dados.map(d=>+d.valor||0);
-  const ctx=document.getElementById("grafico").getContext("2d");
-  if(chart) chart.destroy();
-  chart=new Chart(ctx,{type:"line",data:{labels,datasets:[{label:"Faturamento",data:vals,borderColor:"#60a5fa",backgroundColor:"rgba(96,165,250,.2)",fill:true,tension:.25}]}});}
-function hideGrafico(){if(chart)chart.destroy();chart=null;document.getElementById("graficoContainer").style.display="none";}
+document.getElementById("closeModal").onclick=()=>modal.classList.remove("open");
+document.getElementById("reloadBtn").onclick=carregar;
 
 carregar();
 </script>
