@@ -13,7 +13,8 @@
     }
     [data-theme="light"]{
       --bg:#f6f7fb; --surface:#fff; --card:#fff; --text:#0f172a; --muted:#475569;
-      --line:#e5e7eb; --icon-bg:rgba(2,6,23,.06); --shadow:0 16px 36px rgba(15,23,42,.08);
+      --line:#e5e7eb; --icon-bg:rgba(2,6,23,.06);
+      --shadow:0 16px 36px rgba(15,23,42,.08);
     }
     *{box-sizing:border-box}
     body{margin:0; font-family:ui-sans-serif,Segoe UI,Roboto,Arial,sans-serif; background:var(--bg); color:var(--text);}
@@ -24,11 +25,13 @@
     .head{max-width:1200px; margin:0 auto; padding:14px 18px; display:flex; align-items:center; gap:12px}
     .brand{display:flex; align-items:center; gap:10px; text-decoration:none; color:inherit}
     .brand img{height:42px}
-    .title{font-weight:800; font-size:clamp(18px,1.6vw,22px)}
+    .title{font-weight:800; letter-spacing:.2px; font-size:clamp(18px,1.6vw,22px)}
     .grow{flex:1}
     .btn{border:1px solid var(--line); background:var(--surface); color:var(--text);
       padding:10px 12px; border-radius:12px; font-weight:800; cursor:pointer; display:inline-flex; gap:8px; align-items:center}
     .btn:hover{box-shadow:var(--shadow); transform:translateY(-1px)}
+    .only-desktop{display:inline-flex}
+    @media (max-width:900px){.only-desktop{display:none!important}}
     .user{position:relative}
     .user-btn{display:flex; align-items:center; gap:10px; border:1px solid var(--line);
       background:var(--surface); padding:6px 8px; border-radius:999px; cursor:pointer}
@@ -36,15 +39,28 @@
     .user-menu{position:absolute; right:0; top:110%; background:var(--surface); border:1px solid var(--line);
       border-radius:12px; min-width:200px; padding:6px; box-shadow:var(--shadow); display:none}
     .user.open .user-menu{display:block}
+    .user-menu a,.user-menu button{display:flex; width:100%; padding:10px 12px; border-radius:10px;
+      border:none; background:transparent; color:var(--text); text-align:left; cursor:pointer; font-weight:600}
+    .user-menu a:hover,.user-menu button:hover{background:var(--icon-bg)}
 
-    /* Cards */
+    /* Container */
     .container{max-width:1200px; margin:0 auto; padding:20px 18px}
-    #painel{display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:16px; margin-top:16px}
-    .card{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:16px; text-align:center; box-shadow:var(--shadow); cursor:pointer;}
+
+    /* Grid responsivo */
+    #painel{
+      display:grid; grid-template-columns: repeat(3, minmax(0,1fr));
+      gap:16px; margin-top:16px;
+    }
+    @media (max-width:1200px){ #painel{grid-template-columns: repeat(2, minmax(0,1fr));} }
+    @media (max-width:700px){ #painel{grid-template-columns: 1fr;} }
+
+    .card{background:var(--card); border:1px solid var(--line); border-radius:14px;
+      padding:16px; text-align:center; transition:.2s; box-shadow:var(--shadow); cursor:pointer}
     .card.ok{border-left:6px solid var(--ok)}
     .card.bad{border-left:6px solid var(--bad)}
     .card h2{margin:0 0 6px; font-size:1.05rem}
-    .card p{margin:4px 0; font-size:.95rem}
+    .card p{margin:4px 0; font-size:.93rem; color:var(--muted)}
+    .card b{color:var(--text)}
 
     /* Loading */
     .loading{position:fixed; inset:0; background:rgba(0,0,0,.55); display:none; align-items:center; justify-content:center; z-index:60}
@@ -53,9 +69,9 @@
     @keyframes spin{to{transform:rotate(360deg)}}
 
     /* Modal */
-    .modal{position:fixed; inset:0; background:rgba(0,0,0,.6); display:none; align-items:center; justify-content:center; z-index:80}
+    .modal{position:fixed; inset:0; background:rgba(0,0,0,.6); display:none; align-items:center; justify-content:center; z-index:80; padding:18px}
     .modal.open{display:flex}
-    .modal-card{background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:20px; max-width:600px; width:94%; max-height:90vh; overflow:auto}
+    .modal-card{background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:20px; max-width:700px; width:96%; max-height:90vh; overflow:auto; box-shadow:var(--shadow);}
     .modal-card h3{margin-top:0; margin-bottom:12px}
     .close{cursor:pointer; float:right; font-weight:800; color:var(--muted)}
     table{width:100%; border-collapse:collapse}
@@ -96,7 +112,7 @@
   </div>
 </header>
 
-<div id="loading" class="loading"><div><div class="spinner"></div></div></div>
+<div id="loading" class="loading"><div><div class="spinner"></div><p>Carregando...</p></div></div>
 <div class="container"><div id="painel"></div></div>
 
 <!-- Popover calendário -->
@@ -225,6 +241,7 @@ document.getElementById("nextM").onclick=()=>{range.view=new Date(range.view.get
 // ---------- Tema ----------
 (function(){const t=localStorage.getItem("dv_theme");if(t)document.documentElement.setAttribute("data-theme",t);})();
 document.getElementById("themeToggle").onclick=()=>{const cur=document.documentElement.getAttribute("data-theme")||"light";const next=cur==="light"?"dark":"light";document.documentElement.setAttribute("data-theme",next);localStorage.setItem("dv_theme",next);};
+window.handleLogout=()=>{localStorage.removeItem("dv_theme");location.reload();};
 
 // ---------- Semana vigente ----------
 (function(){
