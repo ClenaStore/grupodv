@@ -1,34 +1,49 @@
 <!DOCTYPE html>
-<html lang="pt-BR" data-theme="dark">
+<html lang="pt-BR" data-theme="light">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-  <title>Análise Couvert x Músicos</title>
+  <title>Couvert x Músicos - Grupo DV</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     :root{
-      --bg:#0b1020; --surface:#10172a; --card:#0f172a; --text:#e5e7eb;
-      --muted:#94a3b8; --line:rgba(148,163,184,.25);
-      --shadow:0 20px 60px rgba(2,6,23,.35);
+      --bg:#0b1020; --surface:#10172a; --card:#0f172a; --text:#e5e7eb; --muted:#94a3b8;
+      --line:rgba(148,163,184,.25); --icon-bg:rgba(255,255,255,.06);
+      --shadow:0 20px 60px rgba(2,6,23,.35); --brand:#60a5fa; --brand2:#22d3ee;
       --ok:#16a34a; --bad:#dc2626;
     }
-    body{margin:0;font-family:ui-sans-serif,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--text);}
+    [data-theme="light"]{
+      --bg:#f6f7fb; --surface:#fff; --card:#fff; --text:#0f172a; --muted:#475569;
+      --line:#e5e7eb; --icon-bg:rgba(2,6,23,.06); --shadow:0 16px 36px rgba(15,23,42,.08);
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:ui-sans-serif,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--text);}
 
-    /* Cabeçalho unificado */
-    header{position:sticky;top:0;z-index:40;backdrop-filter:saturate(160%) blur(8px);
-      background:color-mix(in srgb, var(--surface) 92%, transparent);border-bottom:1px solid var(--line);}
-    .head{max-width:1200px;margin:0 auto;padding:14px 18px;display:flex;align-items:center;gap:12px}
-    .brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit}
+    /* Header */
+    header{position:sticky; top:0; z-index:40; backdrop-filter:saturate(160%) blur(8px);
+      background:color-mix(in srgb, var(--surface) 80%, transparent); border-bottom:1px solid var(--line);}
+    .head{max-width:1200px; margin:0 auto; padding:14px 18px; display:flex; align-items:center; gap:12px}
+    .brand{display:flex; align-items:center; gap:10px; text-decoration:none; color:inherit}
     .brand img{height:42px}
-    .title{font-weight:800;font-size:clamp(18px,1.6vw,22px)}
+    .title{font-weight:800; font-size:clamp(18px,1.6vw,22px)}
     .grow{flex:1}
+    .btn{border:1px solid var(--line); background:var(--surface); color:var(--text);
+      padding:10px 12px; border-radius:12px; font-weight:800; cursor:pointer; display:inline-flex; gap:8px; align-items:center}
+    .btn:hover{box-shadow:var(--shadow); transform:translateY(-1px)}
+    .user{position:relative}
+    .user-btn{display:flex; align-items:center; gap:10px; border:1px solid var(--line);
+      background:var(--surface); padding:6px 8px; border-radius:999px; cursor:pointer}
+    .user-btn img{width:34px; height:34px; border-radius:50%; object-fit:cover; background:var(--icon-bg)}
+    .user-menu{position:absolute; right:0; top:110%; background:var(--surface); border:1px solid var(--line);
+      border-radius:12px; min-width:200px; padding:6px; box-shadow:var(--shadow); display:none}
+    .user.open .user-menu{display:block}
+    .user-menu a,.user-menu button{display:flex; width:100%; padding:10px 12px; border-radius:10px;
+      border:none; background:transparent; color:var(--text); text-align:left; cursor:pointer; font-weight:600}
+    .user-menu a:hover,.user-menu button:hover{background:var(--icon-bg)}
 
     .container{max-width:1200px;margin:0 auto;padding:20px 18px}
-
-    /* Cards */
     #painel{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin-top:16px}
-    .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;cursor:pointer;
-      transition:.2s;text-align:center}
+    .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;text-align:center;cursor:pointer;transition:.2s}
     .card:hover{transform:translateY(-2px);box-shadow:var(--shadow)}
     .card h2{margin:0 0 6px;font-size:1rem;color:var(--muted)}
     .card p{margin:4px 0;font-size:.95rem}
@@ -48,19 +63,30 @@
   </style>
 </head>
 <body>
-  <!-- Cabeçalho -->
+
+  <!-- Header -->
   <header>
     <div class="head">
-      <a class="brand" href="#">
+      <a class="brand" href="index.html" aria-label="Início">
         <img src="https://github.com/ClenaStore/painel-principal/blob/main/img/GRUPO%20DV%20(1).png?raw=true" alt="Logo">
-        <span class="title">Análise Couvert x Músicos</span>
+        <span class="title">Couvert x Músicos</span>
       </a>
       <div class="grow"></div>
-      <button id="reloadBtn" class="btn">🔄 Atualizar</button>
+      <a class="btn only-desktop" href="index.relatorios.html">📄 Relatórios</a>
+      <button id="themeToggle" class="btn">🌓 Tema</button>
+      <div class="user" id="userMenu">
+        <button class="user-btn" type="button">
+          <img src="https://github.com/ClenaStore/grupodv/blob/main/paste/Imagem%20do%20WhatsApp%20de%202025-09-08%20%C3%A0(s)%2011.54.12_884bebc9.jpg?raw=true" alt="">
+          <strong style="font-size:13px">Leonardo</strong>
+        </button>
+        <div class="user-menu">
+          <a href="perfil.html">👤 Meu Perfil</a>
+          <button onclick="handleLogout()">🚪 Sair</button>
+        </div>
+      </div>
     </div>
   </header>
 
-  <!-- Conteúdo -->
   <div class="container">
     <div id="painel"></div>
   </div>
@@ -94,6 +120,17 @@ const modal=document.getElementById("modal"), modalTitle=document.getElementById
 const BRL=n=>(Number(n)||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
 const fmtData=d=>new Date(d).toLocaleDateString('pt-BR');
 
+function handleLogout(){localStorage.removeItem("dv_pwd");location.reload();}
+document.getElementById("themeToggle").addEventListener("click",()=>{
+  const cur=document.documentElement.getAttribute("data-theme")||"light";
+  const next=(cur==="light")?"dark":"light";
+  document.documentElement.setAttribute("data-theme",next);
+  localStorage.setItem("dv_theme",next);
+});
+const user=document.getElementById("userMenu");
+user.querySelector(".user-btn").addEventListener("click",()=>user.classList.toggle("open"));
+window.addEventListener("click",e=>{if(!user.contains(e.target))user.classList.remove("open");});
+
 async function carregar(){
   painel.innerHTML="<p>Carregando...</p>";
   try{
@@ -109,7 +146,6 @@ async function carregar(){
 
 function render(){
   painel.innerHTML="";
-  // Agrupar agenda por empresa+data
   const grupos={};
   dadosAgenda.forEach(ev=>{
     const key=ev.empresa+"|"+ev.data.split("T")[0];
@@ -118,14 +154,12 @@ function render(){
     grupos[key].totalPago+=+ev.valor||0;
   });
 
-  // Mapear couvert
   const couvertMap={};
   (dadosCouvert.registros||[]).forEach(c=>{
     const key=c.empresa+"|"+c.data;
     couvertMap[key]=+c.total_dia||0;
   });
 
-  // Criar cards
   Object.values(grupos).forEach(gr=>{
     const couvert=couvertMap[gr.empresa+"|"+gr.data]||0;
     const resultado=couvert-gr.totalPago;
@@ -150,8 +184,7 @@ function abrirModal(gr, couvert, resultado){
   modalResultado.style.color=resultado>=0?"var(--ok)":"var(--bad)";
   modal.classList.add("open");
 }
-document.getElementById("closeModal").onclick=()=>modal.classList.remove("open");
-document.getElementById("reloadBtn").onclick=carregar;
+document.querySelector(".close").onclick=()=>modal.classList.remove("open");
 
 carregar();
 </script>
