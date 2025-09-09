@@ -11,44 +11,64 @@
       --bg:#0b1020; --surface:#10172a; --card:#0f172a; --text:#e5e7eb;
       --muted:#94a3b8; --line:rgba(148,163,184,.25);
       --shadow:0 20px 60px rgba(2,6,23,.35);
-      --brand:#60a5fa; --brand2:#22d3ee;
-      --ok:#16a34a; --bad:#dc2626;
+      --brand:#60a5fa; --ok:#16a34a; --bad:#dc2626;
     }
     body{margin:0; font-family:ui-sans-serif,Segoe UI,Roboto,Arial,sans-serif; background:var(--bg); color:var(--text);}
-    header{position:sticky;top:0;z-index:40;background:var(--surface);border-bottom:1px solid var(--line);}
-    .head{max-width:1200px;margin:0 auto;padding:14px 18px;display:flex;align-items:center;gap:12px}
-    .brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit}
-    .brand img{height:40px}
-    .title{font-weight:800;font-size:20px}
-    .grow{flex:1}
-    .btn{border:1px solid var(--line);background:var(--surface);color:var(--text);padding:10px 12px;border-radius:12px;font-weight:800;cursor:pointer}
-    .btn:hover{box-shadow:var(--shadow)}
 
-    .container{max-width:1200px;margin:0 auto;padding:18px}
+    /* Header unificado */
+    header{position:sticky; top:0; z-index:40; backdrop-filter:saturate(160%) blur(8px);
+      background:color-mix(in srgb, var(--surface) 90%, transparent); border-bottom:1px solid var(--line);}
+    .head{max-width:1200px; margin:0 auto; padding:14px 18px; display:flex; align-items:center; gap:12px}
+    .brand{display:flex; align-items:center; gap:10px; text-decoration:none; color:inherit}
+    .brand img{height:42px}
+    .title{font-weight:800; font-size:clamp(18px,1.6vw,22px)}
+
+    .grow{flex:1}
+    .btn{border:1px solid var(--line); background:var(--surface); color:var(--text);
+      padding:10px 12px; border-radius:12px; font-weight:800; cursor:pointer}
+    .btn:hover{box-shadow:var(--shadow); transform:translateY(-1px)}
+
+    .container{max-width:1200px; margin:0 auto; padding:20px 18px}
 
     /* Cards */
-    #painel{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;margin-top:16px}
-    .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;text-align:center;cursor:pointer;transition:.2s}
-    .card:hover{transform:translateY(-2px);box-shadow:var(--shadow)}
-    .card h2{margin:0 0 6px;font-size:1.1rem}
-    .card p{margin:3px 0;color:var(--muted);font-size:.95rem}
+    #painel{display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:16px; margin-top:16px}
+    .card{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:16px; text-align:center; cursor:pointer; transition:.2s}
+    .card:hover{transform:translateY(-2px); box-shadow:var(--shadow)}
+    .card h2{margin:0 0 6px; font-size:1.1rem}
+    .card p{margin:3px 0; color:var(--muted); font-size:.95rem}
 
     /* Modal */
-    .modal{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center;z-index:50;padding:18px}
+    .modal{position:fixed; inset:0; background:rgba(0,0,0,.7); display:none; align-items:center; justify-content:center; z-index:50; padding:18px}
     .modal.open{display:flex}
-    .modal-card{background:var(--surface);border:1px solid var(--line);border-radius:14px;width:min(1000px,96vw);max-height:92vh;overflow:auto;padding:16px}
-    .modal-h{display:flex;align-items:center;margin-bottom:12px}
+    .modal-card{background:var(--surface); border:1px solid var(--line); border-radius:14px; width:min(1000px,96vw); max-height:92vh; overflow:auto; padding:16px}
+    .modal-h{display:flex; align-items:center; margin-bottom:12px}
     .modal-h h3{margin:0}
-    .close{margin-left:auto;cursor:pointer;color:var(--muted)}
+    .close{margin-left:auto; cursor:pointer; color:var(--muted)}
 
-    table{width:100%;border-collapse:collapse;margin-top:10px}
-    th,td{padding:10px;border-bottom:1px solid var(--line);text-align:left}
-    th{background:var(--card);color:var(--muted)}
+    table{width:100%; border-collapse:collapse; margin-top:10px}
+    th,td{padding:10px; border-bottom:1px solid var(--line); text-align:left}
+    th{background:var(--card); color:var(--muted)}
 
-    .chart-box{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-top:20px}
+    .chart-box{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:16px; margin-top:20px}
+
+    /* Popover calendário */
+    .popover{position:absolute; z-index:50; background:var(--surface); color:var(--text);
+      border:1px solid var(--line); border-radius:14px; box-shadow:var(--shadow); padding:14px; width:min(380px,94vw); display:none}
+    .popover.open{display:block}
+    .cal-head{display:flex; align-items:center; justify-content:space-between; padding:0 4px 8px}
+    .cal-nav{border:1px solid var(--line); background:var(--surface); border-radius:10px; width:34px; height:34px; display:grid; place-items:center; cursor:pointer}
+    .dow{display:grid; grid-template-columns:repeat(7,1fr); gap:6px; padding:6px 4px; color:var(--muted); font-weight:800}
+    .grid{display:grid; grid-template-columns:repeat(7,1fr); gap:6px; padding:0 4px 8px}
+    .day{height:40px; border-radius:12px; display:grid; place-items:center; cursor:pointer; user-select:none; background:color-mix(in srgb, var(--surface) 90%, #fff)}
+    .day.muted{opacity:.45}
+    .day.sel{background:#2563eb; color:#fff}
+    .day.in{background:color-mix(in srgb, #2563eb 18%, var(--surface))}
+    .cal-actions{display:flex; gap:8px; justify-content:flex-end; padding-top:6px}
+    .btn-sm{border:1px solid var(--line); background:var(--surface); color:var(--text); padding:8px 12px; border-radius:10px; font-weight:800; cursor:pointer}
   </style>
 </head>
 <body>
+
   <!-- Header -->
   <header>
     <div class="head">
@@ -57,21 +77,31 @@
         <span class="title">Análise Agenda Financeira</span>
       </a>
       <div class="grow"></div>
-      <select id="empresaFiltro" class="btn">
-        <option value="">Todas Empresas</option>
-      </select>
-      <button id="filtrarBtn" class="btn">Filtrar</button>
+      <button id="rangeBtn" class="btn">🗓️ Período</button>
+      <div id="rangeHint" style="color:var(--muted); font-weight:800"></div>
     </div>
   </header>
 
   <div class="container">
-    <!-- Cards -->
     <div id="painel"></div>
-
-    <!-- Gráfico -->
     <div id="graficoContainer" class="chart-box" style="display:none">
       <h3>📈 Evolução</h3>
       <canvas id="grafico"></canvas>
+    </div>
+  </div>
+
+  <!-- Popover calendário -->
+  <div id="rangePop" class="popover">
+    <div class="cal-head">
+      <button id="prevM" class="cal-nav" type="button">‹</button>
+      <strong id="monthLabel"></strong>
+      <button id="nextM" class="cal-nav" type="button">›</button>
+    </div>
+    <div class="dow"><span>D</span><span>S</span><span>T</span><span>Q</span><span>Q</span><span>S</span><span>S</span></div>
+    <div id="daysGrid" class="grid"></div>
+    <div class="cal-actions">
+      <button id="cancelRange" class="btn-sm" type="button">Cancelar</button>
+      <button id="applyRange" class="btn-sm" type="button">Aplicar</button>
     </div>
   </div>
 
@@ -91,66 +121,80 @@
 
 <script>
 const API_URL="https://script.google.com/macros/s/AKfycbxJwRXw2lr2kK58EoHv-oUagd2FV2hvTHXRDJ5mFcNo5eZp3QlX7wX2KdrujAE5zPU-/exec";
+let todos=[], chart=null;
 const painel=document.getElementById("painel");
-const selectEmpresa=document.getElementById("empresaFiltro");
 const modal=document.getElementById("modal"), modalTable=document.getElementById("modalTable"), modalTitle=document.getElementById("modalTitle");
-let chart=null, todos=[];
-
 const BRL=n=>(Number(n)||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
 const fmtData=iso=>new Date(iso).toLocaleDateString('pt-BR');
-const fmtHora=iso=>{let d=new Date(iso);return d instanceof Date&&!isNaN(d)? d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}): iso;}
+const fmtHora=h=>h?.toString().substring(0,5);
 
-async function carregar(){
-  const resp=await fetch(API_URL); todos=await resp.json();
-  preencherEmpresas();
-  render();
+const range={start:null,end:null,view:new Date(new Date().getFullYear(),new Date().getMonth(),1)};
+const hint=document.getElementById("rangeHint");
+
+function updateHint(){hint.textContent=(range.start&&range.end)? fmtData(range.start)+" → "+fmtData(range.end):"";}
+function strip(d){return new Date(d.getFullYear(),d.getMonth(),d.getDate());}
+function sameDay(a,b){return a&&b&&a.getFullYear()==b.getFullYear()&&a.getMonth()==b.getMonth()&&a.getDate()==b.getDate();}
+
+function renderMonth(){
+  const y=range.view.getFullYear(), m=range.view.getMonth();
+  document.getElementById("monthLabel").textContent=new Date(y,m,1).toLocaleDateString('pt-BR',{month:'long',year:'numeric'});
+  const grid=document.getElementById("daysGrid"); grid.innerHTML="";
+  const firstDow=new Date(y,m,1).getDay(), daysInMonth=new Date(y,m+1,0).getDate();
+  for(let i=0;i<firstDow;i++) grid.appendChild(Object.assign(document.createElement("div"),{className:"day muted"}));
+  for(let d=1;d<=daysInMonth;d++){
+    const cur=new Date(y,m,d);const el=document.createElement("div");el.className="day";el.textContent=d;
+    const inSel=range.start&&range.end&&+cur>=+strip(range.start)&&+cur<=+strip(range.end);
+    const isStart=sameDay(cur,range.start), isEnd=sameDay(cur,range.end);
+    if(inSel) el.classList.add("in"); if(isStart||isEnd) el.classList.add("sel");
+    el.onclick=()=>pickDay(cur); grid.appendChild(el);
+  }
 }
-function preencherEmpresas(){
-  const empresas=[...new Set(todos.map(e=>e.empresa))];
-  selectEmpresa.innerHTML='<option value="">Todas Empresas</option>'+empresas.map(e=>`<option>${e}</option>`).join("");
+let firstPick=true;
+function pickDay(date){
+  if(firstPick){range.start=date;range.end=date;firstPick=false;}
+  else{if(date<range.start){range.end=range.start;range.start=date;}else range.end=date;firstPick=true;}
+  renderMonth();
 }
+document.getElementById("prevM").onclick=()=>{range.view=new Date(range.view.getFullYear(),range.view.getMonth()-1,1);renderMonth();}
+document.getElementById("nextM").onclick=()=>{range.view=new Date(range.view.getFullYear(),range.view.getMonth()+1,1);renderMonth();}
+document.getElementById("cancelRange").onclick=()=>document.getElementById("rangePop").classList.remove("open");
+document.getElementById("applyRange").onclick=()=>{updateHint();document.getElementById("rangePop").classList.remove("open");render();}
+document.getElementById("rangeBtn").onclick=(e)=>{e.stopPropagation();document.getElementById("rangePop").classList.add("open");renderMonth();}
+window.onclick=(e)=>{if(!document.getElementById("rangePop").contains(e.target)&&e.target.id!=="rangeBtn")document.getElementById("rangePop").classList.remove("open");}
+
+async function carregar(){const r=await fetch(API_URL);todos=await r.json();render();}
 function render(){
   painel.innerHTML="";
   let dados=todos;
-  const emp=selectEmpresa.value;
-  if(emp) dados=dados.filter(d=>d.empresa===emp);
-
+  if(range.start&&range.end){
+    dados=dados.filter(d=>{const dt=new Date(d.data);return dt>=strip(range.start)&&dt<=strip(range.end);});
+  }
   const porEmpresa={};
-  dados.forEach(d=>{
-    porEmpresa[d.empresa]??={total:0, itens:[]};
-    porEmpresa[d.empresa].total+=Number(d.valor)||0;
-    porEmpresa[d.empresa].itens.push(d);
-  });
-
+  dados.forEach(d=>{porEmpresa[d.empresa]??={total:0,itens:[]};porEmpresa[d.empresa].total+=+d.valor||0;porEmpresa[d.empresa].itens.push(d);});
   Object.entries(porEmpresa).forEach(([empresa,info])=>{
-    const div=document.createElement("div");
-    div.className="card";
+    const div=document.createElement("div");div.className="card";
     div.innerHTML=`<h2>${empresa}</h2><p>Total: <strong>${BRL(info.total)}</strong></p><p>Eventos: ${info.itens.length}</p>`;
-    div.onclick=()=>abrirModal(empresa,info.itens);
-    painel.appendChild(div);
+    div.onclick=()=>abrirModal(empresa,info.itens);painel.appendChild(div);
   });
-
-  if(emp) mostrarGrafico(dados); else hideGrafico();
+  if(Object.keys(porEmpresa).length===1) mostrarGrafico(Object.values(porEmpresa)[0].itens); else hideGrafico();
 }
 function abrirModal(empresa,itens){
   modalTitle.textContent="Detalhes — "+empresa;
   modalTable.innerHTML=itens.map(d=>`<tr><td>${fmtData(d.data)}</td><td>${d.cantor}</td><td>${fmtHora(d.hora)}</td><td>${BRL(d.valor)}</td></tr>`).join("");
   modal.classList.add("open");
 }
-document.getElementById("closeModal").onclick=()=>modal.classList.remove("open");
+document.querySelector(".close").onclick=()=>modal.classList.remove("open");
 
 function mostrarGrafico(dados){
   document.getElementById("graficoContainer").style.display="block";
   dados.sort((a,b)=>new Date(a.data)-new Date(b.data));
-  const labels=dados.map(d=>fmtData(d.data));
-  const vals=dados.map(d=>Number(d.valor)||0);
+  const labels=dados.map(d=>fmtData(d.data)), vals=dados.map(d=>+d.valor||0);
   const ctx=document.getElementById("grafico").getContext("2d");
   if(chart) chart.destroy();
   chart=new Chart(ctx,{type:"line",data:{labels,datasets:[{label:"Faturamento",data:vals,borderColor:"#60a5fa",backgroundColor:"rgba(96,165,250,.2)",fill:true,tension:.25}]}});
 }
-function hideGrafico(){ if(chart) chart.destroy(); chart=null; document.getElementById("graficoContainer").style.display="none"; }
+function hideGrafico(){if(chart)chart.destroy();chart=null;document.getElementById("graficoContainer").style.display="none";}
 
-document.getElementById("filtrarBtn").onclick=()=>render();
 carregar();
 </script>
 </body>
