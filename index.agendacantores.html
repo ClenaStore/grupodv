@@ -46,6 +46,12 @@
     /* Container */
     .container{max-width:1200px; margin:0 auto; padding:20px 18px}
 
+    /* Flags empresas */
+    .flags{display:flex; flex-wrap:wrap; gap:10px; margin-bottom:20px}
+    .flag{padding:8px 14px; border-radius:999px; border:1px solid var(--line);
+      background:var(--surface); cursor:pointer; font-weight:700; font-size:.9rem}
+    .flag.active{background:var(--brand2,#22d3ee); color:#fff; border-color:transparent}
+
     /* Grid responsivo */
     #painel{
       display:grid; grid-template-columns: repeat(3, minmax(0,1fr));
@@ -113,7 +119,10 @@
 </header>
 
 <div id="loading" class="loading"><div><div class="spinner"></div><p>Carregando...</p></div></div>
-<div class="container"><div id="painel"></div></div>
+<div class="container">
+  <div class="flags" id="flags"></div>
+  <div id="painel"></div>
+</div>
 
 <!-- Popover calendário -->
 <div id="rangePop" class="popover">
@@ -150,8 +159,9 @@ const API_COUVERT = "https://script.google.com/macros/s/AKfycbxxv-9kLzyqS9Qy8WX_
 function BRL(v){return (Number(v)||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});}
 function showLoading(v){document.getElementById("loading").classList.toggle("show",!!v);}
 function strip(d){return new Date(d.getFullYear(),d.getMonth(),d.getDate());}
+function sameDay(a,b){return a&&b&&a.getFullYear()==b.getFullYear()&&a.getMonth()==b.getMonth()&&a.getDate()==b.getDate();}
 
-let dadosAgrupados={},range={start:null,end:null,view:new Date()};
+let dadosAgrupados={},range={start:null,end:null,view:new Date()},empresaFiltro=null;
 
 async function carregar(){
   showLoading(true);
@@ -170,14 +180,27 @@ async function carregar(){
       if(!dadosAgrupados[d]) dadosAgrupados[d]={empresa:c.empresa,musicos:[],pagos:0,couvert:0};
       dadosAgrupados[d].couvert+=+c.total_dia;
     });
+    renderFlags();
     render();
   }finally{showLoading(false);}
+}
+
+function renderFlags(){
+  const flags=document.getElementById("flags");flags.innerHTML="";
+  const empresas=[...new Set(Object.values(dadosAgrupados).map(v=>v.empresa))];
+  empresas.forEach(emp=>{
+    const f=document.createElement("div");f.className="flag";f.textContent=emp;
+    if(emp===empresaFiltro) f.classList.add("active");
+    f.onclick=()=>{empresaFiltro=(empresaFiltro===emp?null:emp);renderFlags();render();};
+    flags.appendChild(f);
+  });
 }
 
 function render(){
   const painel=document.getElementById("painel");painel.innerHTML="";
   Object.entries(dadosAgrupados)
-    .filter(([d])=>{
+    .filter(([d,info])=>{
+      if(empresaFiltro && info.empresa!==empresaFiltro) return false;
       if(range.start&&range.end){
         const dt=new Date(d);
         return dt>=strip(range.start)&&dt<=strip(range.end);
@@ -211,7 +234,7 @@ document.getElementById("modal").onclick=e=>{if(e.target.id==="modal")document.g
 const pop=document.getElementById("rangePop"),grid=document.getElementById("daysGrid"),label=document.getElementById("monthLabel");
 document.getElementById("rangeBtn").onclick=(e)=>{e.stopPropagation();pop.classList.add("open");renderMonth();}
 document.getElementById("cancelRange").onclick=()=>pop.classList.remove("open");
-document.getElementById("applyRange").onclick=()=>{pop.classList.remove("open");render();}
+document.getElementById("applyRange").onclick=()=>{showLoading(true);setTimeout(()=>{pop.classList.remove("open");render();showLoading(false);},500);}
 
 function renderMonth(){
   const y=range.view.getFullYear(),m=range.view.getMonth();
@@ -224,11 +247,10 @@ function renderMonth(){
     const el=document.createElement("div");el.className="day";el.textContent=d;
     const inSel=range.start&&range.end&&+cur>=+strip(range.start)&&+cur<=+strip(range.end);
     const isStart=sameDay(cur,range.start),isEnd=sameDay(cur,range.end);
-    if(inSel) el.classList.add("in");if(isStart||isEnd) el.classList.add("sel");
+    if(inSel)el.classList.add("in");if(isStart||isEnd)el.classList.add("sel");
     el.onclick=()=>pickDay(cur);grid.appendChild(el);
   }
 }
-function sameDay(a,b){return a&&b&&a.getFullYear()==b.getFullYear()&&a.getMonth()==b.getMonth()&&a.getDate()==b.getDate();}
 let firstPick=true;
 function pickDay(date){
   if(firstPick){range.start=date;range.end=date;firstPick=false;}
@@ -237,13 +259,15 @@ function pickDay(date){
 }
 document.getElementById("prevM").onclick=()=>{range.view=new Date(range.view.getFullYear(),range.view.getMonth()-1,1);renderMonth();}
 document.getElementById("nextM").onclick=()=>{range.view=new Date(range.view.getFullYear(),range.view.getMonth()+1,1);renderMonth();}
+window.onclick=e=>{if(!pop.contains(e.target)&&e.target.id!=="rangeBtn")pop.classList.remove("open");};
 
-// ---------- Tema ----------
-(function(){const t=localStorage.getItem("dv_theme");if(t)document.documentElement.setAttribute("data-theme",t);})();
-document.getElementById("themeToggle").onclick=()=>{const cur=document.documentElement.getAttribute("data-theme")||"light";const next=cur==="light"?"dark":"light";document.documentElement.setAttribute("data-theme",next);localStorage.setItem("dv_theme",next);};
+// Tema
+document.getElementById("themeToggle").onclick=()=>{const cur=document.documentElement.getAttribute("data-theme")||"light";const next=cur==="light"?"dark":"light";document.documentElement.setAttribute("data-theme",next);localStorage.setItem("dv_theme",next);}
+const user=document.getElementById("userMenu");
+user.querySelector(".user-btn").onclick=()=>user.classList.toggle("open");
 window.handleLogout=()=>{localStorage.removeItem("dv_theme");location.reload();};
 
-// ---------- Semana vigente ----------
+// Semana vigente padrão
 (function(){
   const hoje=new Date();const dia=hoje.getDay();
   const segunda=new Date(hoje);segunda.setDate(hoje.getDate()-((dia+6)%7));
