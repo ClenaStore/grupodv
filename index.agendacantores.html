@@ -38,7 +38,7 @@
 
     .container{max-width:1200px; margin:0 auto; padding:20px 18px}
     #painel{display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:16px; margin-top:16px}
-    .card{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:16px; text-align:center; box-shadow:var(--shadow);}
+    .card{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:16px; text-align:center; box-shadow:var(--shadow); cursor:pointer;}
     .card.ok{border-left:6px solid var(--ok)}
     .card.bad{border-left:6px solid var(--bad)}
     .card h2{margin:0 0 6px; font-size:1.05rem}
@@ -49,15 +49,15 @@
     .spinner{width:74px; height:74px; border-radius:50%; border:6px solid rgba(255,255,255,.25); border-top-color:#fff; animation:spin 1s linear infinite}
     @keyframes spin{to{transform:rotate(360deg)}}
 
-    /* Popover calendário */
-    .popover{position:absolute; background:var(--surface); border:1px solid var(--line); border-radius:12px;
-      padding:12px; box-shadow:var(--shadow); display:none; z-index:50}
-    .popover.open{display:block}
-    .cal-head{display:flex; justify-content:space-between; margin-bottom:8px}
-    .grid{display:grid; grid-template-columns:repeat(7,1fr); gap:4px}
-    .day{height:36px; border-radius:8px; display:grid; place-items:center; cursor:pointer}
-    .day.sel{background:#2563eb; color:#fff}
-    .day.in{background:rgba(37,99,235,.2)}
+    /* Modal */
+    .modal{position:fixed; inset:0; background:rgba(0,0,0,.6); display:none; align-items:center; justify-content:center; z-index:80}
+    .modal.open{display:flex}
+    .modal-card{background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:20px; max-width:600px; width:94%; max-height:90vh; overflow:auto}
+    .modal-card h3{margin-top:0; margin-bottom:12px}
+    .close{cursor:pointer; float:right; font-weight:800; color:var(--muted)}
+    table{width:100%; border-collapse:collapse}
+    th,td{padding:8px; border-bottom:1px solid var(--line); text-align:left}
+    th{color:var(--muted)}
   </style>
 </head>
 <body>
@@ -81,13 +81,16 @@
 <div id="loading" class="loading"><div><div class="spinner"></div></div></div>
 <div class="container"><div id="painel"></div></div>
 
-<!-- Calendário -->
-<div id="rangePop" class="popover">
-  <div class="cal-head"><button id="prevM">‹</button><strong id="monthLabel"></strong><button id="nextM">›</button></div>
-  <div class="grid" id="daysGrid"></div>
-  <div style="margin-top:8px; display:flex; gap:8px; justify-content:flex-end">
-    <button id="cancelRange">Cancelar</button>
-    <button id="applyRange">Aplicar</button>
+<!-- Modal -->
+<div id="modal" class="modal">
+  <div class="modal-card">
+    <span id="closeModal" class="close">✕</span>
+    <h3 id="modalTitle"></h3>
+    <table>
+      <thead><tr><th>Cantor</th><th>Hora</th><th>Pago</th></tr></thead>
+      <tbody id="modalBody"></tbody>
+    </table>
+    <p id="modalCouvert"></p>
   </div>
 </div>
 
@@ -98,8 +101,10 @@ const API_COUVERT = "https://script.google.com/macros/s/AKfycbxxv-9kLzyqS9Qy8WX_
 function BRL(v){return (Number(v)||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});}
 function showLoading(v){document.getElementById("loading").classList.toggle("show",!!v);}
 
-let range={start:null,end:null,view:new Date()};
+let range={start:null,end:null};
 function strip(d){return new Date(d.getFullYear(),d.getMonth(),d.getDate());}
+
+let dadosAgrupados={};
 
 async function carregar(){
   showLoading(true);
@@ -107,21 +112,23 @@ async function carregar(){
     const ag=await (await fetch(API_AGENDA)).json();
     const cv=await (await fetch(API_COUVERT)).json();
 
-    const porData={};
+    dadosAgrupados={};
+
     ag.forEach(a=>{
       const d=a.data.split("T")[0];
-      if(!porData[d]) porData[d]={empresa:a.empresa,pagos:0,couvert:0};
-      porData[d].pagos+=+a.valor;
+      if(!dadosAgrupados[d]) dadosAgrupados[d]={empresa:a.empresa,musicos:[],pagos:0,couvert:0};
+      dadosAgrupados[d].musicos.push({cantor:a.cantor,hora:a.hora,valor:+a.valor});
+      dadosAgrupados[d].pagos+=+a.valor;
     });
     (cv.registros||[]).forEach(c=>{
       const d=c.data;
-      if(!porData[d]) porData[d]={empresa:c.empresa,pagos:0,couvert:0};
-      porData[d].couvert+=+c.total_dia;
+      if(!dadosAgrupados[d]) dadosAgrupados[d]={empresa:c.empresa,musicos:[],pagos:0,couvert:0};
+      dadosAgrupados[d].couvert+=+c.total_dia;
     });
 
     const painel=document.getElementById("painel");
     painel.innerHTML="";
-    Object.entries(porData)
+    Object.entries(dadosAgrupados)
       .filter(([d])=>{
         if(range.start&&range.end){
           const dt=new Date(d);
@@ -132,43 +139,32 @@ async function carregar(){
       .sort(([d1],[d2])=>new Date(d2)-new Date(d1))
       .forEach(([d,info])=>{
         const lucro=info.couvert-info.pagos;
-        painel.innerHTML+=`
-        <div class="card ${lucro>=0?"ok":"bad"}">
+        const card=document.createElement("div");
+        card.className=`card ${lucro>=0?"ok":"bad"}`;
+        card.innerHTML=`
           <h2>${info.empresa} – ${d.split("-").reverse().join("/")}</h2>
           <p>🎤 Pago músicos: <b>${BRL(info.pagos)}</b></p>
           <p>🎟️ Couvert: <b>${BRL(info.couvert)}</b></p>
-          <p>${lucro>=0?"✅ Lucro":"❌ Prejuízo"}: <b>${BRL(lucro)}</b></p>
-        </div>`;
+          <p>${lucro>=0?"✅ Lucro":"❌ Prejuízo"}: <b>${BRL(lucro)}</b></p>`;
+        card.onclick=()=>abrirModal(d,info);
+        painel.appendChild(card);
       });
   }finally{showLoading(false);}
 }
 
-// Calendário simples
-function renderMonth(){
-  const y=range.view.getFullYear(),m=range.view.getMonth();
-  document.getElementById("monthLabel").textContent=new Date(y,m).toLocaleDateString("pt-BR",{month:"long",year:"numeric"});
-  const g=document.getElementById("daysGrid");g.innerHTML="";
-  const days=new Date(y,m+1,0).getDate();
-  for(let d=1;d<=days;d++){
-    const el=document.createElement("div");el.className="day";el.textContent=d;
-    const cur=new Date(y,m,d);
-    if(range.start&&range.end&&cur>=strip(range.start)&&cur<=strip(range.end))el.classList.add("in");
-    if(cur.getTime()==strip(range.start)?.getTime()||cur.getTime()==strip(range.end)?.getTime())el.classList.add("sel");
-    el.onclick=()=>{if(!range.start||range.end){range.start=cur;range.end=null;}else{range.end=cur;}}
-    g.appendChild(el);
-  }
+function abrirModal(data,info){
+  document.getElementById("modalTitle").textContent=`${info.empresa} – ${data.split("-").reverse().join("/")}`;
+  document.getElementById("modalBody").innerHTML=info.musicos.map(m=>`
+    <tr><td>${m.cantor}</td><td>${m.hora||"-"}</td><td>${BRL(m.valor)}</td></tr>
+  `).join("");
+  document.getElementById("modalCouvert").textContent="🎟️ Couvert arrecadado: "+BRL(info.couvert);
+  document.getElementById("modal").classList.add("open");
 }
-document.getElementById("rangeBtn").onclick=(e)=>{e.stopPropagation();document.getElementById("rangePop").classList.add("open");renderMonth();}
-document.getElementById("cancelRange").onclick=()=>document.getElementById("rangePop").classList.remove("open");
-document.getElementById("applyRange").onclick=()=>{document.getElementById("rangePop").classList.remove("open");carregar();}
-document.getElementById("prevM").onclick=()=>{range.view=new Date(range.view.getFullYear(),range.view.getMonth()-1,1);renderMonth();}
-document.getElementById("nextM").onclick=()=>{range.view=new Date(range.view.getFullYear(),range.view.getMonth()+1,1);renderMonth();}
-window.onclick=(e)=>{if(!document.getElementById("rangePop").contains(e.target)&&e.target.id!=="rangeBtn"){document.getElementById("rangePop").classList.remove("open");}}
+document.getElementById("closeModal").onclick=()=>document.getElementById("modal").classList.remove("open");
+document.getElementById("modal").onclick=e=>{if(e.target.id==="modal")document.getElementById("modal").classList.remove("open");};
 
-// Tema sincronizado
-(function(){
-  const t=localStorage.getItem("dv_theme");if(t)document.documentElement.setAttribute("data-theme",t);
-})();
+// Tema
+(function(){const t=localStorage.getItem("dv_theme");if(t)document.documentElement.setAttribute("data-theme",t);})();
 document.getElementById("themeToggle").onclick=()=>{
   const cur=document.documentElement.getAttribute("data-theme")||"light";
   const next=cur==="light"?"dark":"light";
@@ -181,12 +177,12 @@ const user=document.getElementById("userMenu");
 user.querySelector(".user-btn").onclick=()=>user.classList.toggle("open");
 window.handleLogout=()=>{localStorage.removeItem("dv_theme");location.reload();};
 
-// Inicialização: semana vigente
+// Semana vigente
 (function(){
   const hoje=new Date();const dia=hoje.getDay();
   const segunda=new Date(hoje);segunda.setDate(hoje.getDate()-((dia+6)%7));
   const domingo=new Date(segunda);domingo.setDate(segunda.getDate()+6);
-  range.start=segunda;range.end=domingo;range.view=new Date();
+  range.start=segunda;range.end=domingo;
   carregar();
 })();
 </script>
