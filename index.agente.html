@@ -1,0 +1,399 @@
+<!doctype html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+  <title>Agente IA • Grupo DV</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg:#0b1020; --surface:#10172a; --card:#0f172a; --text:#e5e7eb; --muted:#94a3b8;
+      --line: rgba(148,163,184,.25); --brand:#60a5fa; --accent:#8b5cf6; --ok:#16a34a; --warn:#f59e0b; --danger:#ef4444;
+      --chip-bg:#0b1225; --shadow: 0 16px 36px rgba(15,23,42,.24);
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      color:var(--text); background: radial-gradient(1200px 600px at 20% -10%, rgba(99,102,241,.08), transparent 60%), var(--bg);
+    }
+    .container{max-width:1100px; margin:0 auto; padding:18px; display:flex; gap:18px; height:100%}
+    .sidebar{
+      width:300px; background:linear-gradient(180deg, rgba(2,6,23,.6), rgba(2,6,23,.2)); border:1px solid var(--line);
+      border-radius:18px; padding:16px; box-shadow: var(--shadow); height:calc(100vh - 36px); position:sticky; top:18px; overflow:auto;
+    }
+    .brand{display:flex; align-items:center; gap:10px; margin-bottom:12px}
+    .logo{width:34px; height:34px; border-radius:10px; background:linear-gradient(135deg, var(--brand), var(--accent)); display:grid; place-items:center; font-weight:800}
+    .brand h1{font-size:16px; margin:0}
+    .muted{color:var(--muted); font-size:12px}
+    .badge{display:inline-flex; align-items:center; gap:8px; padding:8px 10px; background:var(--chip-bg); border:1px solid var(--line); border-radius:12px; font-size:12px}
+    .badge code{font-size:11px; color:#c7d2fe}
+    .stack{display:flex; flex-direction:column; gap:10px}
+    .stack .row{display:flex; gap:10px}
+    .btn, button{
+      appearance:none; border:1px solid var(--line); color:var(--text); background:#0b1225; padding:10px 12px; border-radius:12px; cursor:pointer;
+      transition:transform .08s ease, background .2s ease, border-color .2s ease; font-weight:600;
+    }
+    .btn:hover{transform:translateY(-1px); border-color:#4f46e5}
+    .btn.primary{background:linear-gradient(180deg, #1f2a44, #121a2f); border-color:#334155}
+    input, textarea, select{
+      width:100%; background:#0b1225; border:1px solid var(--line); color:var(--text); border-radius:12px; padding:10px 12px; outline:none;
+    }
+    input::placeholder, textarea::placeholder{color:#8aa0c5}
+    .content{
+      flex:1; display:flex; flex-direction:column; height:100vh; gap:12px;
+    }
+    header{
+      display:flex; align-items:center; justify-content:space-between; gap:12px; padding:8px 12px; border:1px solid var(--line);
+      border-radius:18px; background:linear-gradient(180deg, rgba(15,23,42,.5), rgba(2,6,23,.3)); box-shadow: var(--shadow);
+      position:sticky; top:18px; z-index:10;
+    }
+    header .title{display:flex; align-items:center; gap:10px}
+    header .title .dot{width:10px; height:10px; border-radius:50%; background:radial-gradient(circle at 30% 30%, #22c55e, #14532d); box-shadow:0 0 18px rgba(34,197,94,.7)}
+    #messages{
+      flex:1; overflow:auto; border:1px solid var(--line); border-radius:18px; padding:16px; background:linear-gradient(180deg, rgba(15,23,42,.55), rgba(2,6,23,.25));
+      box-shadow: var(--shadow);
+    }
+    .msg{display:flex; gap:10px; margin:16px 0}
+    .msg .bubble{
+      padding:12px 14px; border:1px solid var(--line); border-radius:14px; max-width:75%;
+      background:rgba(2,6,23,.45);
+      white-space:pre-wrap; word-wrap:break-word; line-height:1.5;
+    }
+    .msg.user .bubble{ background:linear-gradient(180deg, rgba(59,130,246,.12), rgba(59,130,246,.06)); border-color:rgba(99,102,241,.45) }
+    .msg.assistant .bubble{ background:linear-gradient(180deg, rgba(2,6,23,.6), rgba(2,6,23,.4)) }
+    .msg .avatar{width:36px;height:36px;border-radius:10px; display:grid; place-items:center; font-weight:800}
+    .msg.user .avatar{ background:linear-gradient(135deg, #3b82f6, #6366f1) }
+    .msg.assistant .avatar{ background:linear-gradient(135deg, #10b981, #22d3ee) }
+    .sources{margin-top:10px; display:flex; gap:8px; flex-wrap:wrap}
+    .source{font-size:11px; border:1px dashed #334155; padding:6px 8px; border-radius:10px; background:rgba(2,6,23,.4)}
+    .composer{ display:flex; gap:8px; align-items:flex-end; }
+    .composer textarea{ min-height:46px; max-height:160px; resize:vertical; }
+    .composer .actions{ display:flex; gap:8px }
+    .hint{font-size:12px; color:#a5b4fc}
+    .chips{display:flex; gap:8px; flex-wrap:wrap}
+    .chip{font-size:12px; padding:8px 10px; background:var(--chip-bg); border:1px solid var(--line); border-radius:999px; cursor:pointer}
+    .chip:hover{border-color:#4f46e5}
+    .kbd{display:inline-block; border:1px solid var(--line); background:#0b1225; padding:1px 6px; border-radius:6px; font-size:12px; color:#cbd5e1}
+    .sr{position:absolute; left:-9999px}
+    footer{font-size:12px; color:var(--muted); display:flex; justify-content:space-between; gap:12px; align-items:center}
+    .danger{color:#fecaca}
+    .ok{color:#86efac}
+    .pill{display:inline-flex; align-items:center; gap:8px; padding:6px 8px; border-radius:999px; border:1px solid var(--line); background:#0b1225; font-size:12px}
+  </style>
+</head>
+<body>
+<div class="container">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="logo">DV</div>
+      <div>
+        <h1>Agente IA • Grupo DV</h1>
+        <div class="muted">Responde usando os dados dos seus painéis.</div>
+      </div>
+    </div>
+
+    <div class="stack" style="margin:14px 0 16px">
+      <div class="badge">
+        <span>🔐 Senha da API (x-api-key)</span>
+      </div>
+      <input id="apikey" type="password" placeholder="Digite sua senha…">
+      <div class="row">
+        <button class="btn" onclick="saveKey()">Salvar</button>
+        <button class="btn" onclick="testKey()">Testar</button>
+        <span id="keyStatus" class="pill">Status: <b id="keyStatusText">desconhecido</b></span>
+      </div>
+      <div class="muted">Esta senha é checada em <code>/api/ping</code> e enviada em todas as requisições do agente.</div>
+    </div>
+
+    <div class="stack" style="margin:10px 0 20px">
+      <div class="badge">📚 Fontes conectadas</div>
+      <div class="chips" id="sourcesChips"></div>
+      <div class="muted">O agente envia a lista de fontes para <code>/api/ask</code>. Você pode desmarcar se quiser.</div>
+    </div>
+
+    <div class="stack">
+      <div class="badge">💡 Exemplos</div>
+      <div class="chips">
+        <div class="chip" onclick="ask('Quanto vendi no Mercatto Delícia ontem?')">Quanto vendi ontem?</div>
+        <div class="chip" onclick="ask('Mostre os cancelamentos por empresa neste mês, resumidos por item.')">Cancelamentos por empresa</div>
+        <div class="chip" onclick="ask('Qual a meta de faturamento atual e o valor atingido por empresa?')">Meta & atingido</div>
+        <div class="chip" onclick="ask('Quais reservas VIP hoje e amanhã?')">Reservas VIP</div>
+      </div>
+      <div class="muted">Dica: pressione <span class="kbd">Shift</span> + <span class="kbd">Enter</span> para quebrar linha.</div>
+    </div>
+
+    <div style="margin-top:18px" class="muted">
+      ⚙️ Requisitos de backend: implemente <code>/api/ask</code> (Vercel) que chama a OpenAI com RAG usando as fontes abaixo.
+    </div>
+  </aside>
+
+  <main class="content">
+    <header>
+      <div class="title">
+        <span class="dot" id="dot"></span>
+        <strong>Agente Inteligente</strong>
+        <span class="muted">GPT com acesso aos painéis</span>
+      </div>
+      <div class="pill">Timezone: <code id="tz"></code></div>
+    </header>
+
+    <section id="messages" aria-live="polite" aria-label="Mensagens da conversa">
+      <!-- messages rendered here -->
+    </section>
+
+    <section class="composer">
+      <textarea id="input" placeholder="Pergunte algo…"></textarea>
+      <div class="actions">
+        <button class="btn primary" id="send">Enviar ▶</button>
+        <button class="btn" id="clear">Limpar</button>
+      </div>
+    </section>
+
+    <footer>
+      <div>Conversa: <code id="cid"></code></div>
+      <div class="muted">Este agente usa OpenAI (gpt) com recuperação de contexto das suas APIs.</div>
+    </footer>
+  </main>
+</div>
+
+<script>
+// ---------------------- Config & Repertório ----------------------
+const DEFAULT_SOURCES = [
+  // mapeamento segue README_VERCEL.txt e api/[key].js
+  {key:'abc_vendas',         path:'/api/abc_vendas',         label:'ABC de Vendas', enabled:true},
+  {key:'avaliacoes',         path:'/api/avaliacoes',         label:'Avaliações',    enabled:true},
+  {key:'cancelamentos',      path:'/api/cancelamentos',      label:'Cancelamentos', enabled:true},
+  {key:'conciliacao',        path:'/api/conciliacao',        label:'Conciliação',   enabled:true},
+  {key:'couvert_abc',        path:'/api/couvert_abc',        label:'Couvert (ABC)', enabled:true},
+  {key:'couvert_pagamentos', path:'/api/couvert_pagamentos', label:'Couvert (Pagto)', enabled:true},
+  {key:'delivery',           path:'/api/delivery',           label:'Delivery',      enabled:true},
+  {key:'meta',               path:'/api/meta',               label:'Metas',         enabled:true},
+  {key:'reservas',           path:'/api/reservas',           label:'Reservas',      enabled:true},
+  {key:'resumo_financeiro',  path:'/api/resumo_financeiro',  label:'Resumo Financeiro', enabled:true},
+  {key:'travas_comparacao',  path:'/api/travas_comparacao',  label:'Travas • Comparação', enabled:true},
+];
+
+// Persistência simples
+const LS_KEY      = 'gdv-agent-sources';
+const LS_APIKEY   = 'x-api-key';
+const LS_CID      = 'gdv-conversation-id';
+
+// Estado
+let SOURCES = loadSources();
+let conversationId = localStorage.getItem(LS_CID) || crypto.randomUUID();
+localStorage.setItem(LS_CID, conversationId);
+
+// UI init
+document.getElementById('cid').textContent = conversationId.slice(0,8);
+document.getElementById('tz').textContent = Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/Bahia';
+document.getElementById('apikey').value = localStorage.getItem(LS_APIKEY) || '';
+renderSourceChips();
+testKey(true);
+
+// Atalhos / envio
+const ta = document.getElementById('input');
+ta.addEventListener('keydown', (e)=>{
+  if(e.key === 'Enter' && !e.shiftKey){
+    e.preventDefault(); send();
+  }
+});
+document.getElementById('send').onclick = send;
+document.getElementById('clear').onclick = clearChat;
+
+// ---------------------- Helpers ----------------------
+function loadSources(){
+  try{
+    const raw = localStorage.getItem(LS_KEY);
+    if(raw){ 
+      const parsed = JSON.parse(raw);
+      // mesclar com DEFAULT (caso o pacote tenha atualizado)
+      const map = Object.fromEntries(DEFAULT_SOURCES.map(s=>[s.key, s]));
+      for(const item of parsed){ if(map[item.key]){ map[item.key].enabled = !!item.enabled; } }
+      return Object.values(map);
+    }
+  }catch(e){}
+  return [...DEFAULT_SOURCES];
+}
+function saveSources(){
+  localStorage.setItem(LS_KEY, JSON.stringify(SOURCES));
+}
+function renderSourceChips(){
+  const wrap = document.getElementById('sourcesChips');
+  wrap.innerHTML = '';
+  for(const src of SOURCES){
+    const el = document.createElement('div');
+    el.className = 'chip';
+    el.textContent = (src.enabled?'✅ ':'⬜ ') + src.label;
+    el.title = src.path;
+    el.onclick = ()=>{ src.enabled = !src.enabled; saveSources(); renderSourceChips(); };
+    wrap.appendChild(el);
+  }
+}
+function saveKey(){
+  const v = document.getElementById('apikey').value.trim();
+  localStorage.setItem(LS_APIKEY, v);
+  testKey();
+}
+async function testKey(silent=false){
+  const el = document.getElementById('keyStatusText');
+  try{
+    const r = await fetch('/api/ping', { headers: { 'x-api-key': localStorage.getItem(LS_APIKEY)||'' } });
+    const data = await r.json();
+    const ok = data && data.ok;
+    el.textContent = ok ? 'ok' : 'falhou';
+    el.className = ok ? 'ok' : 'danger';
+    document.getElementById('dot').style.background = ok
+      ? 'radial-gradient(circle at 30% 30%, #22c55e, #14532d)'
+      : 'radial-gradient(circle at 30% 30%, #f97316, #7c2d12)';
+    if(!silent && !ok) alert('Falha na autenticação. Verifique a senha (x-api-key).');
+  }catch(e){
+    el.textContent = 'erro'; el.className = 'danger';
+    if(!silent) alert('Erro ao testar a senha: ' + e);
+  }
+}
+
+function addMsg(role, text, sources){
+  const wrap = document.getElementById('messages');
+  const row = document.createElement('div');
+  row.className = 'msg ' + (role==='user' ? 'user':'assistant');
+  const av = document.createElement('div'); av.className='avatar'; av.textContent = role==='user'?'U':'AI';
+  const bb = document.createElement('div'); bb.className='bubble'; bb.textContent = text || '';
+  row.appendChild(av); row.appendChild(bb);
+  if(sources && sources.length){
+    const swrap = document.createElement('div'); swrap.className='sources';
+    for(const s of sources){
+      const tag = document.createElement('a');
+      tag.className = 'source';
+      tag.href = s.url || '#'; tag.target = '_blank'; tag.rel='noopener noreferrer';
+      tag.textContent = s.label || s.title || s.key || 'fonte';
+      swrap.appendChild(tag);
+    }
+    bb.appendChild(swrap);
+  }
+  wrap.appendChild(row);
+  wrap.scrollTop = wrap.scrollHeight;
+  return bb;
+}
+
+function setThinking(isOn){
+  document.getElementById('send').disabled = !!isOn;
+  document.getElementById('input').disabled = !!isOn;
+  document.getElementById('dot').style.boxShadow = isOn ? '0 0 18px rgba(99,102,241,.8)' : '0 0 18px rgba(34,197,94,.7)';
+}
+
+// ---------------------- Chat Flow ----------------------
+async function send(){
+  const q = ta.value.trim();
+  if(!q) return;
+  ta.value='';
+  addMsg('user', q);
+  const bb = addMsg('assistant', 'Pensando…');
+  setThinking(true);
+
+  // fontes habilitadas
+  const sources = SOURCES.filter(s=>s.enabled).map(({key, path, label})=>({key, path, label}));
+
+  // Tenta streaming via SSE/NDJSON. Fallback para JSON simples.
+  const headers = {
+    'Content-Type': 'application/json',
+    'x-api-key': localStorage.getItem(LS_APIKEY)||'',
+    'x-tz': Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/Bahia'
+  };
+  const body = JSON.stringify({
+    input: q,
+    conversation_id: conversationId,
+    sources,
+    stream: true
+  });
+
+  try{
+    const r = await fetch('/api/ask', { method:'POST', headers, body });
+    if(!r.ok){
+      const err = await r.text();
+      bb.textContent = 'Falha: ' + r.status + ' ' + err;
+      setThinking(false);
+      return;
+    }
+
+    const ct = r.headers.get('content-type') || '';
+    if(ct.includes('text/event-stream') || ct.includes('application/x-ndjson') || ct.includes('text/plain')){
+      // leitura streaming
+      const reader = r.body.getReader();
+      const dec = new TextDecoder();
+      bb.textContent = '';
+      let full=''; let finalSources=null;
+      while(true){
+        const {value, done} = await reader.read();
+        if(done) break;
+        const chunk = dec.decode(value, {stream:true});
+        for(const line of chunk.split(/\r?\n/)){
+          const s = line.trim();
+          if(!s) continue;
+          // suporta JSONL: {type:"token"|"done", content, sources?}
+          try{
+            const evt = JSON.parse(s);
+            if(evt.type === 'token'){
+              bb.textContent += evt.content || '';
+              full += evt.content || '';
+            }else if(evt.type === 'done'){
+              finalSources = evt.sources || null;
+            }
+          }catch{
+            // fallback: render bruto
+            bb.textContent += s;
+            full += s;
+          }
+        }
+      }
+      if(finalSources && Array.isArray(finalSources) && finalSources.length){
+        const swrap = document.createElement('div'); swrap.className='sources';
+        for(const s of finalSources){
+          const tag = document.createElement('a');
+          tag.className = 'source'; tag.href = s.url || '#'; tag.target='_blank'; tag.rel='noopener noreferrer';
+          tag.textContent = s.label || s.title || s.key || 'fonte';
+          swrap.appendChild(tag);
+        }
+        bb.appendChild(swrap);
+      }
+    }else{
+      // JSON normal: {answer, sources?}
+      const data = await r.json();
+      bb.textContent = data.answer || JSON.stringify(data);
+      if(Array.isArray(data.sources) && data.sources.length){
+        const swrap = document.createElement('div'); swrap.className='sources';
+        for(const s of data.sources){
+          const tag = document.createElement('a');
+          tag.className = 'source'; tag.href = s.url || '#'; tag.target='_blank'; tag.rel='noopener noreferrer';
+          tag.textContent = s.label || s.title || s.key || 'fonte';
+          swrap.appendChild(tag);
+        }
+        bb.appendChild(swrap);
+      }
+    }
+
+  }catch(e){
+    bb.textContent = 'Erro ao consultar o agente: ' + e;
+  }finally{
+    setThinking(false);
+  }
+}
+
+function clearChat(){
+  const box = document.getElementById('messages');
+  box.innerHTML = '';
+  addMsg('assistant', 'Pronto! Posso ajudar com vendas, cancelamentos, metas, reservas, conciliação e muito mais. Pergunte!');
+}
+
+// Ação rápida
+function ask(q){
+  ta.value = q;
+  send();
+}
+
+// Boot
+clearChat();
+</script>
+</body>
+</html>
