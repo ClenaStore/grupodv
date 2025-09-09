@@ -317,29 +317,32 @@
   <!-- ===== App inteiro (escondido até autenticar) ===== -->
   <div id="app" hidden>
     <!-- Header -->
-    <header>
-      <div class="head-wrap">
-        <a class="brand" href="index.html" aria-label="Início">
-          <img src="https://github.com/ClenaStore/painel-principal/blob/main/img/GRUPO%20DV%20(1).png?raw=true" alt="Logo">
-          <div class="title">Análise Financeira</div>
-        </a>
-        <div class="head-spacer"></div>
+   <header>
+  <div class="head-wrap">
+    <a class="brand" href="index.html" aria-label="Início">
+      <img src="https://github.com/ClenaStore/painel-principal/blob/main/img/GRUPO%20DV%20(1).png?raw=true" alt="Logo">
+      <div class="title">Análise Financeira</div>
+    </a>
+    <div class="head-spacer"></div>
 
-        <a class="icon-btn only-desktop" href="index.relatorios.html" title="Relatório Consolidado">📄 Relatórios</a>
-        <button id="themeToggle" class="icon-btn" type="button" title="Alternar tema">🌓 Tema</button>
+    <!-- NOVO botão -->
+    <a class="icon-btn only-desktop" href="index.agente.html" title="Agente IA">🤖 Agente IA</a>
 
-        <div class="user" id="userMenu">
-          <button class="user-btn" type="button" title="Perfil">
-            <img id="userAvatar" src="https://github.com/ClenaStore/grupodv/blob/main/paste/Imagem%20do%20WhatsApp%20de%202025-09-08%20%C3%A0(s)%2011.54.12_884bebc9.jpg?raw=true" alt="Usuário">
-            <strong id="userName" style="font-size:13px">Leonardo</strong>
-          </button>
-          <div class="user-menu">
-            <a href="perfil.html">👤 Meu Perfil</a>
-            <button onclick="handleLogout()">🚪 Sair</button>
-          </div>
-        </div>
+    <a class="icon-btn only-desktop" href="index.relatorios.html" title="Relatório Consolidado">📄 Relatórios</a>
+    <button id="themeToggle" class="icon-btn" type="button" title="Alternar tema">🌓 Tema</button>
+
+    <div class="user" id="userMenu">
+      <button class="user-btn" type="button" title="Perfil">
+        <img id="userAvatar" src="https://github.com/ClenaStore/grupodv/blob/main/paste/Imagem%20do%20WhatsApp%20de%202025-09-08%20%C3%A0(s)%2011.54.12_884bebc9.jpg?raw=true" alt="Usuário">
+        <strong id="userName" style="font-size:13px">Leonardo</strong>
+      </button>
+      <div class="user-menu">
+        <a href="perfil.html">👤 Meu Perfil</a>
+        <button onclick="handleLogout()">🚪 Sair</button>
       </div>
-    </header>
+    </div>
+  </div>
+</header>
 
     <!-- Hero / Filtros -->
     <section class="hero">
