@@ -15,14 +15,13 @@
     }
     body{margin:0; font-family:ui-sans-serif,Segoe UI,Roboto,Arial,sans-serif; background:var(--bg); color:var(--text);}
 
-    /* Header unificado */
+    /* Header unificado (igual painel metas) */
     header{position:sticky; top:0; z-index:40; backdrop-filter:saturate(160%) blur(8px);
       background:color-mix(in srgb, var(--surface) 90%, transparent); border-bottom:1px solid var(--line);}
     .head{max-width:1200px; margin:0 auto; padding:14px 18px; display:flex; align-items:center; gap:12px}
     .brand{display:flex; align-items:center; gap:10px; text-decoration:none; color:inherit}
     .brand img{height:42px}
     .title{font-weight:800; font-size:clamp(18px,1.6vw,22px)}
-
     .grow{flex:1}
     .btn{border:1px solid var(--line); background:var(--surface); color:var(--text);
       padding:10px 12px; border-radius:12px; font-weight:800; cursor:pointer}
@@ -191,8 +190,7 @@ function mostrarGrafico(dados){
   const labels=dados.map(d=>fmtData(d.data)), vals=dados.map(d=>+d.valor||0);
   const ctx=document.getElementById("grafico").getContext("2d");
   if(chart) chart.destroy();
-  chart=new Chart(ctx,{type:"line",data:{labels,datasets:[{label:"Faturamento",data:vals,borderColor:"#60a5fa",backgroundColor:"rgba(96,165,250,.2)",fill:true,tension:.25}]}});
-}
+  chart=new Chart(ctx,{type:"line",data:{labels,datasets:[{label:"Faturamento",data:vals,borderColor:"#60a5fa",backgroundColor:"rgba(96,165,250,.2)",fill:true,tension:.25}]}});}
 function hideGrafico(){if(chart)chart.destroy();chart=null;document.getElementById("graficoContainer").style.display="none";}
 
 carregar();
