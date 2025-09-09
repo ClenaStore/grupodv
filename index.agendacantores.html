@@ -3,8 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-  <title>Couvert x Músicos - Grupo DV</title>
+  <title>Entradas • Grupo DV</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
   <style>
     :root{
       --bg:#0b1020; --surface:#10172a; --card:#0f172a; --text:#e5e7eb; --muted:#94a3b8;
@@ -14,22 +15,25 @@
     }
     [data-theme="light"]{
       --bg:#f6f7fb; --surface:#fff; --card:#fff; --text:#0f172a; --muted:#475569;
-      --line:#e5e7eb; --icon-bg:rgba(2,6,23,.06); --shadow:0 16px 36px rgba(15,23,42,.08);
+      --line:#e5e7eb; --icon-bg:rgba(2,6,23,.06);
+      --shadow:0 16px 36px rgba(15,23,42,.08);
     }
     *{box-sizing:border-box}
-    body{margin:0;font-family:ui-sans-serif,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--text);}
+    body{margin:0; font-family:ui-sans-serif,Segoe UI,Roboto,Arial,sans-serif; background:var(--bg); color:var(--text);}
 
     /* Header */
     header{position:sticky; top:0; z-index:40; backdrop-filter:saturate(160%) blur(8px);
-      background:color-mix(in srgb, var(--surface) 80%, transparent); border-bottom:1px solid var(--line);}
+      background:color-mix(in srgb, var(--surface) 85%, transparent); border-bottom:1px solid var(--line);}
     .head{max-width:1200px; margin:0 auto; padding:14px 18px; display:flex; align-items:center; gap:12px}
     .brand{display:flex; align-items:center; gap:10px; text-decoration:none; color:inherit}
     .brand img{height:42px}
-    .title{font-weight:800; font-size:clamp(18px,1.6vw,22px)}
+    .title{font-weight:800; letter-spacing:.2px; font-size:clamp(18px,1.6vw,22px)}
     .grow{flex:1}
     .btn{border:1px solid var(--line); background:var(--surface); color:var(--text);
       padding:10px 12px; border-radius:12px; font-weight:800; cursor:pointer; display:inline-flex; gap:8px; align-items:center}
     .btn:hover{box-shadow:var(--shadow); transform:translateY(-1px)}
+    .only-desktop{display:inline-flex}
+    @media (max-width:900px){.only-desktop{display:none!important}}
     .user{position:relative}
     .user-btn{display:flex; align-items:center; gap:10px; border:1px solid var(--line);
       background:var(--surface); padding:6px 8px; border-radius:999px; cursor:pointer}
@@ -41,25 +45,24 @@
       border:none; background:transparent; color:var(--text); text-align:left; cursor:pointer; font-weight:600}
     .user-menu a:hover,.user-menu button:hover{background:var(--icon-bg)}
 
-    .container{max-width:1200px;margin:0 auto;padding:20px 18px}
-    #painel{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin-top:16px}
-    .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;text-align:center;cursor:pointer;transition:.2s}
-    .card:hover{transform:translateY(-2px);box-shadow:var(--shadow)}
-    .card h2{margin:0 0 6px;font-size:1rem;color:var(--muted)}
-    .card p{margin:4px 0;font-size:.95rem}
-    .lucro{border-left:6px solid var(--ok);}
-    .prejuizo{border-left:6px solid var(--bad);}
+    /* Container */
+    .container{max-width:1200px; margin:0 auto; padding:20px 18px}
 
-    /* Modal */
-    .modal{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center;z-index:50;padding:18px}
-    .modal.open{display:flex}
-    .modal-card{background:var(--surface);border:1px solid var(--line);border-radius:14px;width:min(800px,96vw);max-height:92vh;overflow:auto;padding:16px}
-    .modal-h{display:flex;align-items:center;margin-bottom:12px}
-    .modal-h h3{margin:0}
-    .close{margin-left:auto;cursor:pointer;color:var(--muted)}
-    table{width:100%;border-collapse:collapse;margin-top:10px}
-    th,td{padding:10px;border-bottom:1px solid var(--line);text-align:left}
-    th{background:var(--card);color:var(--muted)}
+    /* Cards */
+    #painel{display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:16px; margin-top:16px}
+    .card{background:var(--card); border:1px solid var(--line); border-radius:14px;
+      padding:16px; text-align:center; transition:.2s; box-shadow:var(--shadow);}
+    .card.ok{border-left:6px solid var(--ok)}
+    .card.bad{border-left:6px solid var(--bad)}
+    .card h2{margin:0 0 6px; font-size:1.05rem}
+    .card p{margin:4px 0; font-size:.95rem}
+
+    /* Loading */
+    .loading{position:fixed; inset:0; background:rgba(0,0,0,.55); display:none; align-items:center; justify-content:center; z-index:60}
+    .loading.show{display:flex}
+    .spinner{width:74px; height:74px; border-radius:50%; border:6px solid rgba(255,255,255,.25); border-top-color:#fff; animation:spin 1s linear infinite}
+    .loading p{color:#fff; font-weight:800; margin-top:12px}
+    @keyframes spin{to{transform:rotate(360deg)}}
   </style>
 </head>
 <body>
@@ -67,12 +70,12 @@
   <!-- Header -->
   <header>
     <div class="head">
-      <a class="brand" href="index.html" aria-label="Início">
+      <a class="brand" href="#">
         <img src="https://github.com/ClenaStore/painel-principal/blob/main/img/GRUPO%20DV%20(1).png?raw=true" alt="Logo">
-        <span class="title">Couvert x Músicos</span>
+        <span class="title">Entradas</span>
       </a>
       <div class="grow"></div>
-      <a class="btn only-desktop" href="index.relatorios.html">📄 Relatórios</a>
+      <a class="btn only-desktop" href="#">📄 Relatórios</a>
       <button id="themeToggle" class="btn">🌓 Tema</button>
       <div class="user" id="userMenu">
         <button class="user-btn" type="button">
@@ -80,111 +83,79 @@
           <strong style="font-size:13px">Leonardo</strong>
         </button>
         <div class="user-menu">
-          <a href="perfil.html">👤 Meu Perfil</a>
+          <a href="#">👤 Meu Perfil</a>
           <button onclick="handleLogout()">🚪 Sair</button>
         </div>
       </div>
     </div>
   </header>
 
+  <!-- Loading -->
+  <div id="loading" class="loading"><div><div class="spinner"></div><p>Carregando...</p></div></div>
+
   <div class="container">
     <div id="painel"></div>
-  </div>
-
-  <!-- Modal -->
-  <div id="modal" class="modal">
-    <div class="modal-card">
-      <div class="modal-h">
-        <h3 id="modalTitle">Detalhes</h3>
-        <span id="closeModal" class="close">✕</span>
-      </div>
-      <table>
-        <thead><tr><th>Cantor</th><th>Pagamento</th></tr></thead>
-        <tbody id="modalTable"></tbody>
-      </table>
-      <p id="modalCouvert" style="margin-top:14px;font-weight:700"></p>
-      <p id="modalResultado" style="margin-top:6px"></p>
-    </div>
   </div>
 
 <script>
 const API_AGENDA = "https://script.google.com/macros/s/AKfycbxJwRXw2lr2kK58EoHv-oUagd2FV2hvTHXRDJ5mFcNo5eZp3QlX7wX2KdrujAE5zPU-/exec";
 const API_COUVERT = "https://script.google.com/macros/s/AKfycbxxv-9kLzyqS9Qy8WX_qPp7UG8He3OaEbIxZMV3HoRaSpdBfRYqZZZODLQlIJZDufso/exec";
 
-let dadosAgenda=[], dadosCouvert=[];
-const painel=document.getElementById("painel");
-const modal=document.getElementById("modal"), modalTitle=document.getElementById("modalTitle"),
-      modalTable=document.getElementById("modalTable"), modalCouvert=document.getElementById("modalCouvert"),
-      modalResultado=document.getElementById("modalResultado");
-
-const BRL=n=>(Number(n)||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
-const fmtData=d=>new Date(d).toLocaleDateString('pt-BR');
-
-function handleLogout(){localStorage.removeItem("dv_pwd");location.reload();}
-document.getElementById("themeToggle").addEventListener("click",()=>{
-  const cur=document.documentElement.getAttribute("data-theme")||"light";
-  const next=(cur==="light")?"dark":"light";
-  document.documentElement.setAttribute("data-theme",next);
-  localStorage.setItem("dv_theme",next);
-});
-const user=document.getElementById("userMenu");
-user.querySelector(".user-btn").addEventListener("click",()=>user.classList.toggle("open"));
-window.addEventListener("click",e=>{if(!user.contains(e.target))user.classList.remove("open");});
+function BRL(v){return (Number(v)||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});}
+function showLoading(v){document.getElementById("loading").classList.toggle("show",!!v);}
 
 async function carregar(){
-  painel.innerHTML="<p>Carregando...</p>";
+  showLoading(true);
   try{
-    const [r1,r2] = await Promise.all([fetch(API_AGENDA), fetch(API_COUVERT)]);
-    dadosAgenda = await r1.json();
-    dadosCouvert = await r2.json();
-    render();
-  }catch(e){
-    console.error(e);
-    painel.innerHTML="<p>Erro ao carregar dados</p>";
-  }
+    const agResp = await fetch(API_AGENDA);
+    const agenda = await agResp.json();
+    const cvResp = await fetch(API_COUVERT);
+    const couvert = await cvResp.json();
+
+    const porData={};
+
+    // Agenda
+    agenda.forEach(a=>{
+      const data=a.data.split("T")[0];
+      if(!porData[data]) porData[data]={empresa:a.empresa,pagos:0,couvert:0};
+      porData[data].pagos += +a.valor;
+    });
+
+    // Couvert
+    (couvert.registros||[]).forEach(c=>{
+      const data=c.data;
+      if(!porData[data]) porData[data]={empresa:c.empresa,pagos:0,couvert:0};
+      porData[data].couvert += +c.total_dia;
+    });
+
+    // Render
+    const painel=document.getElementById("painel");
+    painel.innerHTML="";
+    Object.entries(porData).sort(([d1],[d2])=>new Date(d2)-new Date(d1)).forEach(([data,info])=>{
+      const lucro=info.couvert-info.pagos;
+      painel.innerHTML+=`
+        <div class="card ${lucro>=0?"ok":"bad"}">
+          <h2>${info.empresa} – ${data.split("-").reverse().join("/")}</h2>
+          <p>🎤 Pago músicos: <b>${BRL(info.pagos)}</b></p>
+          <p>🎟️ Couvert: <b>${BRL(info.couvert)}</b></p>
+          <p>${lucro>=0?"✅ Lucro":"❌ Prejuízo"}: <b>${BRL(lucro)}</b></p>
+        </div>`;
+    });
+  }catch(e){console.error(e);}
+  finally{showLoading(false);}
 }
 
-function render(){
-  painel.innerHTML="";
-  const grupos={};
-  dadosAgenda.forEach(ev=>{
-    const key=ev.empresa+"|"+ev.data.split("T")[0];
-    if(!grupos[key]) grupos[key]={empresa:ev.empresa,data:ev.data.split("T")[0],pagamentos:[],totalPago:0};
-    grupos[key].pagamentos.push({cantor:ev.cantor,valor:+ev.valor||0});
-    grupos[key].totalPago+=+ev.valor||0;
-  });
-
-  const couvertMap={};
-  (dadosCouvert.registros||[]).forEach(c=>{
-    const key=c.empresa+"|"+c.data;
-    couvertMap[key]=+c.total_dia||0;
-  });
-
-  Object.values(grupos).forEach(gr=>{
-    const couvert=couvertMap[gr.empresa+"|"+gr.data]||0;
-    const resultado=couvert-gr.totalPago;
-    const card=document.createElement("div");
-    card.className="card "+(resultado>=0?"lucro":"prejuizo");
-    card.innerHTML=`
-      <h2>${gr.empresa} – ${fmtData(gr.data)}</h2>
-      <p>🎤 Pago músicos: <b>${BRL(gr.totalPago)}</b></p>
-      <p>🎟️ Couvert: <b>${BRL(couvert)}</b></p>
-      <p>${resultado>=0?"✅ Lucro":"❌ Prejuízo"}: <b>${BRL(resultado)}</b></p>
-    `;
-    card.onclick=()=>abrirModal(gr, couvert, resultado);
-    painel.appendChild(card);
-  });
-}
-
-function abrirModal(gr, couvert, resultado){
-  modalTitle.textContent=`${gr.empresa} – ${fmtData(gr.data)}`;
-  modalTable.innerHTML=gr.pagamentos.map(p=>`<tr><td>${p.cantor}</td><td>${BRL(p.valor)}</td></tr>`).join("");
-  modalCouvert.textContent="🎟️ Couvert arrecadado: "+BRL(couvert);
-  modalResultado.textContent=(resultado>=0?"✅ Lucro: ":"❌ Prejuízo: ")+BRL(resultado);
-  modalResultado.style.color=resultado>=0?"var(--ok)":"var(--bad)";
-  modal.classList.add("open");
-}
-document.querySelector(".close").onclick=()=>modal.classList.remove("open");
+// Tema + usuário
+document.getElementById("themeToggle").onclick=()=>{
+  const cur=document.documentElement.getAttribute("data-theme")||"light";
+  const next=cur==="light"?"dark":"light";
+  document.documentElement.setAttribute("data-theme",next);
+  localStorage.setItem("dv_theme",next);
+};
+const user=document.getElementById("userMenu");
+user.querySelector(".user-btn").onclick=()=>user.classList.toggle("open");
+window.onclick=e=>{if(!user.contains(e.target)) user.classList.remove("open");};
+window.handleLogout=()=>{alert("Logout");};
 
 carregar();
 </script>
