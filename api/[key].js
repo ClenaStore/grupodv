@@ -6,7 +6,6 @@ export default async function handler(req, res) {
     res.status(401).json({error:'unauthorized'}); return;
   }
   const MAP = {
-  "agenda_cantores": "UPSTREAM_AGENDA_CANTORES",
   "abc_vendas": "UPSTREAM_ABC_VENDAS",
   "avaliacoes": "UPSTREAM_AVALIACOES",
   "cancelamentos": "UPSTREAM_CANCELAMENTOS",
