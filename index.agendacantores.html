@@ -4,35 +4,28 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
   <title>Entradas • Grupo DV</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
   <style>
     :root{
       --bg:#0b1020; --surface:#10172a; --card:#0f172a; --text:#e5e7eb; --muted:#94a3b8;
       --line:rgba(148,163,184,.25); --icon-bg:rgba(255,255,255,.06);
-      --shadow:0 20px 60px rgba(2,6,23,.35); --brand:#60a5fa; --ok:#16a34a; --bad:#dc2626;
+      --shadow:0 20px 60px rgba(2,6,23,.35); --ok:#16a34a; --bad:#dc2626;
     }
     [data-theme="light"]{
       --bg:#f6f7fb; --surface:#fff; --card:#fff; --text:#0f172a; --muted:#475569;
-      --line:#e5e7eb; --icon-bg:rgba(2,6,23,.06);
-      --shadow:0 16px 36px rgba(15,23,42,.08);
+      --line:#e5e7eb; --icon-bg:rgba(2,6,23,.06); --shadow:0 16px 36px rgba(15,23,42,.08);
     }
     *{box-sizing:border-box;margin:0;padding:0}
     body{font-family:ui-sans-serif,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--text);}
-
-    /* Header */
     header{position:sticky;top:0;z-index:40;backdrop-filter:saturate(160%) blur(8px);
       background:color-mix(in srgb,var(--surface) 85%,transparent);border-bottom:1px solid var(--line);}
     .head{max-width:1200px;margin:0 auto;padding:14px 18px;display:flex;align-items:center;gap:12px}
     .brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit}
     .brand img{height:42px}
-    .title{font-weight:800;letter-spacing:.2px;font-size:clamp(18px,1.6vw,22px)}
+    .title{font-weight:800;font-size:clamp(18px,1.6vw,22px)}
     .grow{flex:1}
     .btn{border:1px solid var(--line);background:var(--surface);color:var(--text);
       padding:10px 12px;border-radius:12px;font-weight:800;cursor:pointer;display:inline-flex;gap:8px;align-items:center}
     .btn:hover{box-shadow:var(--shadow);transform:translateY(-1px)}
-    .only-desktop{display:inline-flex}
-    @media(max-width:900px){.only-desktop{display:none!important}}
     .user{position:relative}
     .user-btn{display:flex;align-items:center;gap:10px;border:1px solid var(--line);
       background:var(--surface);padding:6px 8px;border-radius:999px;cursor:pointer}
@@ -40,14 +33,7 @@
     .user-menu{position:absolute;right:0;top:110%;background:var(--surface);border:1px solid var(--line);
       border-radius:12px;min-width:200px;padding:6px;box-shadow:var(--shadow);display:none}
     .user.open .user-menu{display:block}
-    .user-menu a,.user-menu button{display:flex;width:100%;padding:10px 12px;border-radius:10px;
-      border:none;background:transparent;color:var(--text);text-align:left;cursor:pointer;font-weight:600}
-    .user-menu a:hover,.user-menu button:hover{background:var(--icon-bg)}
-
-    /* Container */
     .container{max-width:1200px;margin:0 auto;padding:20px 18px}
-
-    /* Filtros */
     .filters{display:grid;grid-template-columns:1fr 1fr auto;gap:12px;align-items:end}
     @media(max-width:800px){.filters{grid-template-columns:1fr}}
     .field label{display:block;margin-bottom:6px;color:var(--muted);font-weight:800;font-size:.95rem}
@@ -55,8 +41,6 @@
     .picker-btn,select{width:100%;border:1px solid var(--line);background:var(--surface);color:var(--text);
       border-radius:12px;padding:12px 14px;font-weight:700}
     .range-hint{color:var(--muted);font-weight:800;white-space:nowrap}
-
-    /* Cards */
     #painel{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin-top:16px}
     .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;
       text-align:center;transition:.2s;box-shadow:var(--shadow);cursor:pointer}
@@ -64,92 +48,41 @@
     .card.bad{border-left:6px solid var(--bad)}
     .card h2{margin:0 0 6px;font-size:1.05rem}
     .card p{margin:4px 0;font-size:.95rem}
-
-    /* Loading */
     .loading{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;z-index:60}
     .loading.show{display:flex}
     .spinner{width:74px;height:74px;border-radius:50%;border:6px solid rgba(255,255,255,.25);border-top-color:#fff;animation:spin 1s linear infinite}
     .loading p{color:#fff;font-weight:800;margin-top:12px}
     @keyframes spin{to{transform:rotate(360deg)}}
-
-    /* Popover calendário */
-    .popover{position:absolute;z-index:50;background:var(--surface);color:var(--text);
-      border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:14px;width:min(380px,94vw);display:none}
-    .popover.open{display:block}
-    .cal-head{display:flex;align-items:center;justify-content:space-between;padding:0 4px 8px}
-    .cal-nav{border:1px solid var(--line);background:var(--surface);border-radius:10px;width:34px;height:34px;display:grid;place-items:center;cursor:pointer}
-    .dow{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;padding:6px 4px;color:var(--muted);font-weight:800}
-    .grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;padding:0 4px 8px}
-    .day{height:40px;border-radius:12px;display:grid;place-items:center;cursor:pointer;user-select:none;background:color-mix(in srgb,var(--surface) 90%,#fff)}
-    .day.muted{opacity:.45}
-    .day.sel{background:#2563eb;color:#fff}
-    .day.in{background:color-mix(in srgb,#2563eb 18%,var(--surface))}
-    .cal-actions{display:flex;gap:8px;justify-content:flex-end;padding-top:6px}
-    .btn-sm{border:1px solid var(--line);background:var(--surface);color:var(--text);padding:8px 12px;border-radius:10px;font-weight:800;cursor:pointer}
   </style>
 </head>
 <body>
-
-  <!-- Header -->
   <header>
     <div class="head">
-      <a class="brand" href="#">
-        <img src="https://github.com/ClenaStore/painel-principal/blob/main/img/GRUPO%20DV%20(1).png?raw=true" alt="Logo">
-        <span class="title">Entradas</span>
-      </a>
+      <a class="brand" href="#"><img src="https://github.com/ClenaStore/painel-principal/blob/main/img/GRUPO%20DV%20(1).png?raw=true"><span class="title">Entradas</span></a>
       <div class="grow"></div>
       <button id="themeToggle" class="btn">🌓 Tema</button>
       <div class="user" id="userMenu">
-        <button class="user-btn" type="button">
-          <img src="https://github.com/ClenaStore/grupodv/blob/main/paste/Imagem%20do%20WhatsApp%20de%202025-09-08%20%C3%A0(s)%2011.54.12_884bebc9.jpg?raw=true" alt="">
-          <strong style="font-size:13px">Leonardo</strong>
-        </button>
-        <div class="user-menu">
-          <a href="#">👤 Meu Perfil</a>
-          <button onclick="handleLogout()">🚪 Sair</button>
-        </div>
+        <button class="user-btn" type="button"><img src="https://github.com/ClenaStore/grupodv/blob/main/paste/Imagem%20do%20WhatsApp%20de%202025-09-08%20%C3%A0(s)%2011.54.12_884bebc9.jpg?raw=true"><strong>Leonardo</strong></button>
+        <div class="user-menu"><a href="#">👤 Meu Perfil</a><button onclick="handleLogout()">🚪 Sair</button></div>
       </div>
     </div>
   </header>
 
-  <!-- Loading -->
   <div id="loading" class="loading"><div><div class="spinner"></div><p>Carregando...</p></div></div>
 
   <div class="container">
-    <!-- Filtros -->
     <div class="filters">
-      <div class="field" style="position:relative">
-        <label>Período</label>
-        <div class="picker-wrap">
-          <button id="rangeBtn" class="picker-btn" type="button">📅 Selecionar</button>
-          <div id="rangeHint" class="range-hint"></div>
-        </div>
-        <!-- Popover calendário -->
-        <div id="rangePop" class="popover">
-          <div class="cal-head">
-            <button id="prevM" class="cal-nav" type="button">‹</button>
-            <strong id="monthLabel"></strong>
-            <button id="nextM" class="cal-nav" type="button">›</button>
-          </div>
-          <div class="dow"><span>D</span><span>S</span><span>T</span><span>Q</span><span>Q</span><span>S</span><span>S</span></div>
-          <div id="daysGrid" class="grid"></div>
-          <div class="cal-actions">
-            <button id="cancelRange" class="btn-sm" type="button">Cancelar</button>
-            <button id="applyRange" class="btn-sm" type="button">Aplicar</button>
-          </div>
-        </div>
-      </div>
       <div class="field">
         <label>Empresa</label>
-        <select id="empresaFiltro"><option value="">Todas</option></select>
+        <select id="empresaFiltro">
+          <option value="">Todas</option>
+          <option value="Mercatto Delícia">Mercatto Delícia</option>
+          <option value="Delícia Gourmet">Delícia Gourmet</option>
+          <option value="Villa Gourmet">Villa Gourmet</option>
+        </select>
       </div>
-      <div class="field">
-        <label>&nbsp;</label>
-        <button id="btnFiltrar" class="btn action" type="button">Filtrar</button>
-      </div>
+      <div class="field"><label>&nbsp;</label><button id="btnFiltrar" class="btn">Filtrar</button></div>
     </div>
-
-    <!-- Cards -->
     <div id="painel"></div>
   </div>
 
@@ -158,66 +91,53 @@ const API_AGENDA="https://script.google.com/macros/s/AKfycbxJwRXw2lr2kK58EoHv-oU
 const API_COUVERT="https://script.google.com/macros/s/AKfycbxxv-9kLzyqS9Qy8WX_qPp7UG8He3OaEbIxZMV3HoRaSpdBfRYqZZZODLQlIJZDufso/exec";
 function BRL(v){return(Number(v)||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});}
 function showLoading(v){document.getElementById("loading").classList.toggle("show",!!v);}
-const $$=s=>document.querySelector(s);
-
-/* ---------- Calendário ---------- */
-const range={start:null,end:null,view:new Date(new Date().getFullYear(),new Date().getMonth(),1)};
-function DMY(d){return`${String(d.getDate()).padStart(2,"0")}/${String(d.getMonth()+1).padStart(2,"0")}/${d.getFullYear()}`}
-function strip(d){return new Date(d.getFullYear(),d.getMonth(),d.getDate());}
-function sameDay(a,b){return a&&b&&a.getFullYear()==b.getFullYear()&&a.getMonth()==b.getMonth()&&a.getDate()==b.getDate();}
-function renderMonth(){
-  const y=range.view.getFullYear(),m=range.view.getMonth();
-  $$("#monthLabel").textContent=new Date(y,m,1).toLocaleDateString("pt-BR",{month:"long",year:"numeric"});
-  const grid=$$("#daysGrid");grid.innerHTML="";
-  const firstDow=new Date(y,m,1).getDay(),daysInMonth=new Date(y,m+1,0).getDate();
-  for(let i=0;i<firstDow;i++)grid.appendChild(Object.assign(document.createElement("div"),{className:"day muted"}));
-  for(let d=1;d<=daysInMonth;d++){
-    const cur=new Date(y,m,d);const el=document.createElement("div");el.className="day";el.textContent=d;
-    const inSel=range.start&&range.end&&+cur>=+strip(range.start)&&+cur<=+strip(range.end);
-    const isStart=sameDay(cur,range.start),isEnd=sameDay(cur,range.end);
-    if(inSel)el.classList.add("in");if(isStart||isEnd)el.classList.add("sel");
-    el.onclick=()=>pickDay(cur);grid.appendChild(el);
-  }
-}
-let firstPick=true;
-function pickDay(date){if(firstPick){range.start=date;range.end=date;firstPick=false;}else{if(date<range.start){range.end=range.start;range.start=date;}else range.end=date;firstPick=true;}renderMonth();}
-document.getElementById("prevM").onclick=()=>{range.view=new Date(range.view.getFullYear(),range.view.getMonth()-1,1);renderMonth();}
-document.getElementById("nextM").onclick=()=>{range.view=new Date(range.view.getFullYear(),range.view.getMonth()+1,1);renderMonth();}
-document.getElementById("cancelRange").onclick=()=>$$('#rangePop').classList.remove("open");
-document.getElementById("applyRange").onclick=()=>{updateHint();$$('#rangePop').classList.remove("open");carregar();}
-document.getElementById("rangeBtn").onclick=e=>{e.stopPropagation();$$('#rangePop').classList.add("open");renderMonth();}
-window.onclick=e=>{if(!$$('#rangePop').contains(e.target)&&e.target.id!=="rangeBtn")$$('#rangePop').classList.remove("open");}
-function updateHint(){$$("#rangeHint").textContent=(range.start&&range.end)?`${DMY(range.start)} → ${DMY(range.end)}`:"";}
-
-/* ---------- Carregar ---------- */
+const NORMALIZAR={
+  "MERCATTO":"Mercatto Delícia",
+  "MERCATTO DELÍCIA":"Mercatto Delícia",
+  "VILLA":"Villa Gourmet",
+  "VILLA GOURMET":"Villa Gourmet",
+  "DELÍCIA GOURMET":"Delícia Gourmet"
+};
 async function carregar(){
   showLoading(true);
   try{
-    const agResp=await fetch(API_AGENDA);const agenda=await agResp.json();
-    const cvResp=await fetch(API_COUVERT);const couvert=await cvResp.json();
+    const empSel=document.getElementById("empresaFiltro").value;
+    const ag=await(await fetch(API_AGENDA)).json();
+    const cv=await(await fetch(API_COUVERT)).json();
     const porData={};
-    agenda.forEach(a=>{const d=a.data.split("T")[0];if(!porData[d])porData[d]={empresa:a.empresa,pagos:0,couvert:0,itens:[]};porData[d].pagos+=+a.valor;porData[d].itens.push(a);});
-    (couvert.registros||[]).forEach(c=>{const d=c.data;if(!porData[d])porData[d]={empresa:c.empresa,pagos:0,couvert:0,itens:[]};porData[d].couvert+=+c.total_dia;});
-    const painel=$$("#painel");painel.innerHTML="";
-    Object.entries(porData).sort(([d1],[d2])=>new Date(d2)-new Date(d1)).forEach(([data,info])=>{
-      const lucro=info.couvert-info.pagos;
-      const card=document.createElement("div");
-      card.className=`card ${lucro>=0?"ok":"bad"}`;
-      card.innerHTML=`<h2>${info.empresa} – ${data.split("-").reverse().join("/")}</h2>
-        <p>🎤 Pago músicos: <b>${BRL(info.pagos)}</b></p>
-        <p>🎟️ Couvert: <b>${BRL(info.couvert)}</b></p>
-        <p>${lucro>=0?"✅ Lucro":"❌ Prejuízo"}: <b>${BRL(lucro)}</b></p>`;
-      painel.appendChild(card);
+    ag.forEach(a=>{
+      let emp=(NORMALIZAR[a.empresa?.toUpperCase()]||a.empresa);
+      const d=a.data.split("T")[0];
+      if(!porData[d])porData[d]={empresa:emp,pagos:0,couvert:0};
+      porData[d].pagos+=+a.valor;
+      porData[d].empresa=emp;
     });
-  }catch(e){console.error(e);}finally{showLoading(false);}
+    (cv.registros||[]).forEach(c=>{
+      let emp=(NORMALIZAR[c.empresa?.toUpperCase()]||c.empresa);
+      const d=c.data;
+      if(!porData[d])porData[d]={empresa:emp,pagos:0,couvert:0};
+      porData[d].couvert+=+c.total_dia;
+      porData[d].empresa=emp;
+    });
+    const painel=document.getElementById("painel");painel.innerHTML="";
+    Object.entries(porData).sort(([d1],[d2])=>new Date(d2)-new Date(d1)).forEach(([data,info])=>{
+      if(empSel && info.empresa!==empSel) return;
+      const lucro=info.couvert-info.pagos;
+      painel.innerHTML+=`
+        <div class="card ${lucro>=0?"ok":"bad"}">
+          <h2>${info.empresa} – ${data.split("-").reverse().join("/")}</h2>
+          <p>🎤 Pago músicos: <b>${BRL(info.pagos)}</b></p>
+          <p>🎟️ Couvert: <b>${BRL(info.couvert)}</b></p>
+          <p>${lucro>=0?"✅ Lucro":"❌ Prejuízo"}: <b>${BRL(lucro)}</b></p>
+        </div>`;
+    });
+  }finally{showLoading(false);}
 }
-
-/* ---------- Tema e usuário ---------- */
+document.getElementById("btnFiltrar").onclick=()=>carregar();
 document.getElementById("themeToggle").onclick=()=>{const cur=document.documentElement.getAttribute("data-theme")||"light";const next=cur==="light"?"dark":"light";document.documentElement.setAttribute("data-theme",next);localStorage.setItem("dv_theme",next);}
-const user=document.getElementById("userMenu");user.querySelector(".user-btn").onclick=()=>user.classList.toggle("open");window.handleLogout=()=>{localStorage.removeItem("dv_theme");location.reload();};
-
-/* ---------- Semana vigente por padrão ---------- */
-(function(){const hoje=new Date();const dia=hoje.getDay();const segunda=new Date(hoje);segunda.setDate(hoje.getDate()-((dia+6)%7));const domingo=new Date(segunda);domingo.setDate(segunda.getDate()+6);range.start=segunda;range.end=domingo;range.view=new Date(hoje.getFullYear(),hoje.getMonth(),1);updateHint();carregar();})();
+const user=document.getElementById("userMenu");user.querySelector(".user-btn").onclick=()=>user.classList.toggle("open");
+window.handleLogout=()=>{localStorage.removeItem("dv_theme");location.reload();}
+carregar();
 </script>
 </body>
 </html>
