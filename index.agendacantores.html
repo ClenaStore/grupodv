@@ -41,13 +41,15 @@
     .picker-btn,select{width:100%;border:1px solid var(--line);background:var(--surface);color:var(--text);
       border-radius:12px;padding:12px 14px;font-weight:700}
     .range-hint{color:var(--muted);font-weight:800;white-space:nowrap}
-    #painel{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin-top:16px}
+    #painel{display:grid;grid-template-columns:1fr;gap:16px;margin-top:16px}
     .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;
-      text-align:center;transition:.2s;box-shadow:var(--shadow);cursor:pointer}
+      transition:.2s;box-shadow:var(--shadow);}
     .card.ok{border-left:6px solid var(--ok)}
     .card.bad{border-left:6px solid var(--bad)}
-    .card h2{margin:0 0 6px;font-size:1.05rem}
+    .card h2{margin:0 0 10px;font-size:1.1rem}
     .card p{margin:4px 0;font-size:.95rem}
+    .musicos{margin-top:8px;padding-left:10px;border-left:2px solid var(--line)}
+    .musicos p{margin:2px 0;font-size:.9rem;color:var(--muted)}
     .loading{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;z-index:60}
     .loading.show{display:flex}
     .spinner{width:74px;height:74px;border-radius:50%;border:6px solid rgba(255,255,255,.25);border-top-color:#fff;animation:spin 1s linear infinite}
@@ -89,8 +91,10 @@
 <script>
 const API_AGENDA="https://script.google.com/macros/s/AKfycbxJwRXw2lr2kK58EoHv-oUagd2FV2hvTHXRDJ5mFcNo5eZp3QlX7wX2KdrujAE5zPU-/exec";
 const API_COUVERT="https://script.google.com/macros/s/AKfycbxxv-9kLzyqS9Qy8WX_qPp7UG8He3OaEbIxZMV3HoRaSpdBfRYqZZZODLQlIJZDufso/exec";
+
 function BRL(v){return(Number(v)||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});}
 function showLoading(v){document.getElementById("loading").classList.toggle("show",!!v);}
+
 const NORMALIZAR={
   "MERCATTO":"Mercatto Delícia",
   "MERCATTO DELÍCIA":"Mercatto Delícia",
@@ -98,29 +102,49 @@ const NORMALIZAR={
   "VILLA GOURMET":"Villa Gourmet",
   "DELÍCIA GOURMET":"Delícia Gourmet"
 };
+
+function getSemanaAtual(){
+  const hoje=new Date();
+  const dia=hoje.getDay(); // 0-dom,1-seg...
+  const segunda=new Date(hoje);segunda.setDate(hoje.getDate()-((dia+6)%7));
+  const domingo=new Date(segunda);domingo.setDate(segunda.getDate()+6);
+  return {inicio:segunda,fim:domingo};
+}
+
 async function carregar(){
   showLoading(true);
   try{
     const empSel=document.getElementById("empresaFiltro").value;
     const ag=await(await fetch(API_AGENDA)).json();
     const cv=await(await fetch(API_COUVERT)).json();
+
+    const semana=getSemanaAtual();
+    const iniKey=semana.inicio.toISOString().split("T")[0];
+    const fimKey=semana.fim.toISOString().split("T")[0];
+
     const porData={};
+
     ag.forEach(a=>{
       let emp=(NORMALIZAR[a.empresa?.toUpperCase()]||a.empresa);
       const d=a.data.split("T")[0];
-      if(!porData[d])porData[d]={empresa:emp,pagos:0,couvert:0};
+      if(d<iniKey||d>fimKey)return; // fora da semana
+      if(!porData[d])porData[d]={empresa:emp,pagos:0,couvert:0,musicos:[]};
       porData[d].pagos+=+a.valor;
+      porData[d].musicos.push(`${a.cantor} (${BRL(a.valor)})`);
       porData[d].empresa=emp;
     });
+
     (cv.registros||[]).forEach(c=>{
       let emp=(NORMALIZAR[c.empresa?.toUpperCase()]||c.empresa);
       const d=c.data;
-      if(!porData[d])porData[d]={empresa:emp,pagos:0,couvert:0};
+      if(d<iniKey||d>fimKey)return;
+      if(!porData[d])porData[d]={empresa:emp,pagos:0,couvert:0,musicos:[]};
       porData[d].couvert+=+c.total_dia;
       porData[d].empresa=emp;
     });
+
     const painel=document.getElementById("painel");painel.innerHTML="";
-    Object.entries(porData).sort(([d1],[d2])=>new Date(d2)-new Date(d1)).forEach(([data,info])=>{
+    Object.entries(porData).sort(([d1],[d2])=>new Date(d1)-new Date(d2)).forEach(([data,info])=>{
       if(empSel && info.empresa!==empSel) return;
       const lucro=info.couvert-info.pagos;
       painel.innerHTML+=`
@@ -129,10 +153,12 @@ async function carregar(){
           <p>🎤 Pago músicos: <b>${BRL(info.pagos)}</b></p>
           <p>🎟️ Couvert: <b>${BRL(info.couvert)}</b></p>
           <p>${lucro>=0?"✅ Lucro":"❌ Prejuízo"}: <b>${BRL(lucro)}</b></p>
+          <div class="musicos">${info.musicos.map(m=>`<p>• ${m}</p>`).join("")}</div>
         </div>`;
     });
   }finally{showLoading(false);}
 }
+
 document.getElementById("btnFiltrar").onclick=()=>carregar();
 document.getElementById("themeToggle").onclick=()=>{const cur=document.documentElement.getAttribute("data-theme")||"light";const next=cur==="light"?"dark":"light";document.documentElement.setAttribute("data-theme",next);localStorage.setItem("dv_theme",next);}
 const user=document.getElementById("userMenu");user.querySelector(".user-btn").onclick=()=>user.classList.toggle("open");
