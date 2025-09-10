@@ -148,23 +148,45 @@
 const API_URL="https://script.google.com/macros/s/AKfycbzCWTJPkUHvHdvQrvWOu-jbd_I2O7VAnL8cDRrWuXACy4xWifwfIYd48MWiksmNpORm/exec";
 let eventos=[];const $$=sel=>document.querySelector(sel);
 
+/* Loading & helpers */
 function showLoading(v){ $$('#loading').classList.toggle('show',v); }
 function BRL(v){ return Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}); }
 function DMY(iso){ if(!iso) return ''; const [y,m,d]=iso.split('-'); return `${d}/${m}/${y}`; }
 
-/* Tema + logout */
+/* Tema + senha + logout */
 (function(){
+  const KEY='dv_pwd';
   const t=localStorage.getItem('dv_theme'); if(t) document.documentElement.setAttribute('data-theme',t);
+
   window.__toggleTheme=()=>{const cur=document.documentElement.getAttribute('data-theme')||'dark';
     const next=(cur==='dark')?'light':'dark';document.documentElement.setAttribute('data-theme',next);
     localStorage.setItem('dv_theme',next);}
-  window.handleLogout=()=>{localStorage.removeItem('dv_pwd');location.reload();}
+
+  window.handleLogout=()=>{localStorage.removeItem(KEY);location.reload();}
+
+  // intercepta fetch e injeta x-api-key
+  const _f=window.fetch.bind(window);
+  window.fetch=(input,init={})=>{
+    const headers=new Headers(init.headers||{});const pwd=localStorage.getItem(KEY)||'';
+    if(pwd) headers.set('x-api-key',pwd);
+    return _f(input,{...init,headers});
+  }
+
+  async function ensurePwd(){
+    let pwd=localStorage.getItem(KEY)||'';
+    while(!pwd){
+      pwd=prompt('Digite a senha de acesso:')||'';
+      if(pwd){localStorage.setItem(KEY,pwd);}
+    }
+  }
+  ensurePwd();
 })();
+
 document.getElementById('themeToggle').onclick=()=>window.__toggleTheme();
 const user=document.getElementById('userMenu');user.querySelector('.user-btn').onclick=()=>user.classList.toggle('open');
 window.addEventListener('click',e=>{if(!user.contains(e.target))user.classList.remove('open')});
 
-/* Calendário */
+/* Calendário (mesmo do metas simplificado) */
 const range={start:null,end:null,view:new Date()};
 const rangeBtn=$$('#rangeBtn'),pop=$$('#rangePop'),grid=$$('#daysGrid'),label=$$('#monthLabel'),hint=$$('#rangeHint');
 function strip(d){return new Date(d.getFullYear(),d.getMonth(),d.getDate());}
