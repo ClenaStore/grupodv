@@ -506,98 +506,62 @@
     $("#overlay").style.display = 'none';
   }
 
- function buildRangeCalendar(container, initStart, initEnd, onApply, onCancel){
-  container.innerHTML = "";
-  const cal = document.createElement("div"); 
-  cal.className = "cal";
+  function buildRangeCalendar(container, initStart, initEnd, onApply, onCancel){
+    container.innerHTML = "";
+    const cal = document.createElement("div"); cal.className="cal";
 
-  // Estado do calendário
-  const state = {
-    cursor: new Date(initStart.getFullYear(), initStart.getMonth(), 1),
-    start: new Date(initStart), 
-    end: new Date(initEnd)
-  };
+    // Estado do calendário
+    const state = {
+      cursor: new Date(initStart.getFullYear(), initStart.getMonth(), 1),
+      start: new Date(initStart), end: new Date(initEnd)
+    };
 
-  // Cabeçalho
-  const head = document.createElement("div"); 
-  head.className="cal-head";
-  const prev = document.createElement("button"); prev.className="btn"; prev.textContent="‹";
-  const next = document.createElement("button"); next.className="btn"; next.textContent="›";
-  const title = document.createElement("div"); title.style.fontWeight="800";
-  const updTitle=()=> title.textContent = state.cursor.toLocaleString('pt-BR',{month:'long',year:'numeric'});
-  prev.onclick=()=>{ state.cursor = new Date(state.cursor.getFullYear(), state.cursor.getMonth()-1, 1); drawGrid(); updTitle(); };
-  next.onclick=()=>{ state.cursor = new Date(state.cursor.getFullYear(), state.cursor.getMonth()+1, 1); drawGrid(); updTitle(); };
-  head.append(prev,title,next); cal.append(head);
+    // Cabeçalho
+    const head = document.createElement("div"); head.className="cal-head";
+    const prev = document.createElement("button"); prev.className="btn"; prev.textContent="‹";
+    const next = document.createElement("button"); next.className="btn"; next.textContent="›";
+    const title = document.createElement("div"); title.style.fontWeight="800";
+    const updTitle=()=> title.textContent = state.cursor.toLocaleString('pt-BR',{month:'long',year:'numeric'});
+    prev.onclick=()=>{ state.cursor = new Date(state.cursor.getFullYear(), state.cursor.getMonth()-1, 1); drawGrid(); updTitle(); placePopover(container, $("#btnRange")); };
+    next.onclick=()=>{ state.cursor = new Date(state.cursor.getFullYear(), state.cursor.getMonth()+1, 1); drawGrid(); updTitle(); placePopover(container, $("#btnRange")); };
+    head.appendChild(prev); head.appendChild(title); head.appendChild(next);
+    cal.appendChild(head);
 
-  // Grid
-  const grid = document.createElement("div"); 
-  grid.className="cal-grid";
-  "DSTQQSS".split("").forEach(l=>{
-    const d=document.createElement("div"); 
-    d.className="dow"; 
-    d.textContent=l; 
-    grid.append(d);
-  });
-  cal.append(grid);
+    // Grid
+    const grid = document.createElement("div"); grid.className="cal-grid";
+    "DSTQQSS".split("").forEach(l=>{ const d=document.createElement("div"); d.className="dow"; d.textContent=l; grid.appendChild(d); });
 
-  function sameYMD(a,b){ return a&&b&&a.getFullYear()===b.getFullYear()&&a.getMonth()===b.getMonth()&&a.getDate()===b.getDate(); }
-  function inSelRange(d){ return state.start && state.end && d>=state.start && d<=state.end; }
-
-  function drawGrid(){
-    grid.querySelectorAll('.day').forEach(n=>n.remove());
-    const y=state.cursor.getFullYear(), m=state.cursor.getMonth();
-    const first=new Date(y,m,1);
-    const startDay=first.getDay(); // domingo = 0
-    const daysInMonth=new Date(y,m+1,0).getDate();
-
-    // Dias anteriores
-    for(let i=0;i<startDay;i++){
-      const prevDate=new Date(y,m,1-(startDay-i));
-      const x=document.createElement("div");
-      x.className="day out";
-      x.textContent=prevDate.getDate();
-      grid.append(x);
+    function sameYMD(a,b){ return a && b && a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate(); }
+    function inSelRange(d){
+      if(!state.start||!state.end) return false;
+      const dd=new Date(d.getFullYear(),d.getMonth(),d.getDate());
+      const s=new Date(state.start.getFullYear(),state.start.getMonth(),state.start.getDate());
+      const e=new Date(state.end.getFullYear(),state.end.getMonth(),state.end.getDate());
+      return dd>=s && dd<=e;
     }
 
-    // Dias do mês atual
-    for(let d=1; d<=daysInMonth; d++){
-      const date=new Date(y,m,d);
-      const el=document.createElement("div"); 
-      el.className="day"; 
-      el.textContent=d;
-      if(sameYMD(date,state.start)||sameYMD(date,state.end)) el.classList.add('sel');
-      else if(inSelRange(date)) el.classList.add('range');
-      el.onclick=()=>{
-        if(!state.start || state.end){ state.start=date; state.end=null; }
-        else { if(date<state.start){ state.end=state.start; state.start=date; } else state.end=date; }
-        drawGrid();
-      };
-      grid.append(el);
+    function drawGrid(){
+      grid.querySelectorAll('.day').forEach(n=>n.remove());
+      const y=state.cursor.getFullYear(), m=state.cursor.getMonth();
+      const first=new Date(y,m,1);
+      const startDay=(first.getDay()+6)%7; // começa em segunda
+      const daysInMonth=new Date(y,m+1,0).getDate();
+
+      for(let i=0;i<startDay;i++){ const x=document.createElement("div"); x.className="day out"; grid.appendChild(x); }
+      for(let d=1; d<=daysInMonth; d++){
+        const date=new Date(y,m,d);
+        const el=document.createElement("div"); el.className="day"; el.textContent=d;
+        if(sameYMD(date,state.start)||sameYMD(date,state.end)) el.classList.add('sel');
+        else if(inSelRange(date)) el.classList.add('range');
+        el.onclick=()=>{
+          if(!state.start || (state.start && state.end)){ state.start=date; state.end=null; }
+          else { if(date<state.start){ state.end=state.start; state.start=date; } else { state.end=date; } }
+          drawGrid();
+        };
+        grid.appendChild(el);
+      }
     }
-
-    // Dias do próximo mês
-    const filled=startDay+daysInMonth;
-    const totalCells=Math.ceil(filled/7)*7;
-    for(let i=filled;i<totalCells;i++){
-      const nextDate=new Date(y,m,(i-filled)+1);
-      const x=document.createElement("div");
-      x.className="day out";
-      x.textContent=nextDate.getDate();
-      grid.append(x);
-    }
-  }
-
-  // Rodapé
-  const foot=document.createElement("div"); foot.className="cal foot";
-  const cancel=document.createElement("button"); cancel.className="btn"; cancel.textContent="Cancelar"; cancel.onclick=onCancel;
-  const apply=document.createElement("button"); apply.className="btn dark"; apply.textContent="Aplicar";
-  apply.onclick=()=>{ if(state.start && !state.end) state.end=state.start; if(state.start && state.end) onApply(state.start,state.end); };
-  foot.append(cancel,apply); cal.append(foot);
-
-  container.append(cal);
-  updTitle(); drawGrid();
-}
-
+    cal.appendChild(grid);
 
     // Rodapé
     const foot=document.createElement("div"); foot.className="cal foot";
