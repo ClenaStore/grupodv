@@ -9,7 +9,7 @@
     :root{
       --bg:#0b1020; --surface:#10172a; --card:#0f172a; --text:#e5e7eb; --muted:#94a3b8;
       --line:rgba(148,163,184,.25); --icon-bg:rgba(255,255,255,.06);
-      --shadow:0 20px 60px rgba(2,6,23,.35); --brand:#60a5fa;
+      --shadow:0 20px 60px rgba(2,6,23,.35); --brand:#60a5fa; --brand2:#22d3ee;
     }
     [data-theme="light"]{
       --bg:#f6f7fb; --surface:#fff; --card:#fff; --text:#0f172a; --muted:#475569;
@@ -29,8 +29,6 @@
     .btn{border:1px solid var(--line);background:var(--surface);color:var(--text);
       padding:10px 12px;border-radius:12px;font-weight:800;cursor:pointer;display:inline-flex;align-items:center}
     .btn:hover{box-shadow:var(--shadow);transform:translateY(-1px)}
-
-    /* Perfil */
     .user{position:relative}
     .user-btn{display:flex;align-items:center;gap:10px;border:1px solid var(--line);
       background:var(--surface);padding:6px 8px;border-radius:999px;cursor:pointer}
@@ -47,10 +45,9 @@
     .filters{display:grid;grid-template-columns:1fr 220px 160px;gap:12px;align-items:end}
     @media(max-width:800px){.filters{grid-template-columns:1fr}}
     .field label{display:block;margin:0 0 6px;color:var(--muted);font-weight:800;font-size:.95rem}
-    .picker-wrap{display:flex;align-items:center;gap:12px}
     .picker-btn, select{width:100%;border:1px solid var(--line);background:var(--surface);color:var(--text);
       border-radius:12px;padding:12px 14px;font-weight:700}
-    .range-hint{color:var(--muted);font-weight:800;white-space:nowrap}
+    .range-hint{color:var(--muted);font-weight:800;margin-top:6px}
 
     /* Cards */
     #painelAgenda{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-top:20px}
@@ -63,13 +60,20 @@
     .card h2{margin:0 0 6px;font-size:1.05rem}
     .card p{margin:4px 0;color:var(--muted);font-size:.93rem}
 
-    /* Modal */
-    .modal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:100;padding:18px}
-    .modal.open{display:flex}
-    .modal-card{background:var(--surface);border:1px solid var(--line);border-radius:14px;width:min(400px,90vw);padding:20px;box-shadow:var(--shadow)}
-    .modal-card h3{margin:0 0 12px;font-size:1.2rem}
-    .modal-card p{margin:6px 0}
-    .close{margin-top:16px;width:100%;padding:10px;border:none;border-radius:12px;background:var(--brand);color:#fff;font-weight:800;cursor:pointer}
+    /* Modal calendário */
+    .popover{position:absolute;z-index:50;background:var(--surface);color:var(--text);border:1px solid var(--line);
+      border-radius:14px;box-shadow:var(--shadow);padding:14px;width:min(380px,94vw);display:none}
+    .popover.open{display:block}
+    .cal-head{display:flex;align-items:center;justify-content:space-between;padding:0 4px 8px}
+    .cal-nav{border:1px solid var(--line);background:var(--surface);border-radius:10px;width:34px;height:34px;display:grid;place-items:center;cursor:pointer}
+    .dow{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;padding:6px 4px;color:var(--muted);font-weight:800}
+    .grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;padding:0 4px 8px}
+    .day{height:40px;border-radius:12px;display:grid;place-items:center;cursor:pointer;user-select:none;background:color-mix(in srgb,var(--surface) 90%, #fff)}
+    .day.muted{opacity:.45}
+    .day.sel{background:#2563eb;color:#fff}
+    .day.in{background:color-mix(in srgb,#2563eb 18%,var(--surface))}
+    .cal-actions{display:flex;gap:8px;justify-content:flex-end;padding-top:6px}
+    .btn-sm{border:1px solid var(--line);background:var(--surface);color:var(--text);padding:8px 12px;border-radius:10px;font-weight:800;cursor:pointer}
 
     /* Loading */
     .loading{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;z-index:200}
@@ -91,7 +95,7 @@
       <div class="user" id="userMenu">
         <button class="user-btn" type="button">
           <img src="https://github.com/ClenaStore/grupodv/blob/main/paste/Imagem%20do%20WhatsApp%20de%202025-09-08%20%C3%A0(s)%2011.54.12_884bebc9.jpg?raw=true" alt="">
-          <strong style="font-size:13px">Leonardo</strong>
+          <strong style="font-size:13px">Usuário</strong>
         </button>
         <div class="user-menu">
           <a href="#">👤 Meu Perfil</a>
@@ -109,11 +113,22 @@
     <div class="filters">
       <div class="field" style="position:relative">
         <label>Período</label>
-        <div class="picker-wrap">
-          <button id="rangeBtn" class="picker-btn" type="button">🗓️ Selecionar</button>
-          <div id="rangeHint" class="range-hint"></div>
+        <button id="rangeBtn" class="picker-btn" type="button">🗓️ Selecionar</button>
+        <div id="rangeHint" class="range-hint"></div>
+        <!-- Popover calendário -->
+        <div id="rangePop" class="popover">
+          <div class="cal-head">
+            <button id="prevM" class="cal-nav" type="button">‹</button>
+            <strong id="monthLabel"></strong>
+            <button id="nextM" class="cal-nav" type="button">›</button>
+          </div>
+          <div class="dow"><span>D</span><span>S</span><span>T</span><span>Q</span><span>Q</span><span>S</span><span>S</span></div>
+          <div id="daysGrid" class="grid"></div>
+          <div class="cal-actions">
+            <button id="cancelRange" class="btn-sm" type="button">Cancelar</button>
+            <button id="applyRange" class="btn-sm" type="button">Aplicar</button>
+          </div>
         </div>
-        <!-- Popover calendário será igual ao que já mandei antes -->
       </div>
       <div class="field">
         <label>Empresa</label>
@@ -130,24 +145,79 @@
   </div>
 
 <script>
-/* ---- Tema sincronizado ---- */
+const API_URL="https://script.google.com/macros/s/AKfycbzCWTJPkUHvHdvQrvWOu-jbd_I2O7VAnL8cDRrWuXACy4xWifwfIYd48MWiksmNpORm/exec";
+let eventos=[];const $$=sel=>document.querySelector(sel);
+
+function showLoading(v){ $$('#loading').classList.toggle('show',v); }
+function BRL(v){ return Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}); }
+function DMY(iso){ if(!iso) return ''; const [y,m,d]=iso.split('-'); return `${d}/${m}/${y}`; }
+
+/* Tema + logout */
 (function(){
-  const t = localStorage.getItem('dv_theme');
-  if(t) document.documentElement.setAttribute('data-theme', t);
-  window.__toggleTheme = function(){
-    const cur = document.documentElement.getAttribute('data-theme')||'dark';
-    const next = (cur==='dark')?'light':'dark';
-    document.documentElement.setAttribute('data-theme', next);
-    localStorage.setItem('dv_theme', next);
-  };
+  const t=localStorage.getItem('dv_theme'); if(t) document.documentElement.setAttribute('data-theme',t);
+  window.__toggleTheme=()=>{const cur=document.documentElement.getAttribute('data-theme')||'dark';
+    const next=(cur==='dark')?'light':'dark';document.documentElement.setAttribute('data-theme',next);
+    localStorage.setItem('dv_theme',next);}
+  window.handleLogout=()=>{localStorage.removeItem('dv_pwd');location.reload();}
 })();
 document.getElementById('themeToggle').onclick=()=>window.__toggleTheme();
+const user=document.getElementById('userMenu');user.querySelector('.user-btn').onclick=()=>user.classList.toggle('open');
+window.addEventListener('click',e=>{if(!user.contains(e.target))user.classList.remove('open')});
 
-/* ---- Usuário (menu) ---- */
-const user=document.getElementById('userMenu');
-user.querySelector('.user-btn').onclick=()=>user.classList.toggle('open');
-window.onclick=e=>{if(!user.contains(e.target))user.classList.remove('open')};
-function handleLogout(){localStorage.removeItem('dv_theme');location.reload();}
+/* Calendário */
+const range={start:null,end:null,view:new Date()};
+const rangeBtn=$$('#rangeBtn'),pop=$$('#rangePop'),grid=$$('#daysGrid'),label=$$('#monthLabel'),hint=$$('#rangeHint');
+function strip(d){return new Date(d.getFullYear(),d.getMonth(),d.getDate());}
+function sameDay(a,b){return a&&b&&a.getFullYear()==b.getFullYear()&&a.getMonth()==b.getMonth()&&a.getDate()==b.getDate();}
+function DMYhint(){return (range.start&&range.end)?`${DMY(range.start.toISOString().split('T')[0])} → ${DMY(range.end.toISOString().split('T')[0])}`:'';}
+function updateHint(){hint.textContent=DMYhint();}
+function renderMonth(){const y=range.view.getFullYear(),m=range.view.getMonth();
+  label.textContent=new Date(y,m,1).toLocaleDateString('pt-BR',{month:'long',year:'numeric'});
+  grid.innerHTML='';const firstDow=new Date(y,m,1).getDay();const daysInMonth=new Date(y,m+1,0).getDate();
+  for(let i=0;i<firstDow;i++){grid.innerHTML+='<div class="day muted"></div>'}
+  for(let d=1;d<=daysInMonth;d++){const cur=new Date(y,m,d);const el=document.createElement('div');el.className='day';el.textContent=d;
+    const inSel=range.start&&range.end&&+cur>=+strip(range.start)&&+cur<=+strip(range.end);
+    const isStart=sameDay(cur,range.start),isEnd=sameDay(cur,range.end);
+    if(inSel)el.classList.add('in');if(isStart||isEnd)el.classList.add('sel');
+    el.onclick=()=>pickDay(cur);grid.appendChild(el);}}
+function pickDay(date){if(!range.start||range.end){range.start=date;range.end=null;}
+  else if(date<range.start){range.end=range.start;range.start=date;}else{range.end=date;}renderMonth();}
+document.getElementById('prevM').onclick=()=>{range.view=new Date(range.view.getFullYear(),range.view.getMonth()-1,1);renderMonth();}
+document.getElementById('nextM').onclick=()=>{range.view=new Date(range.view.getFullYear(),range.view.getMonth()+1,1);renderMonth();}
+document.getElementById('cancelRange').onclick=()=>{pop.classList.remove('open');}
+document.getElementById('applyRange').onclick=()=>{updateHint();pop.classList.remove('open');carregar();}
+rangeBtn.onclick=e=>{e.stopPropagation();renderMonth();pop.classList.add('open');}
+window.onclick=e=>{if(!pop.contains(e.target)&&e.target!==rangeBtn)pop.classList.remove('open');}
+
+/* Dados */
+async function carregarEmpresas(){
+  showLoading(true);
+  const rsp=await fetch(API_URL);eventos=await rsp.json();
+  const empresas=[...new Set(eventos.map(e=>e.empresa))].sort();
+  const sel=$$('#empresaFiltro');empresas.forEach(e=>{const o=document.createElement('option');o.value=e;o.textContent=e;sel.appendChild(o);});
+  showLoading(false);carregar();
+}
+function carregar(){
+  const box=$$('#painelAgenda');box.innerHTML="";
+  let filtrados=eventos;
+  const empSel=$$('#empresaFiltro').value;if(empSel)filtrados=filtrados.filter(e=>e.empresa===empSel);
+  if(range.start)filtrados=filtrados.filter(e=>e.data>=range.start.toISOString().split('T')[0]);
+  if(range.end)filtrados=filtrados.filter(e=>e.data<=range.end.toISOString().split('T')[0]);
+  if(!filtrados.length){box.innerHTML="<p style='text-align:center;color:var(--muted)'>Nenhum evento encontrado.</p>";return;}
+  filtrados.forEach(ev=>{const card=document.createElement('div');card.className="card";
+    card.innerHTML=`<h2>${ev.cantor}</h2><p>📅 ${DMY(ev.data)}</p><p>⏰ ${ev.hora}</p><p>💰 ${BRL(ev.valor)}</p>`;
+    box.appendChild(card);});
+}
+document.getElementById('btnFiltrar').onclick=()=>carregar();
+
+/* Inicialização: semana atual (seg→dom) */
+(function init(){
+  const hoje=new Date(),dow=hoje.getDay();
+  const segunda=new Date(hoje);segunda.setDate(hoje.getDate()-((dow+6)%7));
+  const domingo=new Date(segunda);domingo.setDate(segunda.getDate()+6);
+  range.start=segunda;range.end=domingo;range.view=new Date(hoje.getFullYear(),hoje.getMonth(),1);
+  updateHint();carregarEmpresas();
+})();
 </script>
 </body>
 </html>
