@@ -9,7 +9,7 @@
     :root{
       --bg:#0b1020; --surface:#10172a; --card:#0f172a; --text:#e5e7eb; --muted:#94a3b8;
       --line:rgba(148,163,184,.25); --icon-bg:rgba(255,255,255,.06);
-      --shadow:0 20px 60px rgba(2,6,23,.35); --brand:#60a5fa; --brand2:#22d3ee;
+      --shadow:0 20px 60px rgba(2,6,23,.35); --brand:#60a5fa;
     }
     *{box-sizing:border-box}
     body{margin:0;font-family:ui-sans-serif,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--text)}
@@ -43,8 +43,25 @@
     .filters{display:grid;grid-template-columns:1fr 220px 160px;gap:12px;align-items:end}
     @media(max-width:800px){.filters{grid-template-columns:1fr}}
     .field label{display:block;margin:0 0 6px;color:var(--muted);font-weight:800;font-size:.95rem}
+    .picker-wrap{display:flex;align-items:center;gap:12px}
     .picker-btn, select{width:100%;border:1px solid var(--line);background:var(--surface);color:var(--text);
       border-radius:12px;padding:12px 14px;font-weight:700}
+    .range-hint{color:var(--muted);font-weight:800;white-space:nowrap}
+
+    /* Popover calendário */
+    .popover{position:absolute;z-index:50;background:var(--surface);color:var(--text);border:1px solid var(--line);
+      border-radius:14px;box-shadow:var(--shadow);padding:14px;width:min(380px,94vw);display:none}
+    .popover.open{display:block}
+    .cal-head{display:flex;align-items:center;justify-content:space-between;padding:0 4px 8px}
+    .cal-nav{border:1px solid var(--line);background:var(--surface);border-radius:10px;width:34px;height:34px;display:grid;place-items:center;cursor:pointer}
+    .dow{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;padding:6px 4px;color:var(--muted);font-weight:800}
+    .grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;padding:0 4px 8px}
+    .day{height:40px;border-radius:12px;display:grid;place-items:center;cursor:pointer;user-select:none;background:color-mix(in srgb,var(--surface) 90%, #fff)}
+    .day.muted{opacity:.45}
+    .day.sel{background:#2563eb;color:#fff}
+    .day.in{background:color-mix(in srgb,#2563eb 18%,var(--surface))}
+    .cal-actions{display:flex;gap:8px;justify-content:flex-end;padding-top:6px}
+    .btn-sm{border:1px solid var(--line);background:var(--surface);color:var(--text);padding:8px 12px;border-radius:10px;font-weight:800;cursor:pointer}
 
     /* Cards */
     #painelAgenda{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-top:20px}
@@ -101,10 +118,25 @@
   <div class="container">
     <!-- Filtros -->
     <div class="filters">
-      <div class="field">
+      <div class="field" style="position:relative">
         <label>Período</label>
-        <input type="date" id="dataInicio" class="picker-btn">
-        <input type="date" id="dataFim" class="picker-btn" style="margin-top:8px">
+        <div class="picker-wrap">
+          <button id="rangeBtn" class="picker-btn" type="button">🗓️ Selecionar</button>
+          <div id="rangeHint" class="range-hint"></div>
+        </div>
+        <div id="rangePop" class="popover">
+          <div class="cal-head">
+            <button id="prevM" class="cal-nav" type="button">‹</button>
+            <strong id="monthLabel"></strong>
+            <button id="nextM" class="cal-nav" type="button">›</button>
+          </div>
+          <div class="dow"><span>D</span><span>S</span><span>T</span><span>Q</span><span>Q</span><span>S</span><span>S</span></div>
+          <div id="daysGrid" class="grid"></div>
+          <div class="cal-actions">
+            <button id="cancelRange" class="btn-sm" type="button">Cancelar</button>
+            <button id="applyRange" class="btn-sm" type="button">Aplicar</button>
+          </div>
+        </div>
       </div>
       <div class="field">
         <label>Empresa</label>
@@ -141,61 +173,73 @@ function showLoading(v){ $$('#loading').classList.toggle('show',v); }
 function BRL(v){ return Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}); }
 function formatarDataBR(iso){ if(!iso) return ""; const [y,m,d]=iso.split("-"); return `${d}/${m}/${y}`; }
 
+/* ---------- Range Calendar ---------- */
+const range={start:null,end:null,view:new Date(new Date().getFullYear(), new Date().getMonth(),1)};
+const rangeBtn=$$('#rangeBtn'),pop=$$('#rangePop'),grid=$$('#daysGrid'),label=$$('#monthLabel'),hint=$$('#rangeHint');
+let firstPick=true;
+function updateHint(){hint.textContent=(range.start&&range.end)?`${formatarDataBR(ISO(range.start))} → ${formatarDataBR(ISO(range.end))}`:'';}
+function ISO(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
+function strip(d){return new Date(d.getFullYear(),d.getMonth(),d.getDate());}
+function sameDay(a,b){return a&&b&&a.getFullYear()==b.getFullYear()&&a.getMonth()==b.getMonth()&&a.getDate()==b.getDate();}
+function renderMonth(){const y=range.view.getFullYear(),m=range.view.getMonth();
+  label.textContent=new Date(y,m,1).toLocaleDateString('pt-BR',{month:'long',year:'numeric'});
+  grid.innerHTML='';const firstDow=new Date(y,m,1).getDay();const daysInMonth=new Date(y,m+1,0).getDate();
+  for(let i=0;i<firstDow;i++){grid.appendChild(Object.assign(document.createElement('div'),{className:'day muted'}));}
+  for(let d=1;d<=daysInMonth;d++){const el=document.createElement('div');el.className='day';el.textContent=d;
+    const cur=new Date(y,m,d);const inSel=range.start&&range.end&&+cur>=+strip(range.start)&&+cur<=+strip(range.end);
+    const isStart=sameDay(cur,range.start),isEnd=sameDay(cur,range.end);
+    if(inSel)el.classList.add('in');if(isStart||isEnd)el.classList.add('sel');
+    el.addEventListener('click',()=>{if(firstPick){range.start=cur;range.end=cur;firstPick=false;}else{if(cur<range.start){range.end=range.start;range.start=cur;}else range.end=cur;firstPick=true;}renderMonth();});grid.appendChild(el);}
+}
+function openPop(){renderMonth();pop.classList.add('open');}
+function closePop(){pop.classList.remove('open');}
+document.getElementById('prevM').onclick=()=>{range.view=new Date(range.view.getFullYear(),range.view.getMonth()-1,1);renderMonth();}
+document.getElementById('nextM').onclick=()=>{range.view=new Date(range.view.getFullYear(),range.view.getMonth()+1,1);renderMonth();}
+document.getElementById('cancelRange').onclick=()=>closePop();
+document.getElementById('applyRange').onclick=()=>{updateHint();closePop();render();};
+rangeBtn.onclick=(e)=>{e.stopPropagation();openPop();};
+
+/* ---------- Dados ---------- */
 async function carregarEmpresas(){
   showLoading(true);
-  const rsp = await fetch(API_URL);
-  const dados = await rsp.json();
-  eventos = dados;
-  const empresas=[...new Set(dados.map(d=>d.empresa))].sort();
+  const rsp=await fetch(API_URL);
+  eventos=await rsp.json();
+  const empresas=[...new Set(eventos.map(d=>d.empresa))].sort();
   const sel=$$('#empresaFiltro');
   empresas.forEach(e=>{const o=document.createElement('option');o.value=e;o.textContent=e;sel.appendChild(o);});
-  render();
-  showLoading(false);
+  render();showLoading(false);
 }
 
 function render(){
-  const box=$$('#painelAgenda'); box.innerHTML="";
+  const box=$$('#painelAgenda');box.innerHTML="";
   const empSel=$$('#empresaFiltro').value;
-  const di=$$('#dataInicio').value, df=$$('#dataFim').value;
-
   let filtrados=eventos;
-  if(empSel) filtrados=filtrados.filter(e=>e.empresa===empSel);
-  if(di) filtrados=filtrados.filter(e=>e.data>=di);
-  if(df) filtrados=filtrados.filter(e=>e.data<=df);
-
+  if(empSel)filtrados=filtrados.filter(e=>e.empresa===empSel);
+  if(range.start&&range.end){
+    const di=ISO(range.start),df=ISO(range.end);
+    filtrados=filtrados.filter(e=>e.data>=di&&e.data<=df);
+  }
   if(!filtrados.length){box.innerHTML="<p style='text-align:center;color:var(--muted)'>Nenhum evento encontrado.</p>";return;}
-
   filtrados.forEach(ev=>{
-    const card=document.createElement('div');
-    card.className="card";
-    card.innerHTML=`
-      <h2>${ev.cantor}</h2>
-      <p>📅 ${formatarDataBR(ev.data)}</p>
-      <p>⏰ ${ev.hora}</p>
-      <p>💰 ${BRL(ev.valor)}</p>
-    `;
-    card.onclick=()=>abrirModal(ev);
-    box.appendChild(card);
+    const card=document.createElement('div');card.className="card";
+    card.innerHTML=`<h2>${ev.cantor}</h2><p>📅 ${formatarDataBR(ev.data)}</p><p>⏰ ${ev.hora}</p><p>💰 ${BRL(ev.valor)}</p>`;
+    card.onclick=()=>abrirModal(ev);box.appendChild(card);
   });
 }
 
-function abrirModal(ev){
-  $$('#detData').textContent="📅 Data: "+formatarDataBR(ev.data);
+function abrirModal(ev){$$('#detData').textContent="📅 Data: "+formatarDataBR(ev.data);
   $$('#detCantor').textContent="🎤 Cantor: "+ev.cantor;
   $$('#detHora').textContent="⏰ Horário: "+ev.hora;
   $$('#detValor').textContent="💰 Valor: "+BRL(ev.valor);
-  $$('#modal').classList.add('open');
-}
-function fecharModal(){ $$('#modal').classList.remove('open'); }
+  $$('#modal').classList.add('open');}
+function fecharModal(){$$('#modal').classList.remove('open');}
 
+/* ---------- Init ---------- */
 document.getElementById('btnFiltrar').onclick=()=>render();
 document.getElementById('themeToggle').onclick=()=>document.body.classList.toggle('light');
-
-const user=document.getElementById('userMenu');
-user.querySelector('.user-btn').addEventListener('click',()=>user.classList.toggle('open'));
-window.addEventListener('click',e=>{if(!user.contains(e.target))user.classList.remove('open')});
+const user=document.getElementById('userMenu');user.querySelector('.user-btn').onclick=()=>user.classList.toggle('open');
+window.onclick=e=>{if(!user.contains(e.target))user.classList.remove('open')};
 function handleLogout(){alert("Logout feito!");}
-
 carregarEmpresas();
 </script>
 </body>
