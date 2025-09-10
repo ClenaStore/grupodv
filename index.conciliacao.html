@@ -147,7 +147,7 @@ window.addEventListener('click', e=>{ if(!user.contains(e.target)) user.classLis
 function showLoading(v){ document.getElementById('loading').classList.toggle('show', !!v); }
 
 /* Conciliação */
-const API_URL="/api/proxy?key=concil";
+const API_URL="/api/concil";
 let chartCartao, chartBanco;
 
 function criaDoughnut(el, valor, cor){
