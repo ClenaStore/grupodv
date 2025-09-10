@@ -26,6 +26,18 @@
       padding:10px 12px;border-radius:12px;font-weight:800;cursor:pointer;display:inline-flex;align-items:center}
     .btn:hover{box-shadow:var(--shadow);transform:translateY(-1px)}
 
+    /* Perfil */
+    .user{position:relative}
+    .user-btn{display:flex;align-items:center;gap:10px;border:1px solid var(--line);
+      background:var(--surface);padding:6px 8px;border-radius:999px;cursor:pointer}
+    .user-btn img{width:34px;height:34px;border-radius:50%;object-fit:cover;background:var(--icon-bg)}
+    .user-menu{position:absolute;right:0;top:110%;background:var(--surface);border:1px solid var(--line);
+      border-radius:12px;min-width:200px;padding:6px;box-shadow:var(--shadow);display:none}
+    .user.open .user-menu{display:block}
+    .user-menu a,.user-menu button{display:flex;width:100%;padding:10px 12px;border-radius:10px;
+      border:none;background:transparent;color:var(--text);text-align:left;cursor:pointer;font-weight:600}
+    .user-menu a:hover,.user-menu button:hover{background:var(--icon-bg)}
+
     /* Filtros */
     .container{max-width:1200px;margin:0 auto;padding:20px 18px}
     .filters{display:grid;grid-template-columns:1fr 220px 160px;gap:12px;align-items:end}
@@ -70,6 +82,16 @@
       </a>
       <div class="grow"></div>
       <button id="themeToggle" class="btn">🌓 Tema</button>
+      <div class="user" id="userMenu">
+        <button class="user-btn" type="button">
+          <img src="https://github.com/ClenaStore/grupodv/blob/main/paste/Imagem%20do%20WhatsApp%20de%202025-09-08%20%C3%A0(s)%2011.54.12_884bebc9.jpg?raw=true" alt="">
+          <strong style="font-size:13px">Leonardo</strong>
+        </button>
+        <div class="user-menu">
+          <a href="#">👤 Meu Perfil</a>
+          <button onclick="handleLogout()">🚪 Sair</button>
+        </div>
+      </div>
     </div>
   </header>
 
@@ -117,8 +139,10 @@ const $$ = sel => document.querySelector(sel);
 
 function showLoading(v){ $$('#loading').classList.toggle('show',v); }
 function BRL(v){ return Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}); }
+function formatarDataBR(iso){ if(!iso) return ""; const [y,m,d]=iso.split("-"); return `${d}/${m}/${y}`; }
 
 async function carregarEmpresas(){
+  showLoading(true);
   const rsp = await fetch(API_URL);
   const dados = await rsp.json();
   eventos = dados;
@@ -126,6 +150,7 @@ async function carregarEmpresas(){
   const sel=$$('#empresaFiltro');
   empresas.forEach(e=>{const o=document.createElement('option');o.value=e;o.textContent=e;sel.appendChild(o);});
   render();
+  showLoading(false);
 }
 
 function render(){
@@ -145,7 +170,7 @@ function render(){
     card.className="card";
     card.innerHTML=`
       <h2>${ev.cantor}</h2>
-      <p>📅 ${ev.data}</p>
+      <p>📅 ${formatarDataBR(ev.data)}</p>
       <p>⏰ ${ev.hora}</p>
       <p>💰 ${BRL(ev.valor)}</p>
     `;
@@ -155,7 +180,7 @@ function render(){
 }
 
 function abrirModal(ev){
-  $$('#detData').textContent="📅 Data: "+ev.data;
+  $$('#detData').textContent="📅 Data: "+formatarDataBR(ev.data);
   $$('#detCantor').textContent="🎤 Cantor: "+ev.cantor;
   $$('#detHora').textContent="⏰ Horário: "+ev.hora;
   $$('#detValor').textContent="💰 Valor: "+BRL(ev.valor);
@@ -165,6 +190,11 @@ function fecharModal(){ $$('#modal').classList.remove('open'); }
 
 document.getElementById('btnFiltrar').onclick=()=>render();
 document.getElementById('themeToggle').onclick=()=>document.body.classList.toggle('light');
+
+const user=document.getElementById('userMenu');
+user.querySelector('.user-btn').addEventListener('click',()=>user.classList.toggle('open'));
+window.addEventListener('click',e=>{if(!user.contains(e.target))user.classList.remove('open')});
+function handleLogout(){alert("Logout feito!");}
 
 carregarEmpresas();
 </script>
