@@ -681,26 +681,28 @@ function buildRangeCalendar(container, state, onApply, onCancel){
     return dd>=s && dd<=e;
   }
 
- function drawGrid(){
+function drawGrid(){
   grid.querySelectorAll('.day').forEach(n=>n.remove());
-  const y=state.cursor.getFullYear(), m=state.cursor.getMonth();
-  const first=new Date(y,m,1);
-  const startDay=first.getDay(); // domingo = 0
-  const daysInMonth=new Date(y,m+1,0).getDate();
+  const y = state.cursor.getFullYear(), m = state.cursor.getMonth();
+  const first = new Date(y,m,1);
+  const startDay = first.getDay(); // domingo = 0
+  const daysInMonth = new Date(y,m+1,0).getDate();
 
-  // Dias anteriores
+  // Dias anteriores do mês passado
   for(let i=0;i<startDay;i++){
-    const prevDate=new Date(y,m,1-(startDay-i));
-    const x=document.createElement("div");
+    const prevDate = new Date(y,m,1-(startDay-i));
+    const x = document.createElement("div");
     x.className="day out";
-    x.textContent=prevDate.getDate();
+    x.textContent = prevDate.getDate();
     grid.appendChild(x);
   }
 
   // Dias do mês atual
   for(let d=1; d<=daysInMonth; d++){
     const date=new Date(y,m,d);
-    const el=document.createElement("div"); el.className="day"; el.textContent=d;
+    const el=document.createElement("div"); 
+    el.className="day"; 
+    el.textContent=d;
     if(isSameDay(date,state.start)||isSameDay(date,state.end)) el.classList.add('sel');
     else if(inSelRange(date)) el.classList.add('range');
     el.onclick=()=>{
@@ -710,6 +712,18 @@ function buildRangeCalendar(container, state, onApply, onCancel){
     };
     grid.appendChild(el);
   }
+
+  // Dias do próximo mês para completar a grade
+  const filled = startDay + daysInMonth;
+  const totalCells = Math.ceil(filled/7)*7;
+  for(let i=filled;i<totalCells;i++){
+    const nextDate=new Date(y,m,(i-filled)+1);
+    const x=document.createElement("div");
+    x.className="day out";
+    x.textContent = nextDate.getDate();
+    grid.appendChild(x);
+  }
+}
 
   // Dias do próximo mês para completar a grade
   const filled=startDay+daysInMonth;
