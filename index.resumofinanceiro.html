@@ -527,7 +527,8 @@
     head.appendChild(prev); head.appendChild(title); head.appendChild(next);
     cal.appendChild(head);
 
-  // Grid
+    // Grid
+    // Grid
 const grid = document.createElement("div"); 
 grid.className="cal-grid";
 "DSTQQSS".split("").forEach(l=>{
@@ -588,6 +589,23 @@ function drawGrid(){
     grid.append(x);
   }
 }
+
+
+    // Rodapé
+    const foot=document.createElement("div"); foot.className="cal foot";
+    const cancel=document.createElement("button"); cancel.className="btn"; cancel.textContent="Cancelar";
+    const apply=document.createElement("button"); apply.className="btn dark"; apply.textContent="Aplicar";
+    cancel.onclick=onCancel;
+    apply.onclick=()=>{ 
+      if(state.start && !state.end){ state.end = state.start; }
+      if(state.start && state.end) onApply(state.start, state.end); 
+    };
+    foot.appendChild(cancel); foot.appendChild(apply);
+    cal.appendChild(foot);
+
+    container.appendChild(cal);
+    updTitle(); drawGrid();
+  }
 
   /* ====== OVERLAY DE CARREGAMENTO ====== */
   function showLoading(txt){ const l=$("#loading"); $("#loadingText").textContent = txt||"Carregando…"; l.classList.add('show'); }
