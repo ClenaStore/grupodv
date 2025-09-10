@@ -9,14 +9,14 @@
     :root{
       --bg:#0b1020; --surface:#10172a; --card:#0f172a; --text:#e5e7eb; --muted:#94a3b8;
       --line:rgba(148,163,184,.25); --icon-bg:rgba(255,255,255,.06);
-      --shadow:0 20px 60px rgba(2,6,23,.35); --brand:#60a5fa;
+      --shadow:0 20px 60px rgba(2,6,23,.35); --brand:#60a5fa; --ok:#16a34a; --bad:#dc2626;
     }
     *{box-sizing:border-box}
     body{margin:0;font-family:ui-sans-serif,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--text)}
 
-    /* Header */
+    /* Header igual ao painel Metas */
     header{position:sticky;top:0;z-index:40;backdrop-filter:saturate(160%) blur(8px);
-      background:color-mix(in srgb,var(--surface) 80%,transparent);border-bottom:1px solid var(--line)}
+      background:color-mix(in srgb, var(--surface) 80%, transparent);border-bottom:1px solid var(--line);}
     .head{max-width:1200px;margin:0 auto;padding:14px 18px;display:flex;align-items:center;gap:12px}
     .brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit}
     .brand img{height:42px}
@@ -32,9 +32,9 @@
     .user-menu{position:absolute;right:0;top:110%;background:var(--surface);border:1px solid var(--line);
       border-radius:12px;min-width:200px;padding:6px;box-shadow:var(--shadow);display:none}
     .user.open .user-menu{display:block}
-    .user-menu button{width:100%;padding:10px;border:none;background:transparent;color:var(--text);
-      text-align:left;cursor:pointer;font-weight:600;border-radius:8px}
-    .user-menu button:hover{background:var(--icon-bg)}
+    .user-menu a,.user-menu button{display:flex;width:100%;padding:10px 12px;border-radius:10px;
+      border:none;background:transparent;color:var(--text);text-align:left;cursor:pointer;font-weight:600}
+    .user-menu a:hover,.user-menu button:hover{background:var(--icon-bg)}
 
     /* Container e filtros */
     .container{max-width:1200px;margin:0 auto;padding:20px 18px}
@@ -91,7 +91,10 @@
       <button id="themeToggle" class="btn">🌓 Tema</button>
       <div class="user" id="userMenu">
         <button class="user-btn"><img src="https://i.imgur.com/0y0y0y0.png"><strong>Usuário</strong></button>
-        <div class="user-menu"><button onclick="logout()">🚪 Sair</button></div>
+        <div class="user-menu">
+          <a href="#">👤 Meu Perfil</a>
+          <button onclick="logout()">🚪 Sair</button>
+        </div>
       </div>
     </div>
   </header>
