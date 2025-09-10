@@ -725,18 +725,6 @@ function drawGrid(){
   }
 }
 
-  // Dias do próximo mês para completar a grade
-  const filled=startDay+daysInMonth;
-  const totalCells=Math.ceil(filled/7)*7;
-  for(let i=filled;i<totalCells;i++){
-    const nextDate=new Date(y,m,(i-filled)+1);
-    const x=document.createElement("div");
-    x.className="day out";
-    x.textContent=nextDate.getDate();
-    grid.appendChild(x);
-  }
-}
-
 
   const foot=document.createElement("div"); foot.className="cal-foot cal foot";
   const cancel=document.createElement("button"); cancel.className="btn"; cancel.textContent="Cancelar";
