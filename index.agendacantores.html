@@ -9,12 +9,12 @@
     :root{
       --bg:#0b1020; --surface:#10172a; --card:#0f172a; --text:#e5e7eb; --muted:#94a3b8;
       --line:rgba(148,163,184,.25); --icon-bg:rgba(255,255,255,.06);
-      --shadow:0 20px 60px rgba(2,6,23,.35); --brand:#60a5fa; --ok:#16a34a; --bad:#dc2626;
+      --shadow:0 20px 60px rgba(2,6,23,.35); --brand:#60a5fa;
     }
     *{box-sizing:border-box}
     body{margin:0;font-family:ui-sans-serif,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--text)}
 
-    /* Header igual ao painel Metas */
+    /* Header (igual Metas) */
     header{position:sticky;top:0;z-index:40;backdrop-filter:saturate(160%) blur(8px);
       background:color-mix(in srgb, var(--surface) 80%, transparent);border-bottom:1px solid var(--line);}
     .head{max-width:1200px;margin:0 auto;padding:14px 18px;display:flex;align-items:center;gap:12px}
@@ -36,7 +36,7 @@
       border:none;background:transparent;color:var(--text);text-align:left;cursor:pointer;font-weight:600}
     .user-menu a:hover,.user-menu button:hover{background:var(--icon-bg)}
 
-    /* Container e filtros */
+    /* Container */
     .container{max-width:1200px;margin:0 auto;padding:20px 18px}
     .filters{display:grid;grid-template-columns:1fr 220px 120px;gap:12px;align-items:end}
     @media(max-width:800px){.filters{grid-template-columns:1fr}}
@@ -108,7 +108,6 @@
         <label>Período</label>
         <button id="rangeBtn" class="picker-btn" type="button">📅 Selecionar</button>
         <div id="rangeHint" class="range-hint"></div>
-        <!-- Popover calendário -->
         <div id="rangePop" class="popover">
           <div class="cal-head">
             <button id="prevM" class="cal-nav" type="button">‹</button>
