@@ -13,7 +13,30 @@
       --blue:#2563eb; --yellow:#f59e0b;
     }
     body{margin:0; font-family:sans-serif; background:var(--bg); color:var(--text);}
-    header{background:var(--surface); border-bottom:1px solid var(--line); padding:12px 18px; font-weight:800}
+
+    /* Header */
+    header{position:sticky; top:0; z-index:40; backdrop-filter:saturate(160%) blur(8px);
+      background:var(--surface); border-bottom:1px solid var(--line);}
+    .head{max-width:1200px; margin:0 auto; padding:14px 18px; display:flex; align-items:center; gap:12px}
+    .brand{display:flex; align-items:center; gap:10px; text-decoration:none; color:inherit}
+    .brand img{height:42px}
+    .title{font-weight:800; letter-spacing:.2px; font-size:clamp(18px,1.6vw,22px)}
+    .grow{flex:1}
+    .btn{border:1px solid var(--line); background:var(--surface); color:var(--text);
+      padding:8px 12px; border-radius:12px; font-weight:800; cursor:pointer; display:inline-flex; gap:8px; align-items:center}
+    .btn:hover{box-shadow:var(--shadow); transform:translateY(-1px)}
+    .user{position:relative}
+    .user-btn{display:flex; align-items:center; gap:10px; border:1px solid var(--line);
+      background:var(--surface); padding:6px 8px; border-radius:999px; cursor:pointer}
+    .user-btn img{width:34px; height:34px; border-radius:50%; object-fit:cover; background:#ddd}
+    .user-menu{position:absolute; right:0; top:110%; background:var(--surface); border:1px solid var(--line);
+      border-radius:12px; min-width:200px; padding:6px; box-shadow:var(--shadow); display:none}
+    .user.open .user-menu{display:block}
+    .user-menu a,.user-menu button{display:flex; width:100%; padding:10px 12px; border-radius:10px;
+      border:none; background:transparent; color:var(--text); text-align:left; cursor:pointer; font-weight:600}
+    .user-menu a:hover,.user-menu button:hover{background:rgba(2,6,23,.06)}
+
+    /* Container e Cards */
     .container{max-width:1200px; margin:0 auto; padding:20px}
     .filters{display:grid; grid-template-columns:1fr 160px 160px; gap:12px; margin-bottom:20px}
     @media(max-width:700px){.filters{grid-template-columns:1fr;}}
@@ -31,10 +54,46 @@
     table{width:100%; border-collapse:collapse; font-size:.95rem}
     th,td{padding:10px; border-bottom:1px solid var(--line); text-align:left}
     td:last-child,th:last-child{text-align:right}
+
+    /* Loading overlay */
+    .loading{position:fixed; inset:0; background:rgba(0,0,0,.55); display:none; align-items:center; justify-content:center; z-index:60}
+    .loading.show{display:flex}
+    .spinner{width:74px; height:74px; border-radius:50%; border:6px solid rgba(255,255,255,.25); border-top-color:#fff; animation:spin 1s linear infinite}
+    .loading p{color:#fff; font-weight:800; margin-top:12px; text-shadow:0 2px 6px rgba(0,0,0,.3)}
+    @keyframes spin{to{transform:rotate(360deg)}}
   </style>
 </head>
 <body>
-<header>📊 Painel de Conciliação</header>
+
+<!-- Header -->
+<header>
+  <div class="head">
+    <a class="brand" href="#">
+      <img src="https://github.com/ClenaStore/painel-principal/blob/main/img/GRUPO%20DV%20(1).png?raw=true" alt="Logo">
+      <span class="title">Painel de Conciliação</span>
+    </a>
+    <div class="grow"></div>
+    <button class="btn">🌓 Tema</button>
+    <div class="user" id="userMenu">
+      <button class="user-btn" type="button">
+        <img src="https://github.com/ClenaStore/grupodv/blob/main/paste/Imagem%20do%20WhatsApp%20de%202025-09-08%20%C3%A0(s)%2011.54.12_884bebc9.jpg?raw=true" alt="">
+        <strong style="font-size:13px">Leonardo</strong>
+      </button>
+      <div class="user-menu">
+        <a href="#">👤 Meu Perfil</a>
+        <button onclick="alert('Logout')">🚪 Sair</button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- Overlay Loading -->
+<div id="loading" class="loading" aria-hidden="true">
+  <div style="display:flex; flex-direction:column; align-items:center;">
+    <div class="spinner"></div>
+    <p>Carregando dados...</p>
+  </div>
+</div>
 
 <div class="container">
   <!-- Filtros -->
@@ -79,9 +138,18 @@
 </div>
 
 <script>
-const API_URL="/api/concil"; // GAS endpoint
+/* Header interações */
+const user = document.getElementById('userMenu');
+user.querySelector('.user-btn').addEventListener('click', ()=>user.classList.toggle('open'));
+window.addEventListener('click', e=>{ if(!user.contains(e.target)) user.classList.remove('open'); });
 
+/* Overlay helpers */
+function showLoading(v){ document.getElementById('loading').classList.toggle('show', !!v); }
+
+/* Conciliação */
+const API_URL="/api/concil"; // GAS endpoint
 let chartCartao, chartBanco;
+
 function criaDoughnut(el, valor, cor){
   const data = {
     datasets:[{data:[valor,100-valor], backgroundColor:[cor,"#e5e7eb"], cutout:"70%"}]
@@ -100,6 +168,7 @@ function criaDoughnut(el, valor, cor){
 }
 
 async function carregar(){
+  showLoading(true);
   const res = await fetch(API_URL);
   const js = await res.json();
 
@@ -107,6 +176,12 @@ async function carregar(){
   const empresas=[...new Set(js.map(r=>r.empresa))];
   const sel=document.getElementById("fEmpresa");
   sel.innerHTML=`<option value="">Todas</option>`+empresas.map(e=>`<option>${e}</option>`).join("");
+
+  // Datas padrão = ontem
+  const ontem=new Date(); ontem.setDate(ontem.getDate()-1);
+  const iso=ontem.toISOString().slice(0,10);
+  document.getElementById("fIni").value=iso;
+  document.getElementById("fFim").value=iso;
 
   // Filtra
   function aplicar(){
@@ -139,6 +214,8 @@ async function carregar(){
   }
   aplicar();
   sel.onchange=aplicar; document.getElementById("fIni").onchange=aplicar; document.getElementById("fFim").onchange=aplicar;
+
+  showLoading(false);
 }
 carregar();
 </script>
