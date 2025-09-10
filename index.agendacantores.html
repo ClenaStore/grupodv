@@ -8,15 +8,19 @@
   <style>
     :root{
       --bg:#0b1020; --surface:#10172a; --card:#0f172a; --text:#e5e7eb; --muted:#94a3b8;
-      --line:rgba(148,163,184,.25); --icon-bg:rgba(255,255,255,.06);
-      --shadow:0 20px 60px rgba(2,6,23,.35); --brand:#60a5fa;
+      --line:rgba(148,163,184,.25); --shadow:0 20px 60px rgba(2,6,23,.35);
+      --brand:#60a5fa; --brand2:#22d3ee;
+    }
+    [data-theme="light"]{
+      --bg:#f6f7fb; --surface:#fff; --card:#fff; --text:#0f172a; --muted:#475569;
+      --line:#e5e7eb; --shadow:0 16px 36px rgba(15,23,42,.08);
     }
     *{box-sizing:border-box}
     body{margin:0;font-family:ui-sans-serif,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--text)}
 
     /* Header */
     header{position:sticky;top:0;z-index:40;backdrop-filter:saturate(160%) blur(8px);
-      background:color-mix(in srgb, var(--surface) 80%, transparent);border-bottom:1px solid var(--line);}
+      background:color-mix(in srgb,var(--surface) 80%,transparent);border-bottom:1px solid var(--line)}
     .head{max-width:1200px;margin:0 auto;padding:14px 18px;display:flex;align-items:center;gap:12px}
     .brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit}
     .brand img{height:42px}
@@ -39,8 +43,9 @@
     #painelAgenda{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-top:20px}
     @media(max-width:1200px){#painelAgenda{grid-template-columns:repeat(2,minmax(0,1fr))}}
     @media(max-width:700px){#painelAgenda{grid-template-columns:1fr}}
-    .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;box-shadow:var(--shadow);
-      text-align:center;min-height:160px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;
+      box-shadow:var(--shadow);text-align:center;min-height:160px;
+      display:flex;flex-direction:column;align-items:center;justify-content:center;
       transition:.2s}
     .card:hover{transform:translateY(-3px);box-shadow:0 8px 24px rgba(0,0,0,.28)}
     .card h2{margin:0 0 6px;font-size:1.05rem}
@@ -125,13 +130,18 @@ let eventos=[];
 const $$=s=>document.querySelector(s);
 function showLoading(v){ $$('#loading').classList.toggle('show',v); }
 function BRL(v){ return Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}); }
-document.getElementById('themeToggle').onclick=()=>{document.documentElement.dataset.theme=(document.documentElement.dataset.theme==='dark'?'light':'dark');}
 
+// tema
+document.getElementById('themeToggle').onclick=()=>{const cur=document.documentElement.dataset.theme;const next=(cur==='dark'?'light':'dark');document.documentElement.dataset.theme=next;localStorage.setItem('dv_theme',next);}
+document.addEventListener('DOMContentLoaded',()=>{const t=localStorage.getItem('dv_theme');if(t)document.documentElement.dataset.theme=t;});
+
+// senha
 async function ensurePwd(){
   let pwd=localStorage.getItem(KEY)||'';
   while(!pwd){ pwd=prompt('Digite a senha:')||''; if(!pwd) continue; localStorage.setItem(KEY,pwd); }
 }
 
+// datas
 function semanaAtual(){ const hoje=new Date(); const dow=hoje.getDay(); const segunda=new Date(hoje);segunda.setDate(hoje.getDate()-((dow+6)%7)); const domingo=new Date(segunda);domingo.setDate(segunda.getDate()+6); return {de:segunda,ate:domingo}; }
 const ISO=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 const DMY=d=>`${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
@@ -144,10 +154,11 @@ function openPop(){renderMonth();$$('#rangePop').classList.add('open');}function
 document.getElementById('prevM').onclick=()=>{range.view=new Date(range.view.getFullYear(),range.view.getMonth()-1,1);renderMonth();};
 document.getElementById('nextM').onclick=()=>{range.view=new Date(range.view.getFullYear(),range.view.getMonth()+1,1);renderMonth();};
 document.getElementById('cancelRange').onclick=()=>closePop();
-document.getElementById('applyRange').onclick=()=>{updateHint();closePop();carregarAgenda();};
+document.getElementById('applyRange').onclick=()=>{updateHint();closePop();render();};
 document.getElementById('rangeBtn').onclick=e=>{e.stopPropagation();openPop();};
 document.addEventListener('click',e=>{if(!$$('#rangePop').contains(e.target)&&e.target.id!=='rangeBtn')closePop();});
 
+// dados
 async function carregarAgenda(){
   showLoading(true);
   try{
@@ -170,6 +181,7 @@ function render(){
 
 document.getElementById('btnFiltrar').onclick=()=>render();
 
+// init
 (async function init(){
   await ensurePwd();
   const sem=semanaAtual();range.start=sem.de;range.end=sem.ate;range.view=new Date(sem.de.getFullYear(),sem.de.getMonth(),1);
