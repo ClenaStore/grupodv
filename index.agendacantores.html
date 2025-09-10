@@ -14,7 +14,7 @@
     *{box-sizing:border-box}
     body{margin:0;font-family:ui-sans-serif,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--text)}
 
-    /* Header (igual Metas) */
+    /* Header */
     header{position:sticky;top:0;z-index:40;backdrop-filter:saturate(160%) blur(8px);
       background:color-mix(in srgb, var(--surface) 80%, transparent);border-bottom:1px solid var(--line);}
     .head{max-width:1200px;margin:0 auto;padding:14px 18px;display:flex;align-items:center;gap:12px}
@@ -25,16 +25,6 @@
     .btn{border:1px solid var(--line);background:var(--surface);color:var(--text);
       padding:10px 12px;border-radius:12px;font-weight:800;cursor:pointer;display:inline-flex;align-items:center}
     .btn:hover{box-shadow:var(--shadow);transform:translateY(-1px)}
-    .user{position:relative}
-    .user-btn{display:flex;align-items:center;gap:10px;border:1px solid var(--line);
-      background:var(--surface);padding:6px 10px;border-radius:999px;cursor:pointer}
-    .user-btn img{width:34px;height:34px;border-radius:50%}
-    .user-menu{position:absolute;right:0;top:110%;background:var(--surface);border:1px solid var(--line);
-      border-radius:12px;min-width:200px;padding:6px;box-shadow:var(--shadow);display:none}
-    .user.open .user-menu{display:block}
-    .user-menu a,.user-menu button{display:flex;width:100%;padding:10px 12px;border-radius:10px;
-      border:none;background:transparent;color:var(--text);text-align:left;cursor:pointer;font-weight:600}
-    .user-menu a:hover,.user-menu button:hover{background:var(--icon-bg)}
 
     /* Container */
     .container{max-width:1200px;margin:0 auto;padding:20px 18px}
@@ -89,13 +79,6 @@
       </a>
       <div class="grow"></div>
       <button id="themeToggle" class="btn">🌓 Tema</button>
-      <div class="user" id="userMenu">
-        <button class="user-btn"><img src="https://i.imgur.com/0y0y0y0.png"><strong>Usuário</strong></button>
-        <div class="user-menu">
-          <a href="#">👤 Meu Perfil</a>
-          <button onclick="logout()">🚪 Sair</button>
-        </div>
-      </div>
     </div>
   </header>
 
@@ -142,7 +125,6 @@ let eventos=[];
 const $$=s=>document.querySelector(s);
 function showLoading(v){ $$('#loading').classList.toggle('show',v); }
 function BRL(v){ return Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}); }
-function logout(){localStorage.removeItem(KEY);location.reload();}
 document.getElementById('themeToggle').onclick=()=>{document.documentElement.dataset.theme=(document.documentElement.dataset.theme==='dark'?'light':'dark');}
 
 async function ensurePwd(){
