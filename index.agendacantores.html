@@ -1,169 +1,129 @@
 <!DOCTYPE html>
-<html lang="pt-BR" data-theme="light">
+<html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-  <title>Entradas • Grupo DV</title>
+  <title>Agenda de Músicos</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Great+Vibes&family=Poppins:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
   <style>
     :root{
-      --bg:#0b1020; --surface:#10172a; --card:#0f172a; --text:#e5e7eb; --muted:#94a3b8;
-      --line:rgba(148,163,184,.25); --icon-bg:rgba(255,255,255,.06);
-      --shadow:0 20px 60px rgba(2,6,23,.35); --ok:#16a34a; --bad:#dc2626;
+      --amarelo:#ffd700; --overlay:rgba(10,0,30,.78);
+      --texto:#fff; --muted:#d8d8d8; --card:rgba(255,255,255,.06);
+      --line:rgba(255,255,255,.18);
     }
-    [data-theme="light"]{
-      --bg:#f6f7fb; --surface:#fff; --card:#fff; --text:#0f172a; --muted:#475569;
-      --line:#e5e7eb; --icon-bg:rgba(2,6,23,.06); --shadow:0 16px 36px rgba(15,23,42,.08);
-    }
-    *{box-sizing:border-box;margin:0;padding:0}
-    body{font-family:ui-sans-serif,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--text);}
-    header{position:sticky;top:0;z-index:40;backdrop-filter:saturate(160%) blur(8px);
-      background:color-mix(in srgb,var(--surface) 85%,transparent);border-bottom:1px solid var(--line);}
-    .head{max-width:1200px;margin:0 auto;padding:14px 18px;display:flex;align-items:center;gap:12px}
-    .brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit}
-    .brand img{height:42px}
-    .title{font-weight:800;font-size:clamp(18px,1.6vw,22px)}
-    .grow{flex:1}
-    .btn{border:1px solid var(--line);background:var(--surface);color:var(--text);
-      padding:10px 12px;border-radius:12px;font-weight:800;cursor:pointer;display:inline-flex;gap:8px;align-items:center}
-    .btn:hover{box-shadow:var(--shadow);transform:translateY(-1px)}
-    .user{position:relative}
-    .user-btn{display:flex;align-items:center;gap:10px;border:1px solid var(--line);
-      background:var(--surface);padding:6px 8px;border-radius:999px;cursor:pointer}
-    .user-btn img{width:34px;height:34px;border-radius:50%;object-fit:cover;background:var(--icon-bg)}
-    .user-menu{position:absolute;right:0;top:110%;background:var(--surface);border:1px solid var(--line);
-      border-radius:12px;min-width:200px;padding:6px;box-shadow:var(--shadow);display:none}
-    .user.open .user-menu{display:block}
-    .container{max-width:1200px;margin:0 auto;padding:20px 18px}
-    .filters{display:grid;grid-template-columns:1fr 1fr auto;gap:12px;align-items:end}
-    @media(max-width:800px){.filters{grid-template-columns:1fr}}
-    .field label{display:block;margin-bottom:6px;color:var(--muted);font-weight:800;font-size:.95rem}
-    .picker-wrap{display:flex;align-items:center;gap:12px}
-    .picker-btn,select{width:100%;border:1px solid var(--line);background:var(--surface);color:var(--text);
-      border-radius:12px;padding:12px 14px;font-weight:700}
-    .range-hint{color:var(--muted);font-weight:800;white-space:nowrap}
-    #painel{display:grid;grid-template-columns:1fr;gap:16px;margin-top:16px}
-    .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;
-      transition:.2s;box-shadow:var(--shadow);}
-    .card.ok{border-left:6px solid var(--ok)}
-    .card.bad{border-left:6px solid var(--bad)}
-    .card h2{margin:0 0 10px;font-size:1.1rem}
-    .card p{margin:4px 0;font-size:.95rem}
-    .musicos{margin-top:8px;padding-left:10px;border-left:2px solid var(--line)}
-    .musicos p{margin:2px 0;font-size:.9rem;color:var(--muted)}
-    .loading{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;z-index:60}
-    .loading.show{display:flex}
-    .spinner{width:74px;height:74px;border-radius:50%;border:6px solid rgba(255,255,255,.25);border-top-color:#fff;animation:spin 1s linear infinite}
-    .loading p{color:#fff;font-weight:800;margin-top:12px}
-    @keyframes spin{to{transform:rotate(360deg)}}
+    body{margin:0;font-family:'Poppins',sans-serif;background:#0b0b15;color:var(--texto);}
+    header.titulo{position:sticky;top:0;background:var(--overlay);
+      display:flex;justify-content:space-between;align-items:center;
+      padding:16px 20px;z-index:100;}
+    .title{margin:0;font-family:'Bebas Neue',sans-serif;font-size:32px;color:var(--amarelo);}
+    .head-right{display:flex;align-items:center;gap:12px}
+    select,button{padding:8px 10px;border-radius:8px;border:1px solid var(--line);font-size:15px;}
+    button{cursor:pointer;background:var(--amarelo);font-weight:600}
+    .content{padding:20px;max-width:960px;margin:auto;}
+    .grupo{display:grid;grid-template-columns:80px 1fr;gap:12px;margin-bottom:16px;}
+    .dia{font-family:'Bebas Neue',sans-serif;font-size:30px;color:#fff;text-align:center}
+    .dia small{display:block;color:var(--amarelo);font-size:12px;}
+    .itens{border-left:4px solid var(--amarelo);padding-left:12px;display:flex;flex-direction:column;gap:10px;}
+    .linha{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;
+      display:flex;justify-content:space-between;cursor:pointer;transition:.2s;}
+    .linha:hover{background:rgba(255,215,0,0.08);}
+    .linha .texto{font-weight:600;}
+    .linha .hora{color:var(--muted);font-weight:600;}
+    #modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.6);z-index:2000;}
+    .modal-box{background:#101326;color:#fff;padding:20px;border-radius:14px;width:min(400px,92%);}
+    .modal-box h3{margin:0 0 10px;font-size:18px;}
+    .kv{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px dashed rgba(255,255,255,.15);}
+    .kv:last-child{border-bottom:none;}
+    .kv b{color:var(--amarelo);}
+    .btn-close{margin-top:14px;width:100%;padding:10px;background:var(--amarelo);border:none;border-radius:10px;font-weight:700;cursor:pointer}
   </style>
 </head>
 <body>
-  <header>
-    <div class="head">
-      <a class="brand" href="#"><img src="https://github.com/ClenaStore/painel-principal/blob/main/img/GRUPO%20DV%20(1).png?raw=true"><span class="title">Entradas</span></a>
-      <div class="grow"></div>
-      <button id="themeToggle" class="btn">🌓 Tema</button>
-      <div class="user" id="userMenu">
-        <button class="user-btn" type="button"><img src="https://github.com/ClenaStore/grupodv/blob/main/paste/Imagem%20do%20WhatsApp%20de%202025-09-08%20%C3%A0(s)%2011.54.12_884bebc9.jpg?raw=true"><strong>Leonardo</strong></button>
-        <div class="user-menu"><a href="#">👤 Meu Perfil</a><button onclick="handleLogout()">🚪 Sair</button></div>
-      </div>
+  <header class="titulo">
+    <h1 class="title">Agenda</h1>
+    <div class="head-right">
+      <select id="empresaSel">
+        <option value="">Selecione a empresa</option>
+        <option>Mercatto Delícia</option>
+        <option>Villa Gourmet</option>
+        <option>Delícia Gourmet</option>
+      </select>
+      <button id="calendarBtn">📅 Filtro</button>
     </div>
   </header>
 
-  <div id="loading" class="loading"><div><div class="spinner"></div><p>Carregando...</p></div></div>
+  <div class="content"><main class="lista" id="lista"></main></div>
 
-  <div class="container">
-    <div class="filters">
-      <div class="field">
-        <label>Empresa</label>
-        <select id="empresaFiltro">
-          <option value="">Todas</option>
-          <option value="Mercatto Delícia">Mercatto Delícia</option>
-          <option value="Delícia Gourmet">Delícia Gourmet</option>
-          <option value="Villa Gourmet">Villa Gourmet</option>
-        </select>
-      </div>
-      <div class="field"><label>&nbsp;</label><button id="btnFiltrar" class="btn">Filtrar</button></div>
-    </div>
-    <div id="painel"></div>
-  </div>
+  <!-- Modal detalhes -->
+  <div id="modal"><div class="modal-box">
+    <h3>Detalhes</h3>
+    <div class="kv"><span>Data</span><b id="m_data"></b></div>
+    <div class="kv"><span>Cantor</span><b id="m_cantor"></b></div>
+    <div class="kv"><span>Horário</span><b id="m_hora"></b></div>
+    <div class="kv"><span>Valor</span><b id="m_valor"></b></div>
+    <button class="btn-close" onclick="fecharModal()">Fechar</button>
+  </div></div>
 
-<script>
-const API_AGENDA="https://script.google.com/macros/s/AKfycbxJwRXw2lr2kK58EoHv-oUagd2FV2hvTHXRDJ5mFcNo5eZp3QlX7wX2KdrujAE5zPU-/exec";
-const API_COUVERT="https://script.google.com/macros/s/AKfycbxxv-9kLzyqS9Qy8WX_qPp7UG8He3OaEbIxZMV3HoRaSpdBfRYqZZZODLQlIJZDufso/exec";
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/pt.js"></script>
+  <script>
+    const API_URL="https://script.google.com/macros/s/AKfycbzCWTJPkUHvHdvQrvWOu-jbd_I2O7VAnL8cDRrWuXACy4xWifwfIYd48MWiksmNpORm/exec";
+    let EMPRESA=null,filtroDe=null,filtroAte=null;
 
-function BRL(v){return(Number(v)||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});}
-function showLoading(v){document.getElementById("loading").classList.toggle("show",!!v);}
+    const pad=n=>String(n).padStart(2,'0');
+    const safeDateKey=i=>{if(!i)return null;const d=new Date(i);return isNaN(d)?null:`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;}
+    const safeTime=t=>t?String(t).substring(0,5):"--:--";
+    const brMoney=v=>Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
 
-const NORMALIZAR={
-  "MERCATTO":"Mercatto Delícia",
-  "MERCATTO DELÍCIA":"Mercatto Delícia",
-  "VILLA":"Villa Gourmet",
-  "VILLA GOURMET":"Villa Gourmet",
-  "DELÍCIA GOURMET":"Delícia Gourmet"
-};
-
-function getSemanaAtual(){
-  const hoje=new Date();
-  const dia=hoje.getDay(); // 0-dom,1-seg...
-  const segunda=new Date(hoje);segunda.setDate(hoje.getDate()-((dia+6)%7));
-  const domingo=new Date(segunda);domingo.setDate(segunda.getDate()+6);
-  return {inicio:segunda,fim:domingo};
-}
-
-async function carregar(){
-  showLoading(true);
-  try{
-    const empSel=document.getElementById("empresaFiltro").value;
-    const ag=await(await fetch(API_AGENDA)).json();
-    const cv=await(await fetch(API_COUVERT)).json();
-
-    const semana=getSemanaAtual();
-    const iniKey=semana.inicio.toISOString().split("T")[0];
-    const fimKey=semana.fim.toISOString().split("T")[0];
-
-    const porData={};
-
-    ag.forEach(a=>{
-      let emp=(NORMALIZAR[a.empresa?.toUpperCase()]||a.empresa);
-      const d=a.data.split("T")[0];
-      if(d<iniKey||d>fimKey)return; // fora da semana
-      if(!porData[d])porData[d]={empresa:emp,pagos:0,couvert:0,musicos:[]};
-      porData[d].pagos+=+a.valor;
-      porData[d].musicos.push(`${a.cantor} (${BRL(a.valor)})`);
-      porData[d].empresa=emp;
+    const calendar=flatpickr("#calendarBtn",{mode:"range",dateFormat:"d/m/Y",locale:"pt",
+      onClose:(d)=>{filtroDe=d[0]||null;filtroAte=d[1]||null;carregarAgenda();}
     });
 
-    (cv.registros||[]).forEach(c=>{
-      let emp=(NORMALIZAR[c.empresa?.toUpperCase()]||c.empresa);
-      const d=c.data;
-      if(d<iniKey||d>fimKey)return;
-      if(!porData[d])porData[d]={empresa:emp,pagos:0,couvert:0,musicos:[]};
-      porData[d].couvert+=+c.total_dia;
-      porData[d].empresa=emp;
+    document.getElementById('empresaSel').addEventListener('change',()=>{
+      EMPRESA=document.getElementById('empresaSel').value;
+      if(EMPRESA) carregarAgenda();
     });
 
-    const painel=document.getElementById("painel");painel.innerHTML="";
-    Object.entries(porData).sort(([d1],[d2])=>new Date(d1)-new Date(d2)).forEach(([data,info])=>{
-      if(empSel && info.empresa!==empSel) return;
-      const lucro=info.couvert-info.pagos;
-      painel.innerHTML+=`
-        <div class="card ${lucro>=0?"ok":"bad"}">
-          <h2>${info.empresa} – ${data.split("-").reverse().join("/")}</h2>
-          <p>🎤 Pago músicos: <b>${BRL(info.pagos)}</b></p>
-          <p>🎟️ Couvert: <b>${BRL(info.couvert)}</b></p>
-          <p>${lucro>=0?"✅ Lucro":"❌ Prejuízo"}: <b>${BRL(lucro)}</b></p>
-          <div class="musicos">${info.musicos.map(m=>`<p>• ${m}</p>`).join("")}</div>
-        </div>`;
-    });
-  }finally{showLoading(false);}
-}
+    async function carregarAgenda(){
+      const box=document.getElementById('lista'); box.innerHTML="";
+      if(!EMPRESA){box.innerHTML="<p>Selecione uma empresa.</p>";return;}
+      let eventos=[];
+      try{
+        const rsp=await fetch(`${API_URL}?empresa=${encodeURIComponent(EMPRESA)}`);
+        eventos=await rsp.json();
+      }catch(e){box.innerHTML="<p>Erro ao carregar.</p>";return;}
 
-document.getElementById("btnFiltrar").onclick=()=>carregar();
-document.getElementById("themeToggle").onclick=()=>{const cur=document.documentElement.getAttribute("data-theme")||"light";const next=cur==="light"?"dark":"light";document.documentElement.setAttribute("data-theme",next);localStorage.setItem("dv_theme",next);}
-const user=document.getElementById("userMenu");user.querySelector(".user-btn").onclick=()=>user.classList.toggle("open");
-window.handleLogout=()=>{localStorage.removeItem("dv_theme");location.reload();}
-carregar();
-</script>
+      if(filtroDe&&filtroAte){
+        const from=safeDateKey(filtroDe),to=safeDateKey(filtroAte);
+        eventos=eventos.filter(ev=>{const k=safeDateKey(ev.data);return k&&k>=from&&k<=to;});
+      }
+
+      const grupos={}; for(const ev of eventos){const k=safeDateKey(ev.data); if(k)(grupos[k] ||= []).push(ev);}
+      const dias=Object.keys(grupos).sort();
+      if(!dias.length){box.innerHTML="<p>Sem eventos no período.</p>";return;}
+
+      for(const k of dias){
+        const [y,m,d]=k.split('-').map(Number);
+        const dia=pad(d),mes=new Date(y,m-1,d).toLocaleString('pt-BR',{month:'short'}).toUpperCase();
+        const itens=grupos[k].map(ev=>`
+          <div class="linha" onclick="abrirModal('${k}','${ev.cantor}','${ev.hora}','${ev.valor}')">
+            <div class="texto">${ev.cantor}</div>
+            <div class="hora">${safeTime(ev.hora)}</div>
+          </div>`).join("");
+        box.innerHTML+=`<section class="grupo"><div class="dia">${dia}<small>${mes}</small></div><div class="itens">${itens}</div></section>`;
+      }
+    }
+
+    function abrirModal(data,cantor,hora,valor){
+      const dt=new Date(`${data}T00:00:00`);
+      document.getElementById('m_data').textContent=dt.toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit',month:'short'});
+      document.getElementById('m_cantor').textContent=cantor;
+      document.getElementById('m_hora').textContent=safeTime(hora);
+      document.getElementById('m_valor').textContent=brMoney(valor);
+      document.getElementById('modal').style.display="flex";
+    }
+    function fecharModal(){document.getElementById('modal').style.display="none";}
+  </script>
 </body>
 </html>
