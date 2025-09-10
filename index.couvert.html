@@ -852,17 +852,32 @@ function hideAllPopovers(){
   $("#lblPR").textContent = fmtRange(pIni,pFim);
   $("#lblAR").textContent = fmtRange(aIni,aFim);
 
-  try{
-    await fetchPagamentos();
-    const {ini:effIni, fim:effFim} = getEffectiveABCRange();
-    await fetchABC(effIni, effFim);
-    coletarEmpresas(); renderChips(); aplicar();
-    $("#loading").style.display="none";
-  }catch(e){
-    console.error(e);
-    alert("Erro ao carregar dados: "+e.message);
-    $("#loading").style.display="none";
-  }
+ try{
+  // 1. carrega apenas pagamentos primeiro
+  await fetchPagamentos();
+  coletarEmpresas(); renderChips(); aplicar();
+  $("#loading").style.display="none";
+
+  // 2. depois carrega arrecadação em segundo plano
+  $("#empLoadMsg").style.display="block";  // mostra aviso
+  const {ini:effIni, fim:effFim} = getEffectiveABCRange();
+  fetchABC(effIni, effFim)
+    .then(()=>{
+      abcLoaded = true;
+      $("#empLoadMsg").style.display="none"; // esconde aviso
+      coletarEmpresas(); renderChips(); aplicar(); // atualiza com ABC
+    })
+    .catch(e=>{
+      console.warn("Erro ao carregar arrecadação em segundo plano:", e);
+      $("#empLoadMsg").textContent="Erro ao carregar arrecadação.";
+    });
+
+}catch(e){
+  console.error(e);
+  alert("Erro ao carregar pagamentos: "+e.message);
+  $("#loading").style.display="none";
+}
+
 })();
 
 /*** BLOQUEIO DE ZOOM (mobile) ***/
