@@ -540,28 +540,57 @@
       return dd>=s && dd<=e;
     }
 
-    function drawGrid(){
-      grid.querySelectorAll('.day').forEach(n=>n.remove());
-      const y=state.cursor.getFullYear(), m=state.cursor.getMonth();
-      const first=new Date(y,m,1);
-      const startDay=(first.getDay()+6)%7; // começa em segunda
-      const daysInMonth=new Date(y,m+1,0).getDate();
+function drawGrid(){
+  grid.querySelectorAll('.day').forEach(n=>n.remove());
+  const y = state.cursor.getFullYear(), m = state.cursor.getMonth();
+  const first = new Date(y,m,1);
 
-      for(let i=0;i<startDay;i++){ const x=document.createElement("div"); x.className="day out"; grid.appendChild(x); }
-      for(let d=1; d<=daysInMonth; d++){
-        const date=new Date(y,m,d);
-        const el=document.createElement("div"); el.className="day"; el.textContent=d;
-        if(sameYMD(date,state.start)||sameYMD(date,state.end)) el.classList.add('sel');
-        else if(inSelRange(date)) el.classList.add('range');
-        el.onclick=()=>{
-          if(!state.start || (state.start && state.end)){ state.start=date; state.end=null; }
-          else { if(date<state.start){ state.end=state.start; state.start=date; } else { state.end=date; } }
-          drawGrid();
-        };
-        grid.appendChild(el);
+  // Início padrão (domingo = 0 … sábado = 6)
+  const startDay = first.getDay();
+  const daysInMonth = new Date(y,m+1,0).getDate();
+
+  // Dias do mês anterior (cinza)
+  for(let i=0;i<startDay;i++){
+    const prevDate = new Date(y,m,1 - (startDay - i));
+    const x=document.createElement("div");
+    x.className="day out";
+    x.textContent = prevDate.getDate();
+    grid.appendChild(x);
+  }
+
+  // Dias do mês atual
+  for(let d=1; d<=daysInMonth; d++){
+    const date=new Date(y,m,d);
+    const el=document.createElement("div"); 
+    el.className="day"; 
+    el.textContent=d;
+
+    if(sameYMD(date,state.start)||sameYMD(date,state.end)) el.classList.add('sel');
+    else if(inSelRange(date)) el.classList.add('range');
+
+    el.onclick=()=>{
+      if(!state.start || (state.start && state.end)){ 
+        state.start=date; state.end=null; 
+      } else { 
+        if(date<state.start){ state.end=state.start; state.start=date; } 
+        else { state.end=date; } 
       }
-    }
-    cal.appendChild(grid);
+      drawGrid();
+    };
+    grid.appendChild(el);
+  }
+
+  // Dias do próximo mês para completar a grade
+  const filled = startDay + daysInMonth;
+  const totalCells = Math.ceil(filled / 7) * 7;
+  for(let i=filled; i<totalCells; i++){
+    const nextDate = new Date(y,m, (i - filled) + 1);
+    const x=document.createElement("div");
+    x.className="day out";
+    x.textContent = nextDate.getDate();
+    grid.appendChild(x);
+  }
+}
 
     // Rodapé
     const foot=document.createElement("div"); foot.className="cal foot";
