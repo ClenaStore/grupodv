@@ -647,11 +647,22 @@ function openApagarModal(){
 }
 
 /*** Aplicar filtros ***/
+/*** Aplicar filtros ***/
 async function applyFilters(){
   hideAllPopovers();
+  $("#loading").style.display = "flex"; // 👈 mostra overlay
+
   const {ini, fim} = getEffectiveABCRange();
-  try { await fetchABC(ini, fim); } catch(e){ console.warn(e); }
-  coletarEmpresas(); renderChips(); aplicar();
+  try { 
+    await fetchABC(ini, fim); 
+  } catch(e){ 
+    console.warn(e); 
+  }
+  coletarEmpresas(); 
+  renderChips(); 
+  aplicar();
+
+  $("#loading").style.display = "none"; // 👈 esconde overlay
 }
 
 function buildRangeCalendar(container, state, onApply, onCancel){
