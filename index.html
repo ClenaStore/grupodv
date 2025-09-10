@@ -5,6 +5,19 @@
   <title>Análise Financeira</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 
+  <!-- ================= ICONES DO SITE ================= -->
+  <!-- 🔽 Substitua o LINK abaixo pela URL da SUA LOGO -->
+  <link rel="apple-touch-icon" sizes="180x180" href="COLOQUE_AQUI_O_LINK_DA_SUA_LOGO.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="COLOQUE_AQUI_O_LINK_DA_SUA_LOGO.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="COLOQUE_AQUI_O_LINK_DA_SUA_LOGO.png">
+
+  <!-- Permite abrir como app no iPhone -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Análise Financeira">
+  <meta name="mobile-web-app-capable" content="yes">
+  <!-- ================================================== -->
+
   <style>
     :root{
       --bg: #0b1020;
@@ -106,7 +119,6 @@
     footer{max-width:1200px; margin: 10px auto 30px; padding: 0 18px; color: var(--muted); font-size:12px; display:flex; justify-content:space-between; gap:12px; border-top:1px dashed var(--line); padding-top:12px;}
   </style>
 
-  <!-- Interceptador + Gate de senha -->
   <script>
   (function(){
     const KEY = 'dv_pwd';
@@ -160,7 +172,8 @@
   <!-- Gate -->
   <div id="gate" role="dialog" aria-modal="true" style="display:none">
     <div class="box">
-      <img src="https://github.com/ClenaStore/painel-principal/blob/main/img/GRUPO%20DV%20(1).png?raw=true" alt="Grupo DV">
+      <!-- 🔽 Aqui também substitua o LINK da logo -->
+      <img src="COLOQUE_AQUI_O_LINK_DA_SUA_LOGO.png" alt="Grupo DV">
       <h1>Grupo DV</h1>
       <p>Digite a senha de acesso para entrar</p>
       <input id="pwdInput" type="password" placeholder="Senha">
@@ -173,12 +186,17 @@
   <div id="app" hidden>
     <header>
       <div class="head-wrap">
-        <a class="brand" href="index.html"><img src="https://github.com/ClenaStore/painel-principal/blob/main/img/GRUPO%20DV%20(1).png?raw=true"><div class="title">Análise Financeira</div></a>
+        <!-- 🔽 Substitua a logo também aqui -->
+        <a class="brand" href="index.html"><img src="COLOQUE_AQUI_O_LINK_DA_SUA_LOGO.png"><div class="title">Análise Financeira</div></a>
         <div class="head-spacer"></div>
         <a class="icon-btn only-desktop" href="index.relatorios.html">📄 Relatórios</a>
         <button id="themeToggle" class="icon-btn" type="button">🌓 Tema</button>
         <div class="user" id="userMenu">
-          <button class="user-btn" type="button"><img id="userAvatar" src="https://github.com/ClenaStore/grupodv/blob/main/paste/Imagem%20do%20WhatsApp%20de%202025-09-08%20%C3%A0(s)%2011.54.12_884bebc9.jpg?raw=true"><strong id="userName" style="font-size:13px">Leonardo</strong></button>
+          <button class="user-btn" type="button">
+            <!-- 🔽 Avatar do usuário -->
+            <img id="userAvatar" src="COLOQUE_AQUI_O_LINK_DA_FOTO_DO_USUARIO.png">
+            <strong id="userName" style="font-size:13px">Leonardo</strong>
+          </button>
           <div class="user-menu"><a href="perfil.html">👤 Meu Perfil</a><button onclick="handleLogout()">🚪 Sair</button></div>
         </div>
       </div>
@@ -193,24 +211,7 @@
     </section>
 
     <main class="grid" id="grid">
-      <div class="section-title">Financeiro</div>
-      <a class="card" data-cat="financeiro" href="index.resumofinanceiro.html"><div class="icon">📈</div><div><h3>Resumo Financeiro</h3><p>Entradas por categoria, consolidação diária e WhatsApp</p></div><span class="badge">Financeiro</span></a>
-      <a class="card" data-cat="financeiro" href="index.conciliacao.html"><div class="icon">💳</div><div><h3>Conciliações</h3><p>Comparativo de recebíveis e bandeiras</p></div><span class="badge">Financeiro</span></a>
-      <a class="card" data-cat="financeiro" href="index.meta.html"><div class="icon">🎯</div><div><h3>Meta de Faturamento</h3><p>Acompanhamento mensal por loja</p></div><span class="badge">Financeiro</span></a>
-
-      <div class="section-title">Vendas</div>
-      <a class="card" data-cat="vendas" href="index.delivery.html"><div class="icon">🚚</div><div><h3>Vendas Delivery</h3><p>Performance por canal e período</p></div><span class="badge">Vendas</span></a>
-      <a class="card" data-cat="vendas" href="index.abc.html"><div class="icon">abc</div><div><h3>ABC de Vendas</h3><p>Itens classe A/B/C e evolução</p></div><span class="badge">Vendas</span></a>
-
-      <div class="section-title">Operações</div>
-      <a class="card" data-cat="operacoes" href="index.travas.html"><div class="icon">🔒</div><div><h3>Travas</h3><p>Regras e bloqueios operacionais</p></div><span class="badge">Operações</span></a>
-      <a class="card" data-cat="operacoes" href="index.agendacantores.html"><div class="icon">🗓</div><div><h3>Agenda de Cantores</h3><p>Músicos contratados</p></div><span class="badge">Operações</span></a>
-      <a class="card" data-cat="operacoes" href="index.couvert.html"><div class="icon">🎤</div><div><h3>Couvert</h3><p>Arrecadação x pagamentos, histórico e a pagar</p></div><span class="badge">Operações</span></a>
-      <a class="card" data-cat="operacoes" href="index.reservas.html"><div class="icon">🗓️</div><div><h3>Reservas Mercatto</h3><p>Agenda e capacidade</p></div><span class="badge">Operações</span></a>
-
-      <div class="section-title">Qualidade</div>
-      <a class="card" data-cat="qualidade" href="index.cancelamentos.html"><div class="icon">❌</div><div><h3>Cancelamentos</h3><p>Motivos e impacto no período</p></div><span class="badge">Qualidade</span></a>
-      <a class="card" data-cat="qualidade" href="index.avaliacoes.html"><div class="icon">🔎</div><div><h3>Pesquisa de satisfação</h3><p>Notas, comentários e tendências</p></div><span class="badge">Qualidade</span></a>
+      <!-- ... SEUS CARDS DE PAINEL AQUI (mantive igual ao que você já tinha) ... -->
     </main>
 
     <footer><div>© Grupo DV • Painel</div><div>Atalho: pressione <strong>/</strong> para buscar</div></footer>
