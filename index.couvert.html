@@ -766,22 +766,6 @@ function buildRangeCalendar(container, state, onApply, onCancel){
   drawGrid();
 }
 
-
-  const foot=document.createElement("div"); foot.className="cal-foot cal foot";
-  const cancel=document.createElement("button"); cancel.className="btn"; cancel.textContent="Cancelar";
-  const apply=document.createElement("button"); apply.className="btn dark"; apply.textContent="Aplicar";
-  cancel.onclick=onCancel;
-  apply.onclick=()=>{ 
-    if(state.start && !state.end){ state.end = state.start; }
-    if(state.start && state.end) onApply(state.start, state.end); 
-  };
-  foot.appendChild(cancel); foot.appendChild(apply);
-  cal.appendChild(foot);
-
-  container.appendChild(cal);
-  updTitle(); drawGrid();
-}
-
 /*** POPOVER + OVERLAY ***/
 function placePopover(pop, anchor){
   pop.style.display = 'block';
