@@ -238,19 +238,49 @@ function setDatasPorFaixa(arr){
 
 /* =================== RENDER =================== */
 function aplicar(){
-  const empresa = $$('#filtroEmpresa').value; // pode ser '' (todas)
+  const empresa = $$('#filtroEmpresa').value;
   const busca = ($$('#filtroBusca').value||'').toLowerCase();
   const di = $$('#dataInicio').value;
   const df = $$('#dataFim').value;
 
   const base = empresa ? (CACHE[empresa] || []) : RAW;
-  const F = base.filter(r=>{
+  let F = base.filter(r=>{
     if (busca && !String(r.produto||'').toLowerCase().includes(busca)) return false;
     if (di && r.data < di) return false;
     if (df && r.data > df) return false;
     return true;
   });
 
+  // ================= LÓGICA NOVA =================
+  if (di && df){
+    const hoje = new Date();
+    const mesAtual = hoje.getMonth();  // 0-11
+    const anoAtual = hoje.getFullYear();
+
+    const ini = new Date(di);
+    const fim = new Date(df);
+
+    // Se o período for exatamente dentro do mês atual → mostra todos os dias
+    if (ini.getMonth() === mesAtual && ini.getFullYear() === anoAtual){
+      // não faz nada, mantém todos os dias
+    } else {
+      // meses anteriores → só últimos dias de cada mês
+      const ultimos = {};
+      F.forEach(r=>{
+        if (!r.data) return;
+        const [ano,mes] = r.data.split('-').map(Number);
+        const chave = `${ano}-${String(mes).padStart(2,'0')}`;
+        if (!ultimos[chave] || r.data > ultimos[chave]){
+          ultimos[chave] = r.data;
+        }
+      });
+      const finais = new Set(Object.values(ultimos));
+      F = F.filter(r => finais.has(r.data));
+    }
+  }
+  // =================================================
+
+  // KPIs
   const fat = F.reduce((s,x)=>s+(x.faturamento||0),0);
   const luc = F.reduce((s,x)=>s+(x.lucro||0),0);
   const qtd = F.length;
@@ -261,8 +291,10 @@ function aplicar(){
   $$('#kpiQtd').textContent = qtd.toLocaleString('pt-BR');
   $$('#kpiTicket').textContent = BRL(ticket);
 
+  // Gráfico
   desenharGrafico(F, true);
 
+  // Listas
   const byProd = {};
   F.forEach(x=>{
     const p = x.produto||'';
@@ -276,6 +308,7 @@ function aplicar(){
   renderLista('#topVendidos',   [...arr].sort((a,b)=>b.f-a.f).slice(0,5), p=>`⭐ ${p.produto} — ${p.q} un • ${BRL(p.f)}`);
   renderLista('#maisLucro',     [...arr].sort((a,b)=>b.l-a.l).slice(0,5), p=>`💰 ${p.produto} — ${BRL(p.l)}`);
   renderLista('#menosLucro',    [...arr].sort((a,b)=>a.l-b.l).slice(0,5), p=>`📉 ${p.produto} — ${BRL(p.l)}`);
+}
 
   const agrup = {};
   F.forEach(x=>{
