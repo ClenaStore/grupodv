@@ -40,7 +40,7 @@
     .user-menu a:hover,.user-menu button:hover{background:rgba(2,6,23,.06)}
 
     .container{max-width:1200px; margin:0 auto; padding:20px}
-    .filters{display:grid; grid-template-columns:1fr 160px 160px; gap:12px; margin-bottom:20px}
+    .filters{display:grid; grid-template-columns:1fr 180px; gap:12px; margin-bottom:20px}
     @media(max-width:700px){.filters{grid-template-columns:1fr;}}
     .field label{display:block; margin:0 0 4px; font-weight:700; color:var(--muted)}
     .field input,.field select{width:100%; padding:10px; border:1px solid var(--line); border-radius:10px;}
@@ -101,12 +101,8 @@
       <select id="fEmpresa"></select>
     </div>
     <div class="field">
-      <label>Data início</label>
-      <input type="date" id="fIni">
-    </div>
-    <div class="field">
-      <label>Data fim</label>
-      <input type="date" id="fFim">
+      <label>Data</label>
+      <input type="date" id="fData">
     </div>
   </div>
 
@@ -177,16 +173,14 @@ async function carregar(){
   // Dia anterior
   const ontem=new Date(); ontem.setDate(ontem.getDate()-1);
   const iso=ontem.toISOString().slice(0,10);
-  document.getElementById("fIni").value=iso;
-  document.getElementById("fFim").value=iso;
+  document.getElementById("fData").value=iso;
 
   function aplicar(){
-    const emp=sel.value, ini=document.getElementById("fIni").value, fim=document.getElementById("fFim").value;
+    const emp=sel.value, data=document.getElementById("fData").value;
     const pend=js.filter(r=>{
       const okEmp=!emp||r.empresa===emp;
-      const okIni=!ini||r.data>=ini;
-      const okFim=!fim||r.data<=fim;
-      return okEmp&&okIni&&okFim;
+      const okData=!data||r.data===data;
+      return okEmp&&okData;
     });
 
     const totCart=pend.filter(r=>r.tipo==="Cartão").length;
@@ -207,7 +201,7 @@ async function carregar(){
       .map(r=>`<tr><td>${r.data}</td><td>${r.empresa}</td><td>${r.tipo}</td><td>R$ ${Number(r.valor).toLocaleString("pt-BR",{minimumFractionDigits:2})}</td></tr>`).join("");
   }
   aplicar();
-  sel.onchange=aplicar; document.getElementById("fIni").onchange=aplicar; document.getElementById("fFim").onchange=aplicar;
+  sel.onchange=aplicar; document.getElementById("fData").onchange=aplicar;
 
   showLoading(false);
 }
