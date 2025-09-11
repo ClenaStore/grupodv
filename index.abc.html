@@ -367,15 +367,41 @@ function desenharGrafico(F, mostrar){
 }
 
 /* =================== BOOTSTRAP =================== */
+/* =================== BOOTSTRAP =================== */
 async function boot(){
   const box = $$('#statusBox');
+  const LS_KEY = 'dv_cache';
+  const EXPIRA_MS = 20 * 60 * 60 * 1000; // 20h em ms
 
-  // 1) Carrega MERCATTO primeiro (render imediato)
+  // Tenta ler cache
+  let cache = null;
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    if(raw){
+      const parsed = JSON.parse(raw);
+      if(Date.now() - parsed.ts < EXPIRA_MS){
+        cache = parsed.data;
+      }
+    }
+  } catch(e){ console.warn("Falha ao ler cache", e); }
+
+  if(cache){
+    CACHE = cache;
+    RAW = Object.values(CACHE).flat();
+    marcarEmpresaPronta('MERCATTO');
+    setDatasPorFaixa(RAW);
+    aplicar();
+    box.style.display='none';
+    console.log("Dados carregados do cache");
+    return;
+  }
+
+  // Senão, carrega da API progressivamente
   try{
     box.innerHTML = '<div class="spinner"></div> Carregando MERCATTO…';
     const mercatto = await fetchEmpresa('MERCATTO');
     CACHE['MERCATTO'] = mercatto;
-    RAW = mercatto.slice(); // por enquanto, RAW = MERCATTO
+    RAW = mercatto.slice();
     setDatasPorFaixa(mercatto);
     marcarEmpresaPronta('MERCATTO');
     $$('#filtroEmpresa').value = 'MERCATTO';
@@ -387,23 +413,21 @@ async function boot(){
     return;
   }
 
-  // 2) Em segundo plano, carrega as demais
+  // Carrega demais em background
   const restantes = EMPRESAS.filter(e => e !== 'MERCATTO');
   for (const emp of restantes){
     try{
       const arr = await fetchEmpresa(emp);
       CACHE[emp] = arr;
-      RAW = Object.values(CACHE).flat(); // atualiza conjunto completo
+      RAW = Object.values(CACHE).flat();
       marcarEmpresaPronta(emp);
 
-      // Se o usuário já escolheu essa empresa enquanto carregava, atualiza a tela
       if ($$('#filtroEmpresa').value === emp) {
         setDatasPorFaixa(arr);
         aplicar();
       }
     }catch(e){
       console.warn('Falha ao carregar', emp, e);
-      // marca como erro no seletor
       const sel = $$('#filtroEmpresa');
       [...sel.options].forEach(o=>{
         if (o.value === emp) o.textContent = `${emp} (erro ao carregar)`;
@@ -411,32 +435,19 @@ async function boot(){
     }
   }
 
-  // 3) Quando tiver pelo menos 2 empresas, permita “Todas”
+  // Salva no localStorage com timestamp
+  try {
+    localStorage.setItem(LS_KEY, JSON.stringify({ data: CACHE, ts: Date.now() }));
+  } catch(e){ console.warn("Falha ao salvar cache", e); }
+
   if (Object.keys(CACHE).length >= 2){
     const optTodas = [...$$('#filtroEmpresa').options].find(o => o.value === '');
     if (optTodas) optTodas.textContent = 'Todas';
   }
+
+  box.style.display='none';
 }
 
-window.addEventListener('load', ()=>{
-  boot();
-
-  ['change','input'].forEach(evt=>{
-    $$('#filtroEmpresa').addEventListener(evt, ()=>{
-      const emp = $$('#filtroEmpresa').value;
-      // ao trocar empresa, ajustar datas para a faixa daquela empresa (se já carregada)
-      if (emp && CACHE[emp] && CACHE[emp].length){
-        setDatasPorFaixa(CACHE[emp]);
-      } else if (!emp && RAW.length){
-        setDatasPorFaixa(RAW);
-      }
-      aplicar();
-    });
-    $$('#filtroBusca').addEventListener(evt, aplicar);
-    $$('#dataInicio').addEventListener(evt, aplicar);
-    $$('#dataFim').addEventListener(evt, aplicar);
-  });
-});
 </script>
 </body>
 </html>
