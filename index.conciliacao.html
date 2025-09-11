@@ -147,7 +147,7 @@ window.addEventListener('click', e=>{ if(!user.contains(e.target)) user.classLis
 function showLoading(v){ document.getElementById('loading').classList.toggle('show', !!v); }
 
 /* Conciliação */
-const API_URL="/api/concil";
+const API_URL="https://script.google.com/macros/s/AKfycbxVmPiaFQptAWVN1GKNiy_LKW-QyovxVNsBMLV-NrEDVDchxLaCCAavqlQoQb4-IWmk/exec";
 let chartCartao, chartBanco;
 
 function criaDoughnut(el, valor, cor){
@@ -156,7 +156,7 @@ function criaDoughnut(el, valor, cor){
   };
   const cfg = {
     type:'doughnut', data,
-    options:{plugins:{legend:{display:false},tooltip:{enabled:false}}},
+    options:{plugins:{legend:{display:false},tooltip:{enabled:false}}}, 
     plugins:[{id:"text", beforeDraw(c){
       const {ctx,width}=c; ctx.save();
       ctx.font="bold 20px sans-serif"; ctx.fillStyle=cor;
@@ -219,5 +219,6 @@ async function carregar(){
 }
 carregar();
 </script>
+
 </body>
 </html>
