@@ -5,7 +5,6 @@
   <title>Painel de Conciliação</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
   <style>
     :root{
       --bg:#f6f7fb; --surface:#fff; --card:#fff; --text:#0f172a; --muted:#475569;
@@ -17,7 +16,6 @@
       --line:#334155; --blue:#3b82f6; --yellow:#fbbf24;
     }
     body{margin:0; font-family:sans-serif; background:var(--bg); color:var(--text);}
-
     header{position:sticky; top:0; z-index:40; backdrop-filter:saturate(160%) blur(8px);
       background:var(--surface); border-bottom:1px solid var(--line);}
     .head{max-width:1200px; margin:0 auto; padding:14px 18px; display:flex; align-items:center; gap:12px}
@@ -38,25 +36,20 @@
     .user-menu a,.user-menu button{display:flex; width:100%; padding:10px 12px; border-radius:10px;
       border:none; background:transparent; color:var(--text); text-align:left; cursor:pointer; font-weight:600}
     .user-menu a:hover,.user-menu button:hover{background:rgba(2,6,23,.06)}
-
     .container{max-width:1200px; margin:0 auto; padding:20px}
     .filters{display:grid; grid-template-columns:1fr 180px; gap:12px; margin-bottom:20px}
     @media(max-width:700px){.filters{grid-template-columns:1fr;}}
     .field label{display:block; margin:0 0 4px; font-weight:700; color:var(--muted)}
     .field input,.field select{width:100%; padding:10px; border:1px solid var(--line); border-radius:10px;}
-
     .card{background:var(--card); border:1px solid var(--line); border-radius:14px; box-shadow:var(--shadow); padding:16px; margin-bottom:18px}
     .card h3{margin:0 0 12px}
     .flex{display:flex; gap:24px; flex-wrap:wrap; align-items:center; justify-content:space-around}
-
     .circle-wrap{display:flex; flex-direction:column; align-items:center; gap:10px}
     canvas{width:120px!important; height:120px!important}
     button{padding:8px 14px; border:1px solid var(--line); border-radius:10px; background:var(--surface); font-weight:700; cursor:pointer}
-
     table{width:100%; border-collapse:collapse; font-size:.95rem}
     th,td{padding:10px; border-bottom:1px solid var(--line); text-align:left}
     td:last-child,th:last-child{text-align:right}
-
     .loading{position:fixed; inset:0; background:rgba(0,0,0,.55); display:none; align-items:center; justify-content:center; z-index:60}
     .loading.show{display:flex}
     .spinner{width:74px; height:74px; border-radius:50%; border:6px solid rgba(255,255,255,.25); border-top-color:#fff; animation:spin 1s linear infinite}
@@ -133,16 +126,24 @@
 const API_URL="https://script.google.com/macros/s/AKfycbxVmPiaFQptAWVN1GKNiy_LKW-QyovxVNsBMLV-NrEDVDchxLaCCAavqlQoQb4-IWmk/exec";
 let chartCartao, chartBanco;
 
+/* -------- THEME GLOBAL -------- */
+function aplicarTema(){
+  const tema=localStorage.getItem("tema")||"light";
+  document.documentElement.dataset.theme=tema;
+}
+aplicarTema();
+
+document.getElementById("btnTema").addEventListener("click",()=>{
+  const atual=document.documentElement.dataset.theme;
+  const novo=atual==="dark"?"light":"dark";
+  localStorage.setItem("tema",novo);
+  aplicarTema();
+});
+
 /* User menu */
 const user=document.getElementById('userMenu');
 user.querySelector('.user-btn').addEventListener('click',()=>user.classList.toggle('open'));
 window.addEventListener('click',e=>{if(!user.contains(e.target)) user.classList.remove('open');});
-
-/* Tema */
-document.getElementById("btnTema").addEventListener("click",()=>{
-  const html=document.documentElement;
-  html.dataset.theme=html.dataset.theme==="dark"?"light":"dark";
-});
 
 /* Loading */
 function showLoading(v){document.getElementById('loading').classList.toggle('show',!!v);}
