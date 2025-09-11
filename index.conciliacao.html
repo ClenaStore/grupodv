@@ -12,9 +12,12 @@
       --line:#e5e7eb; --shadow:0 16px 36px rgba(15,23,42,.08);
       --blue:#2563eb; --yellow:#f59e0b;
     }
+    [data-theme="dark"] {
+      --bg:#0f172a; --surface:#1e293b; --card:#1e293b; --text:#f1f5f9; --muted:#94a3b8;
+      --line:#334155; --blue:#3b82f6; --yellow:#fbbf24;
+    }
     body{margin:0; font-family:sans-serif; background:var(--bg); color:var(--text);}
 
-    /* Header */
     header{position:sticky; top:0; z-index:40; backdrop-filter:saturate(160%) blur(8px);
       background:var(--surface); border-bottom:1px solid var(--line);}
     .head{max-width:1200px; margin:0 auto; padding:14px 18px; display:flex; align-items:center; gap:12px}
@@ -36,7 +39,6 @@
       border:none; background:transparent; color:var(--text); text-align:left; cursor:pointer; font-weight:600}
     .user-menu a:hover,.user-menu button:hover{background:rgba(2,6,23,.06)}
 
-    /* Container e Cards */
     .container{max-width:1200px; margin:0 auto; padding:20px}
     .filters{display:grid; grid-template-columns:1fr 160px 160px; gap:12px; margin-bottom:20px}
     @media(max-width:700px){.filters{grid-template-columns:1fr;}}
@@ -55,7 +57,6 @@
     th,td{padding:10px; border-bottom:1px solid var(--line); text-align:left}
     td:last-child,th:last-child{text-align:right}
 
-    /* Loading overlay */
     .loading{position:fixed; inset:0; background:rgba(0,0,0,.55); display:none; align-items:center; justify-content:center; z-index:60}
     .loading.show{display:flex}
     .spinner{width:74px; height:74px; border-radius:50%; border:6px solid rgba(255,255,255,.25); border-top-color:#fff; animation:spin 1s linear infinite}
@@ -65,7 +66,6 @@
 </head>
 <body>
 
-<!-- Header -->
 <header>
   <div class="head">
     <a class="brand" href="#">
@@ -73,7 +73,7 @@
       <span class="title">Painel de Conciliação</span>
     </a>
     <div class="grow"></div>
-    <button class="btn">🌓 Tema</button>
+    <button id="btnTema" class="btn">🌓 Tema</button>
     <div class="user" id="userMenu">
       <button class="user-btn" type="button">
         <img src="https://github.com/ClenaStore/grupodv/blob/main/paste/Imagem%20do%20WhatsApp%20de%202025-09-08%20%C3%A0(s)%2011.54.12_884bebc9.jpg?raw=true" alt="">
@@ -87,7 +87,6 @@
   </div>
 </header>
 
-<!-- Overlay Loading -->
 <div id="loading" class="loading" aria-hidden="true">
   <div style="display:flex; flex-direction:column; align-items:center;">
     <div class="spinner"></div>
@@ -96,7 +95,6 @@
 </div>
 
 <div class="container">
-  <!-- Filtros -->
   <div class="filters">
     <div class="field">
       <label>Empresa</label>
@@ -112,7 +110,6 @@
     </div>
   </div>
 
-  <!-- KPIs -->
   <div class="card">
     <h3>Conciliação</h3>
     <div class="flex">
@@ -127,7 +124,6 @@
     </div>
   </div>
 
-  <!-- Pendências -->
   <div class="card">
     <h3>Valores Pendentes</h3>
     <table>
@@ -138,52 +134,52 @@
 </div>
 
 <script>
-/* Header interações */
-const user = document.getElementById('userMenu');
-user.querySelector('.user-btn').addEventListener('click', ()=>user.classList.toggle('open'));
-window.addEventListener('click', e=>{ if(!user.contains(e.target)) user.classList.remove('open'); });
-
-/* Overlay helpers */
-function showLoading(v){ document.getElementById('loading').classList.toggle('show', !!v); }
-
-/* Conciliação */
 const API_URL="https://script.google.com/macros/s/AKfycbxVmPiaFQptAWVN1GKNiy_LKW-QyovxVNsBMLV-NrEDVDchxLaCCAavqlQoQb4-IWmk/exec";
 let chartCartao, chartBanco;
 
+/* User menu */
+const user=document.getElementById('userMenu');
+user.querySelector('.user-btn').addEventListener('click',()=>user.classList.toggle('open'));
+window.addEventListener('click',e=>{if(!user.contains(e.target)) user.classList.remove('open');});
+
+/* Tema */
+document.getElementById("btnTema").addEventListener("click",()=>{
+  const html=document.documentElement;
+  html.dataset.theme=html.dataset.theme==="dark"?"light":"dark";
+});
+
+/* Loading */
+function showLoading(v){document.getElementById('loading').classList.toggle('show',!!v);}
+
+/* Chart */
 function criaDoughnut(el, valor, cor){
-  const data = {
-    datasets:[{data:[valor,100-valor], backgroundColor:[cor,"#e5e7eb"], cutout:"70%"}]
-  };
-  const cfg = {
-    type:'doughnut', data,
-    options:{plugins:{legend:{display:false},tooltip:{enabled:false}}}, 
-    plugins:[{id:"text", beforeDraw(c){
-      const {ctx,width}=c; ctx.save();
-      ctx.font="bold 20px sans-serif"; ctx.fillStyle=cor;
-      ctx.textAlign="center"; ctx.textBaseline="middle";
-      ctx.fillText(valor+"%", width/2, c.chartArea.height/2+20);
-    }}]
-  };
-  return new Chart(document.getElementById(el), cfg);
+  const data={datasets:[{data:[valor,100-valor], backgroundColor:[cor,"#e5e7eb"], cutout:"70%"}]};
+  const cfg={type:'doughnut',data,
+    options:{plugins:{legend:{display:false},tooltip:{enabled:false}}},
+    plugins:[{id:"text",beforeDraw(c){
+      const {ctx,width}=c; ctx.save(); ctx.font="bold 20px sans-serif"; ctx.fillStyle=cor;
+      ctx.textAlign="center"; ctx.textBaseline="middle"; ctx.fillText(valor+"%",width/2,c.chartArea.height/2+20);
+    }}]};
+  return new Chart(document.getElementById(el),cfg);
 }
 
+/* Carregar */
 async function carregar(){
   showLoading(true);
-  const res = await fetch(API_URL);
-  const js = await res.json();
+  const res=await fetch(API_URL);
+  const js=await res.json();
 
   // Empresas
   const empresas=[...new Set(js.map(r=>r.empresa))];
   const sel=document.getElementById("fEmpresa");
   sel.innerHTML=`<option value="">Todas</option>`+empresas.map(e=>`<option>${e}</option>`).join("");
 
-  // Datas padrão = ontem
+  // Dia anterior
   const ontem=new Date(); ontem.setDate(ontem.getDate()-1);
   const iso=ontem.toISOString().slice(0,10);
   document.getElementById("fIni").value=iso;
   document.getElementById("fFim").value=iso;
 
-  // Filtra
   function aplicar(){
     const emp=sel.value, ini=document.getElementById("fIni").value, fim=document.getElementById("fFim").value;
     const pend=js.filter(r=>{
@@ -193,7 +189,6 @@ async function carregar(){
       return okEmp&&okIni&&okFim;
     });
 
-    // Calcula %
     const totCart=pend.filter(r=>r.tipo==="Cartão").length;
     const concCart=pend.filter(r=>r.tipo==="Cartão" && r.status==="Conciliado").length;
     const percCart=totCart?(Math.round(concCart/totCart*100)):100;
@@ -204,10 +199,9 @@ async function carregar(){
 
     if(chartCartao) chartCartao.destroy();
     if(chartBanco) chartBanco.destroy();
-    chartCartao=criaDoughnut("grafCartao", percCart, "#2563eb");
-    chartBanco=criaDoughnut("grafBanco", percBco, "#f59e0b");
+    chartCartao=criaDoughnut("grafCartao",percCart,"#2563eb");
+    chartBanco=criaDoughnut("grafBanco",percBco,"#f59e0b");
 
-    // Pendências
     const tbody=document.getElementById("tblPend");
     tbody.innerHTML=pend.filter(r=>r.status!=="Conciliado")
       .map(r=>`<tr><td>${r.data}</td><td>${r.empresa}</td><td>${r.tipo}</td><td>R$ ${Number(r.valor).toLocaleString("pt-BR",{minimumFractionDigits:2})}</td></tr>`).join("");
@@ -219,6 +213,5 @@ async function carregar(){
 }
 carregar();
 </script>
-
 </body>
 </html>
