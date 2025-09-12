@@ -1,5 +1,5 @@
 // /api/ask.js
-// Assistente Grupo DV - Completo com memória, reset, upstreams e inteligência ChatGPT
+// Assistente Grupo DV - versão completa com memória, reset, upstreams, filtros e ChatGPT
 
 // --------- MEMÓRIA GLOBAL ---------
 if (!globalThis.__ASSISTENTE_MEMORIA__) {
@@ -14,12 +14,8 @@ function nowBahia() {
 function fmtDiaLongo(d) {
   return d.toLocaleDateString("pt-BR", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
 }
-function startOfDay(d) {
-  const z = new Date(d); z.setHours(0,0,0,0); return z;
-}
-function endOfDay(d) {
-  const z = new Date(d); z.setHours(23,59,59,999); return z;
-}
+function startOfDay(d) { const z = new Date(d); z.setHours(0,0,0,0); return z; }
+function endOfDay(d) { const z = new Date(d); z.setHours(23,59,59,999); return z; }
 function parsePtDateLike(s) {
   const ddmmyyyy = s.match(/\b(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})\b/);
   if (ddmmyyyy) return new Date(Number(ddmmyyyy[3]), Number(ddmmyyyy[2])-1, Number(ddmmyyyy[1]));
@@ -27,12 +23,8 @@ function parsePtDateLike(s) {
   if (mmyyyy) return new Date(Number(mmyyyy[2]), Number(mmyyyy[1])-1, 1);
   return null;
 }
-function monthBounds(d) {
-  return [startOfDay(new Date(d.getFullYear(), d.getMonth(), 1)), endOfDay(new Date(d.getFullYear(), d.getMonth()+1, 0))];
-}
-function lastMonthBounds(base) {
-  return monthBounds(new Date(base.getFullYear(), base.getMonth()-1, 1));
-}
+function monthBounds(d) { return [startOfDay(new Date(d.getFullYear(), d.getMonth(), 1)), endOfDay(new Date(d.getFullYear(), d.getMonth()+1, 0))]; }
+function lastMonthBounds(base) { return monthBounds(new Date(base.getFullYear(), base.getMonth()-1, 1)); }
 function weekBounds(base) {
   const d = new Date(base);
   const dow = (d.getDay()+6)%7;
@@ -125,8 +117,18 @@ export default async function handler(req, res) {
       const periodInfo={ start_iso:periodo.start.toISOString(), end_iso:periodo.end.toISOString(), label:periodo.label };
       const origin=buildOrigin(req);
       const headers={}; if(process.env.APP_PASSWORD) headers["x-api-key"]=process.env.APP_PASSWORD;
+
       const keys=["meta","resumo_financeiro","abc_vendas","cancelamentos","couvert_abc","couvert_pagamentos","reservas","conciliacao","concil","delivery","avaliacoes","travas_comparacao"];
-      const urls=keys.map(k=>`${origin}/api?key=${encodeURIComponent(k)}`);
+
+      const query=[];
+      if (empresa) query.push(`empresa=${encodeURIComponent(empresa)}`);
+      if (periodo.start && periodo.end) {
+        query.push(`start=${periodo.start.toISOString().slice(0,10)}`);
+        query.push(`end=${periodo.end.toISOString().slice(0,10)}`);
+      }
+      const queryString=query.length ? "&"+query.join("&") : "";
+
+      const urls=keys.map(k=>`${origin}/api?key=${encodeURIComponent(k)}${queryString}`);
       const results=await Promise.allSettled(urls.map(u=>fetchJson(u,headers)));
       const pack={}; results.forEach((r,i)=>{ pack[keys[i]]=r.status==="fulfilled"?r.value:{error:String(r.reason||"fetch_failed")}; });
       dataBundle={ empresa_preferida:empresa, periodo:periodInfo, dados:pack };
