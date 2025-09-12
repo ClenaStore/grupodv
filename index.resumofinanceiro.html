@@ -734,56 +734,74 @@ function drawGrid(){
 
     const empresas = [...new Set(dadosFiltrados.map(item => item.Empresa))];
 
-    empresas.forEach(emp => {
-      const dadosEmpresa = dadosFiltrados.filter(i => i.Empresa === emp);
-      const agrupado = {};
-      dadosEmpresa.forEach(item => {
-        let cat = normalize(item.Categoria);
-        if (cat === 'PREJUIZO' || cat === 'DESPERDICIO') cat = 'ERROS DE GARCONS';
-        const valor = parseFloat(item.Valor) || 0;
-        agrupado[cat] = (agrupado[cat] || 0) + valor;
-      });
+   empresas.forEach(emp => {
+  const dadosEmpresa = dadosFiltrados.filter(i => i.Empresa === emp);
+  const agrupado = {};
+  dadosEmpresa.forEach(item => {
+    let cat = normalize(item.Categoria);
+    if (cat === 'PREJUIZO' || cat === 'DESPERDICIO') cat = 'ERROS DE GARCONS';
+    const valor = parseFloat(item.Valor) || 0;
+    agrupado[cat] = (agrupado[cat] || 0) + valor;
+  });
 
-      const total = Object.values(agrupado).reduce((a, b) => a + b, 0);
-      const box = document.createElement("div");
-      box.className = "empresa-box";
+  const total = Object.values(agrupado).reduce((a, b) => a + b, 0);
+  const box = document.createElement("div");
+  box.className = "empresa-box";
 
-      const conteudo = document.createElement("div");
-      conteudo.className = "empresa-conteudo";
+  // ====== NOVO: calcular Geral Mercatto ======
+  let geralMercatto = 0;
+  if (emp === "MERCATTO EMPORIO" || emp === "MERCATTO RESTAURANTE") {
+    const dadosMercatto = dadosFiltrados.filter(i =>
+      i.Empresa === "MERCATTO EMPORIO" || i.Empresa === "MERCATTO RESTAURANTE"
+    );
+    geralMercatto = dadosMercatto.reduce((s, i) => s + (parseFloat(i.Valor) || 0), 0);
+  }
 
-      let html = `<h2>${emp.toUpperCase()} — R$ ${BRL(total)}</h2><ul>`;
-      for (const catNorm in agrupado) {
-        const nomeExib = displayName(catNorm);
-        const emoji = emojis[nomeExib] || "📌";
-        const valor = BRL(agrupado[catNorm]);
-        html += `<li>${emoji} ${nomeExib}: R$ ${valor}</li>`;
-      }
-      html += `</ul>`;
-      conteudo.innerHTML = html;
+  // ====== Cabeçalho com total + Geral Mercatto ======
+  let html = `<h2 style="display:flex; justify-content:space-between; align-items:center;">
+                <span>${emp.toUpperCase()} — R$ ${BRL(total)}</span>`;
+  if (geralMercatto > 0) {
+    html += `<span style="font-size:0.85em; color:var(--muted); font-weight:700;">
+               GERAL MERCATTO: R$ ${BRL(geralMercatto)}
+             </span>`;
+  }
+  html += `</h2><ul>`;
 
-      const canvasContainer = document.createElement("div");
-      canvasContainer.className = "grafico-desktop";
-      const canvas = document.createElement("canvas");
-      canvasContainer.appendChild(canvas);
+  for (const catNorm in agrupado) {
+    const nomeExib = displayName(catNorm);
+    const emoji = emojis[nomeExib] || "📌";
+    const valor = BRL(agrupado[catNorm]);
+    html += `<li>${emoji} ${nomeExib}: R$ ${valor}</li>`;
+  }
+  html += `</ul>`;
 
-      const legend = document.createElement("div");
-      legend.className = "legend";
-      Object.keys(agrupado).forEach((catNorm, i) => {
-        const cor = `hsl(${i * 35}, 70%, 60%)`;
-        const item = document.createElement("span");
-        item.style.color = cor;
-        item.innerHTML = displayName(catNorm);
-        legend.appendChild(item);
-      });
+  const conteudo = document.createElement("div");
+  conteudo.className = "empresa-conteudo";
+  conteudo.innerHTML = html;
 
-      box.appendChild(conteudo);
-      box.appendChild(canvasContainer);
-      box.appendChild(legend);
-      painel.appendChild(box);
+  const canvasContainer = document.createElement("div");
+  canvasContainer.className = "grafico-desktop";
+  const canvas = document.createElement("canvas");
+  canvasContainer.appendChild(canvas);
 
-      desenharGrafico(canvas, agrupado);
-      canvasContainer.addEventListener('click', () => abrirEvolucaoAnual(emp));
-    });
+  const legend = document.createElement("div");
+  legend.className = "legend";
+  Object.keys(agrupado).forEach((catNorm, i) => {
+    const cor = `hsl(${i * 35}, 70%, 60%)`;
+    const item = document.createElement("span");
+    item.style.color = cor;
+    item.innerHTML = displayName(catNorm);
+    legend.appendChild(item);
+  });
+
+  box.appendChild(conteudo);
+  box.appendChild(canvasContainer);
+  box.appendChild(legend);
+  painel.appendChild(box);
+
+  desenharGrafico(canvas, agrupado);
+  canvasContainer.addEventListener('click', () => abrirEvolucaoAnual(emp));
+});
 
     if (empresas.length === 0)
       painel.innerHTML = "<p style='text-align:center; color: var(--muted)'>Nenhum dado encontrado para os filtros selecionados.</p>";
