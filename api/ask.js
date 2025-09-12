@@ -1,9 +1,14 @@
 // /api/ask.js
-// Responde com dados reais dos seus UPSTREAMs via /api?key=... e NUNCA adivinha data.
-// Se precisar do proxy protegido, envia x-api-key = APP_PASSWORD.
+// Assistente Grupo DV - versão robusta e completa
+// Consulta todos os UPSTREAMS do proxy e responde com dados reais
+// Nunca inventa valores. Sempre fala a verdade.
 
+//
+// --------- FUNÇÕES AUXILIARES ---------
+//
+
+// Data/hora ajustada para America/Bahia (-03:00, sem DST)
 function nowBahia() {
-  // Calcula agora no fuso -03:00 (America/Bahia, sem DST)
   const nowUtc = Date.now();
   return new Date(nowUtc - 3 * 60 * 60 * 1000);
 }
@@ -21,7 +26,6 @@ function endOfDay(d) {
   return z;
 }
 function parsePtDateLike(s) {
-  // tenta dd/mm/aaaa ou mm/aaaa
   const ddmmyyyy = s.match(/\b(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})\b/);
   if (ddmmyyyy) {
     const [_, dd, mm, yyyy] = ddmmyyyy;
@@ -44,7 +48,6 @@ function lastMonthBounds(base) {
   return monthBounds(d);
 }
 function weekBounds(base) {
-  // semana (seg-dom) do base
   const d = new Date(base);
   const dow = (d.getDay()+6)%7; // seg=0
   const a = new Date(d); a.setDate(d.getDate()-dow);
@@ -52,6 +55,9 @@ function weekBounds(base) {
   return [startOfDay(a), endOfDay(b)];
 }
 
+//
+// --------- NORMALIZAÇÃO DE EMPRESAS ---------
+//
 const COMPANY_ALIASES = {
   "MERCATTO": "MERCATTO DELÍCIA",
   "MERCATTO DELICIA": "MERCATTO DELÍCIA",
@@ -71,26 +77,27 @@ function normalizeCompany(q) {
   for (const k of Object.keys(COMPANY_ALIASES)) {
     if (up.includes(k)) { best = COMPANY_ALIASES[k]; }
   }
-  return best; // pode ser null
+  return best;
 }
+
+//
+// --------- DETECÇÃO DE PERÍODO ---------
+//
 function detectPeriod(question) {
-  // Retorna {kind, start, end, label}
   const q = question.toLowerCase();
   const now = nowBahia();
 
-  // data explícita
   const explicit = parsePtDateLike(question);
   if (explicit) {
-    const [a,b] = monthBounds(explicit); // se mm/aaaa -> mês; se dd/mm/aaaa -> dia único (ajustamos)
     if (/\d{1,2}\/\d{1,2}\/\d{4}/.test(question)) {
       return { kind:"day", start: startOfDay(explicit), end: endOfDay(explicit), label: explicit.toLocaleDateString("pt-BR") };
     }
+    const [a,b] = monthBounds(explicit);
     return { kind:"month", start:a, end:b, label: explicit.toLocaleDateString("pt-BR", { month:"long", year:"numeric" }) };
   }
 
   if (/\bhoje\b/.test(q)) {
-    const a = startOfDay(now), b = endOfDay(now);
-    return { kind:"today", start:a, end:b, label:"hoje" };
+    return { kind:"today", start:startOfDay(now), end:endOfDay(now), label:"hoje" };
   }
   if (/\bontem\b/.test(q)) {
     const d = new Date(now); d.setDate(d.getDate()-1);
@@ -116,33 +123,37 @@ function detectPeriod(question) {
     const [a,b] = weekBounds(ref);
     return { kind:"last_week", start:a, end:b, label:"semana passada" };
   }
+
   // fallback: mês atual
   const [a,b] = monthBounds(now);
   const label = a.toLocaleDateString("pt-BR", { month:"long", year:"numeric" });
   return { kind:"month", start:a, end:b, label:`${label}` };
 }
 
-async function fetchJson(url, headers = {}) {
-  const r = await fetch(url, { headers });
-  const text = await r.text();
-  try { return JSON.parse(text); } catch { return { raw:text }; }
-}
-
+//
+// --------- OUTROS HELPERS ---------
+//
 function buildOrigin(req) {
   const proto = req.headers["x-forwarded-proto"] || "https";
   const host = req.headers["x-forwarded-host"] || req.headers.host;
   return `${proto}://${host}`;
 }
-
+async function fetchJson(url, headers = {}) {
+  const r = await fetch(url, { headers });
+  const text = await r.text();
+  try { return JSON.parse(text); } catch { return { raw:text }; }
+}
 function needsData(question) {
   return /(mercatto|mercato|villa|padaria|delicia|delícia|meta|fatur|vendi|vendas|receita|cancelament|reserva|couvert|financeir|compar|percent|por cento|%|ontem|hoje|m[eê]s|semana)/i.test(question);
 }
-
 function isDateQuestion(question) {
   const q = question.trim().toLowerCase();
   return /\b(que dia e|que dia é|data de hoje|que dia)\b/.test(q);
 }
 
+//
+// --------- HANDLER PRINCIPAL ---------
+//
 export default async function handler(req, res) {
   if (req.method !== "POST") { res.status(405).json({ error: "method not allowed" }); return; }
 
@@ -150,7 +161,7 @@ export default async function handler(req, res) {
     const { question } = req.body || {};
     if (!question) { res.status(400).json({ error: "missing question" }); return; }
 
-    // 1) Perguntas de data → responder com precisão do servidor (sem modelo)
+    // 1) Perguntas de data → direto no servidor
     if (isDateQuestion(question)) {
       const now = nowBahia();
       const answer = `Hoje é ${fmtDiaLongo(now)}.`;
@@ -162,10 +173,8 @@ export default async function handler(req, res) {
     const headers = {};
     if (process.env.APP_PASSWORD) headers["x-api-key"] = process.env.APP_PASSWORD;
 
-    // 2) Só consulta dados quando necessário
     let dataBundle = null;
     if (needsData(question)) {
-      // Empresa e período (com tolerância a erros)
       const empresa = normalizeCompany(question) || null;
       const periodo = detectPeriod(question);
       const periodInfo = {
@@ -174,8 +183,6 @@ export default async function handler(req, res) {
         label: periodo.label
       };
 
-      // Consulta múltiplos UPSTREAMs pelo seu proxy
-      // (se os upstreams aceitarem filtros via query, você pode adicionar &empresa=...&start=... aqui)
       const keys = [
         "meta",
         "resumo_financeiro",
@@ -203,21 +210,21 @@ export default async function handler(req, res) {
       };
     }
 
-    // 3) Chamada ao modelo — com instruções para NÃO inventar
+    // 3) OpenAI
     const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey) { res.status(500).json({ error: "missing OPENAI_API_KEY" }); return; }
 
     const systemPrompt = `
 Você é o Assistente Grupo DV.
-REGRAS DE VERDADE:
-- Use APENAS os dados JSON fornecidos neste chat quando a pergunta for sobre as empresas/relatórios do cliente.
+
+REGRAS IMPORTANTES:
+- Use APENAS os dados JSON fornecidos neste chat quando a pergunta for sobre as empresas/relatórios.
 - Se não houver dados suficientes para responder com número, diga exatamente: "Não encontrei dados suficientes para esse pedido."
 - Para percentuais: percentual = ((valor_atual - valor_base) / |valor_base|) * 100. Informe 2 casas decimais.
-- Se a pergunta for sobre a data atual, o servidor já respondeu. Não invente datas.
-- Tolerar erros de português e variações de nome de empresa. Mapear "mercato" → "MERCATTO DELÍCIA", "villa" → "VILLA GOURMET", etc.
-- Ao responder, cite claramente o período usado (por exemplo: "ontem", "mês passado", ou intervalos YYYY-MM-DD).
+- Se a pergunta for sobre a data atual, já foi respondida pelo servidor.
+- Tolerar erros de português e variações de nome de empresa (ex: "mercato" → "MERCATTO DELÍCIA").
+- Ao responder, cite claramente o período usado (ex: "ontem", "mês passado", ou datas ISO).
 - Nunca invente valores. Se algum upstream estiver vazio, diga que está indisponível.
-OUTPUT: dê a resposta direta em português e, quando fizer cálculo, mostre um resumo do cálculo em uma linha.
     `.trim();
 
     const messages = [
@@ -228,9 +235,7 @@ OUTPUT: dê a resposta direta em português e, quando fizer cálculo, mostre um 
     if (dataBundle) {
       messages.push({
         role: "system",
-        content:
-          "DADOS_JSON = " +
-          JSON.stringify(dataBundle, null, 2)
+        content: "DADOS_JSON = " + JSON.stringify(dataBundle, null, 2)
       });
     }
 
