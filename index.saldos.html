@@ -4,8 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
   <title>Caixa das Empresas - Grupo DV</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
   <style>
     :root {
       --bg:#0b1020; --surface:#10172a; --card:#0f172a; --text:#e5e7eb; --muted:#94a3b8;
@@ -17,12 +15,7 @@
       --line:#e5e7eb; --shadow:0 16px 36px rgba(15,23,42,.08);
     }
     *{box-sizing:border-box}
-    body {
-      margin:0; font-family:ui-sans-serif,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
-      background:var(--bg); color:var(--text);
-    }
-
-    /* Header */
+    body {margin:0; font-family:ui-sans-serif,-apple-system,Segoe UI,Roboto,Arial,sans-serif; background:var(--bg); color:var(--text);}
     header {position:sticky; top:0; z-index:40; backdrop-filter:saturate(160%) blur(8px);
       background:color-mix(in srgb, var(--surface) 90%, transparent); border-bottom:1px solid var(--line);}
     .head {max-width:1200px; margin:0 auto; padding:14px 18px; display:flex; align-items:center; gap:12px}
@@ -30,23 +23,16 @@
     .brand img {height:42px}
     .title {font-weight:800; letter-spacing:.2px; font-size:clamp(18px,1.6vw,22px)}
     .grow {flex:1}
-    .btn {border:1px solid var(--line); background:var(--surface); color:var(--text);
-      padding:10px 12px; border-radius:12px; font-weight:800; cursor:pointer;}
+    .btn {border:1px solid var(--line); background:var(--surface); color:var(--text); padding:10px 12px; border-radius:12px; font-weight:800; cursor:pointer;}
     .btn:hover {box-shadow:var(--shadow); transform:translateY(-1px)}
-
-    /* Grid de cards */
     .container{max-width:1200px; margin:0 auto; padding:20px 18px}
     #painel {display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:16px;}
-    .card {
-      background:var(--card); border:1px solid var(--line); border-radius:14px;
+    .card {background:var(--card); border:1px solid var(--line); border-radius:14px;
       padding:16px; box-shadow:var(--shadow); cursor:pointer; text-align:center;
-      transition:.18s transform, .18s box-shadow;
-    }
+      transition:.18s transform, .18s box-shadow;}
     .card:hover {transform:translateY(-3px); box-shadow:0 8px 24px rgba(0,0,0,.28)}
     .card h2 {margin:0 0 6px; font-size:1.1rem; text-transform:uppercase}
     .saldo {font-size:1.2rem; font-weight:800; color:var(--ok)}
-
-    /* Modal */
     .modal{position:fixed; inset:0; background:rgba(0,0,0,.6); display:none; align-items:center; justify-content:center; z-index:55; padding:18px}
     .modal.open{display:flex}
     .modal-card{background:var(--surface); border:1px solid var(--line); border-radius:14px;
@@ -61,8 +47,6 @@
   </style>
 </head>
 <body>
-
-  <!-- Header -->
   <header>
     <div class="head">
       <a class="brand" href="#" aria-label="Início">
@@ -74,12 +58,10 @@
     </div>
   </header>
 
-  <!-- Conteúdo -->
   <div class="container">
     <div id="painel"></div>
   </div>
 
-  <!-- Modal -->
   <div id="modal" class="modal">
     <div class="modal-card">
       <div class="modal-h">
@@ -97,7 +79,14 @@
   </div>
 
 <script>
-const urlBase = "https://script.google.com/macros/s/AKfycbx4TFUkitWV6wYqjyCtUOWrcIAY6ptyeeUE5ggELPSaOPyBfQdgYofabQ2Lm8JjcTtc/exec"; // substitua pelo seu link WebApp
+/* Coloque aqui as URLs dos 4 GAS */
+const endpoints = {
+  "Mercatto Delícia": "URL_GAS1",
+  "M. KIDS": "URL_GAS1",
+  "Delícia Gourmet": "URL_GAS2",
+  "Padaria Delícia": "URL_GAS3",
+  "Villa Gourmet": "URL_GAS4"
+};
 
 document.getElementById("themeToggle").addEventListener("click", ()=>{
   const cur = document.documentElement.getAttribute("data-theme") || "light";
@@ -105,28 +94,32 @@ document.getElementById("themeToggle").addEventListener("click", ()=>{
   document.documentElement.setAttribute("data-theme", next);
 });
 
-/* ---------- Carregar cards ---------- */
 async function carregarEmpresas(){
-  const rsp = await fetch(urlBase);
-  const empresas = await rsp.json();
   const painel = document.getElementById("painel");
   painel.innerHTML = "";
 
-  empresas.forEach(emp=>{
-    const card = document.createElement("div");
-    card.className = "card";
-    card.innerHTML = `
-      <h2>${emp.empresa}</h2>
-      <p class="saldo">R$ ${emp.saldoCaixa.toLocaleString("pt-BR",{minimumFractionDigits:2})}</p>
-    `;
-    card.onclick = ()=>abrirEmpresa(emp.empresa);
-    painel.appendChild(card);
-  });
+  for (const [nome, url] of Object.entries(endpoints)) {
+    try {
+      const rsp = await fetch(url);
+      const lista = await rsp.json();
+      const emp = lista.find(e=>e.empresa === nome);
+      if (!emp) continue;
+
+      const card = document.createElement("div");
+      card.className = "card";
+      card.innerHTML = `
+        <h2>${emp.empresa}</h2>
+        <p class="saldo">R$ ${emp.saldoCaixa.toLocaleString("pt-BR",{minimumFractionDigits:2})}</p>
+      `;
+      card.onclick = ()=>abrirEmpresa(emp.empresa);
+      painel.appendChild(card);
+    } catch(e){ console.error("Erro ao carregar", nome, e); }
+  }
 }
 
-/* ---------- Abrir modal com movimentações ---------- */
 async function abrirEmpresa(nome){
-  const rsp = await fetch(`${urlBase}?empresa=${encodeURIComponent(nome)}`);
+  const url = endpoints[nome];
+  const rsp = await fetch(`${url}?empresa=${encodeURIComponent(nome)}`);
   const emp = await rsp.json();
 
   document.getElementById("modalTitle").textContent = emp.empresa;
@@ -154,7 +147,6 @@ document.getElementById("modal").addEventListener("click", e=>{
   if(e.target.id==="modal") document.getElementById("modal").classList.remove("open");
 });
 
-/* Inicialização */
 carregarEmpresas();
 </script>
 </body>
