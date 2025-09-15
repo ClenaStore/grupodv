@@ -33,11 +33,11 @@
       display: block; font-size: 14px; margin-bottom: 6px; cursor: pointer;
       color: #2563eb; font-weight: bold;
     }
-    .dropdown label:hover { color: #1e40af; }
-    .dropdown input { margin-right: 6px; }
 
-    .filtros { display: flex; gap: 10px; padding: 10px; flex-wrap: wrap; }
-    .filtros input { padding: 5px; border: 1px solid #ccc; border-radius: 6px; }
+    .filtros { display: flex; gap: 10px; padding: 10px; flex-wrap: wrap; align-items: center; }
+    .filtros input, .filtros select {
+      padding: 6px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px;
+    }
 
     .cards { display: flex; flex-wrap: wrap; gap: 15px; padding: 15px; }
     .card {
@@ -73,6 +73,7 @@
     button { padding: 6px 10px; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold; }
     .btn-aprovar { background: #16a34a; color: white; margin: 2px; }
     .btn-negar { background: #dc2626; color: white; margin: 2px; }
+    .btn-revogar { background: #f59e0b; color: white; margin: 2px; }
 
     /* Overlay carregamento */
     #overlay {
@@ -98,18 +99,6 @@
 <body>
   <header>
     <h1>Painel Financeiro</h1>
-    <div class="menu-empresas">
-      <button class="menu-btn" onclick="toggleMenu()">Selecionar Empresas</button>
-      <div class="dropdown" id="dropdownEmpresas">
-        <label><input type="checkbox" value="todas" onchange="selecionarTodas(this)"> Todas</label>
-        <label><input type="checkbox" value="cap delicia"> CAP Delícia</label>
-        <label><input type="checkbox" value="cap villa"> CAP Villa</label>
-        <label><input type="checkbox" value="cap padaria"> CAP Padaria</label>
-        <label><input type="checkbox" value="cap mercatto"> CAP Mercatto</label>
-        <label><input type="checkbox" value="cap m.kids"> CAP M.Kids</label>
-        <button class="menu-btn" style="margin-top:8px;" onclick="aplicarEmpresas()">Aplicar</button>
-      </div>
-    </div>
   </header>
 
   <!-- FILTROS -->
@@ -118,6 +107,19 @@
     <input type="date" id="dataInicio" onchange="carregarTitulos()">
     <label>Data Fim:</label>
     <input type="date" id="dataFim" onchange="carregarTitulos()">
+
+    <label>Pesquisar:</label>
+    <input type="text" id="pesquisa" placeholder="Fornecedor ou Valor" onkeyup="carregarTitulos()">
+
+    <label>Pagamento:</label>
+    <select id="filtroPagamento" onchange="carregarTitulos()">
+      <option value="">Todos</option>
+      <option value="boleto">Boleto</option>
+      <option value="pix">Pix</option>
+      <option value="cartão">Cartão</option>
+      <option value="dinheiro">Dinheiro</option>
+      <option value="transferência">Transferência</option>
+    </select>
   </div>
 
   <!-- RESUMO DE SALDOS -->
@@ -173,20 +175,6 @@
       catch { return iso; }
     }
 
-    function toggleMenu() {
-      const dd = document.getElementById("dropdownEmpresas");
-      dd.style.display = dd.style.display === "block" ? "none" : "block";
-    }
-    function selecionarTodas(checkbox) {
-      document.querySelectorAll("#dropdownEmpresas input[type=checkbox]").forEach(cb=>{
-        if(cb.value !== "todas") cb.checked = checkbox.checked;
-      });
-    }
-    function aplicarEmpresas() {
-      empresasSelecionadas = Array.from(document.querySelectorAll("#dropdownEmpresas input[type=checkbox]:checked")).map(cb=>cb.value).filter(v=>v!=="todas");
-      toggleMenu(); carregarTudo();
-    }
-
     function mostrarOverlay(mostrar) {
       document.getElementById("overlay").style.display = mostrar ? "flex" : "none";
     }
@@ -216,6 +204,8 @@
 
       const inicio=document.getElementById("dataInicio").value;
       const fim=document.getElementById("dataFim").value;
+      const pesquisa=document.getElementById("pesquisa").value.toLowerCase();
+      const filtroPagamento=document.getElementById("filtroPagamento").value;
 
       for(const empresa of empresasSelecionadas){
         const res=await fetch(endpointTitulos+"?action=listar&empresa="+encodeURIComponent(empresa));
@@ -230,15 +220,35 @@
           });
         }
 
+        // Filtro por pesquisa
+        if(pesquisa){
+          titulos=titulos.filter(t=>
+            (t.fornecedor && t.fornecedor.toLowerCase().includes(pesquisa)) ||
+            (t.valor && parseValor(t.valor).toString().includes(pesquisa))
+          );
+        }
+
+        // Filtro por forma de pagamento
+        if(filtroPagamento){
+          titulos=titulos.filter(t=> t.meio_pagamento && t.meio_pagamento.toLowerCase().includes(filtroPagamento));
+        }
+
         titulos.forEach((item,i)=>{
           const valorNum=parseValor(item.valor);
           somaModalidades[item.meio_pagamento]=(somaModalidades[item.meio_pagamento]||0)+valorNum;
 
+          // status "Sim" tratado como "Pendente"
+          let status=item.status==="Sim"?"Pendente":item.status||"Pendente";
+
           const tr=document.createElement("tr");
           tr.innerHTML=`
             <td>
-              <button class="btn-aprovar" onclick="atualizarStatus('${empresa}',${i},'Aprovado')">✔</button>
-              <button class="btn-negar" onclick="atualizarStatus('${empresa}',${i},'Negado')">✖</button>
+              ${status==="Pendente" ? `
+                <button class="btn-aprovar" onclick="atualizarStatus('${empresa}',${i},'Aprovado')">✔</button>
+                <button class="btn-negar" onclick="atualizarStatus('${empresa}',${i},'Negado')">✖</button>
+              ` : `
+                <button class="btn-revogar" onclick="atualizarStatus('${empresa}',${i},'Pendente')">↩ Revogar</button>
+              `}
             </td>
             <td>${item.empresa}</td>
             <td>${item.fornecedor}</td>
@@ -246,7 +256,7 @@
             <td>R$ ${valorNum.toLocaleString("pt-BR",{minimumFractionDigits:2})}</td>
             <td>${item.meio_pagamento}</td>
             <td>${item.historico}</td>
-            <td class="${item.status==='Aprovado'?'status-aprovado':item.status==='Negado'?'status-negado':'status-pendente'}">${item.status||'Pendente'}</td>
+            <td class="${status==='Aprovado'?'status-aprovado':status==='Negado'?'status-negado':'status-pendente'}">${status}</td>
           `;
           tbody.appendChild(tr);
         });
