@@ -15,6 +15,7 @@
     }
     header h1 { font-size: 1.2em; margin: 0; }
 
+    /* Menu flutuante */
     .menu-empresas { position: relative; }
     .menu-btn {
       background: white; color: #2563eb; border: none;
@@ -28,8 +29,15 @@
       box-shadow: 0 2px 8px rgba(0,0,0,.15); padding: 10px; z-index: 200;
       min-width: 180px;
     }
-    .dropdown label { display: block; font-size: 14px; margin-bottom: 6px; cursor: pointer; }
+    .dropdown label {
+      display: block; font-size: 14px; margin-bottom: 6px; cursor: pointer;
+      color: #2563eb; font-weight: bold;
+    }
+    .dropdown label:hover { color: #1e40af; }
     .dropdown input { margin-right: 6px; }
+
+    .filtros { display: flex; gap: 10px; padding: 10px; flex-wrap: wrap; }
+    .filtros input { padding: 5px; border: 1px solid #ccc; border-radius: 6px; }
 
     .cards { display: flex; flex-wrap: wrap; gap: 15px; padding: 15px; }
     .card {
@@ -41,62 +49,48 @@
     .card h3 { margin: 0 0 8px; font-size: 1em; color: #374151; }
     .card .valor { font-size: 1.4em; font-weight: bold; color: #2563eb; }
 
+    .grafico-area { display: flex; flex-wrap: wrap; gap: 20px; padding: 15px; align-items: center; }
     .grafico-container {
-      max-width: 500px; margin: 0 auto; padding: 20px;
+      flex: 1; min-width: 280px; max-width: 400px;
       background: #fff; border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,.1); padding: 15px;
+    }
+    .resumo-modalidades {
+      flex: 1; min-width: 200px; font-size: 14px;
+      background: #fff; padding: 15px; border-radius: 10px;
       box-shadow: 0 2px 6px rgba(0,0,0,.1);
     }
+    .resumo-modalidades h3 { margin-top: 0; color: #2563eb; }
 
-    /* TABELA - DESKTOP */
-    table { width: 100%; border-collapse: collapse; margin-top: 20px; background: #fff; display: none; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; background: #fff; }
     th, td { padding: 10px; border: 1px solid #e5e7eb; font-size: 14px; text-align: center; }
     th { background: #f3f4f6; }
-
     .status-aprovado { color: #16a34a; font-weight: bold; }
     .status-negado { color: #dc2626; font-weight: bold; }
+    .status-pendente { color: #f59e0b; font-weight: bold; }
 
     button { padding: 6px 10px; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold; }
-    .btn-aprovar { background: #16a34a; color: white; margin-right: 4px; }
+    .btn-aprovar { background: #16a34a; color: white; }
     .btn-negar { background: #dc2626; color: white; }
 
-    /* LISTA - MOBILE */
-    .lista-titulos { display: flex; flex-direction: column; gap: 10px; padding: 15px; }
-    .titulo-card {
-      background: #fff; border-radius: 10px; padding: 10px;
-      box-shadow: 0 2px 6px rgba(0,0,0,.1);
-      display: flex; flex-direction: column; gap: 6px;
+    /* Overlay carregamento */
+    #overlay {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.4); display: flex; justify-content: center; align-items: center;
+      z-index: 1000; display: none;
     }
-    .titulo-header {
-      display: flex; justify-content: space-between; align-items: center;
-      border-bottom: 1px solid #e5e7eb; padding-bottom: 6px; margin-bottom: 6px;
-    }
-    .titulo-header input { margin-right: 8px; }
-    .titulo-info { font-size: 13px; color: #374151; }
-
-    /* Balão flutuante */
-    #balaoTotal {
-      position: fixed; bottom: 20px; right: 20px;
-      background: #2563eb; color: #fff;
-      padding: 12px 18px; border-radius: 8px;
-      box-shadow: 0 4px 10px rgba(0,0,0,.2);
-      font-weight: bold; display: none; z-index: 999;
+    #overlay span {
+      background: white; padding: 20px; border-radius: 10px;
+      font-weight: bold; color: #2563eb; box-shadow: 0 2px 6px rgba(0,0,0,.2);
     }
 
-    /* Botão massa */
-    #acoesMassa {
-      position: fixed; bottom: 70px; right: 20px;
-      display: none; z-index: 999;
-    }
-    #acoesMassa button {
-      background: #16a34a; color: white; border: none;
-      padding: 10px 15px; border-radius: 8px; cursor: pointer;
-      font-size: 14px; font-weight: bold;
-      box-shadow: 0 2px 6px rgba(0,0,0,.2);
-    }
-
-    @media(min-width: 769px) {
-      .lista-titulos { display: none; }
-      table { display: table; }
+    /* Mobile */
+    @media(max-width: 768px) {
+      header h1 { font-size: 1em; }
+      .cards { flex-direction: column; }
+      .grafico-area { flex-direction: column; }
+      table { font-size: 12px; }
+      th, td { padding: 6px; }
     }
   </style>
 </head>
@@ -117,29 +111,39 @@
     </div>
   </header>
 
+  <!-- FILTROS -->
+  <div class="filtros">
+    <label>Data Início:</label>
+    <input type="date" id="dataInicio" onchange="carregarTitulos()">
+    <label>Data Fim:</label>
+    <input type="date" id="dataFim" onchange="carregarTitulos()">
+  </div>
+
   <!-- RESUMO DE SALDOS -->
   <div class="cards" id="cardsSaldos"></div>
 
-  <!-- GRÁFICO -->
-  <div class="grafico-container">
-    <canvas id="graficoModalidades"></canvas>
+  <!-- GRÁFICO + MODALIDADES -->
+  <div class="grafico-area">
+    <div class="grafico-container">
+      <canvas id="graficoModalidades"></canvas>
+    </div>
+    <div class="resumo-modalidades" id="resumoModalidades">
+      <h3>Resumo Modalidades</h3>
+      <ul id="listaModalidades"></ul>
+    </div>
   </div>
 
-  <!-- LISTA MOBILE -->
-  <div class="lista-titulos" id="listaTitulos"></div>
-
-  <!-- LISTA DESKTOP -->
+  <!-- LISTA DE TÍTULOS -->
   <div style="padding: 15px;">
     <table id="tabelaTitulos">
       <thead>
         <tr>
-          <th><input type="checkbox" id="checkTodos" onchange="toggleTodos(this)"></th>
           <th>Ações</th>
           <th>Empresa</th>
           <th>Fornecedor</th>
           <th>Vencimento</th>
-          <th>Valor</th>
-          <th>Meio</th>
+          <th>Valor Bruto</th>
+          <th>Meio de Pagamento</th>
           <th>Histórico</th>
           <th>Status</th>
         </tr>
@@ -148,122 +152,130 @@
     </table>
   </div>
 
-  <!-- BALÃO TOTAL -->
-  <div id="balaoTotal"></div>
-  <!-- BOTÃO MASSA -->
-  <div id="acoesMassa"><button onclick="aprovarMassa()">Aprovar Selecionados</button></div>
+  <!-- Overlay -->
+  <div id="overlay"><span>Carregando...</span></div>
 
   <script>
     const endpointSaldos = "https://script.google.com/macros/s/AKfycbzz1sV5SYJ7zBjY6GYZuUd1HUM7ZmP_Oz798SNAxH36KXdAoTNtqARVsw7EJa9F2__Y/exec";
-    const endpointTitulos = "https://script.google.com/macros/s/AKfycbzs_6FaNdpSGDEHMARcSUFEhhXht4emd5RSBhhlNf9CFWGUGWbJ32EA1-emBuaTsUls/exec";
+    const endpointTitulos = "https://script.google.com/macros/s/AKfycbwCpe51vPoH2lG8YR89kVR_uRfg6-T7SNkWwI3LbJAvbNiqEA1pddhG_3llm8tINMCB/exec";
 
     let empresasSelecionadas = ["cap mercatto"];
     let grafico;
-    let selecionados = {};
 
     function parseValor(v) {
       if (!v) return 0;
       return Number(v.toString().replace("R$","").replace(/\./g,"").replace(",",".").trim()) || 0;
     }
+
     function formatarData(iso) {
-      try { return new Date(iso).toLocaleDateString("pt-BR",{timeZone:"UTC"}); }
+      try { return new Date(iso).toLocaleDateString("pt-BR", { timeZone: "UTC" }); }
       catch { return iso; }
     }
 
-    function toggleMenu(){document.getElementById("dropdownEmpresas").style.display=document.getElementById("dropdownEmpresas").style.display==="block"?"none":"block";}
-    function selecionarTodas(chk){document.querySelectorAll("#dropdownEmpresas input[type=checkbox]").forEach(cb=>{if(cb.value!=="todas")cb.checked=chk.checked;});}
-    function aplicarEmpresas(){const inputs=document.querySelectorAll("#dropdownEmpresas input[type=checkbox]:checked");empresasSelecionadas=Array.from(inputs).map(cb=>cb.value).filter(v=>v!=="todas");toggleMenu();carregarTudo();}
+    function toggleMenu() {
+      const dd = document.getElementById("dropdownEmpresas");
+      dd.style.display = dd.style.display === "block" ? "none" : "block";
+    }
+    function selecionarTodas(checkbox) {
+      document.querySelectorAll("#dropdownEmpresas input[type=checkbox]").forEach(cb=>{
+        if(cb.value !== "todas") cb.checked = checkbox.checked;
+      });
+    }
+    function aplicarEmpresas() {
+      empresasSelecionadas = Array.from(document.querySelectorAll("#dropdownEmpresas input[type=checkbox]:checked")).map(cb=>cb.value).filter(v=>v!=="todas");
+      toggleMenu(); carregarTudo();
+    }
 
-    async function carregarSaldos(){
-      const res=await fetch(endpointSaldos);const dados=await res.json();
-      const cards=document.getElementById("cardsSaldos");cards.innerHTML="";
-      dados.filter(s=>empresasSelecionadas.includes(s.Empresa.toLowerCase())).forEach(s=>{
-        const card=document.createElement("div");card.className="card";
+    function mostrarOverlay(mostrar) {
+      document.getElementById("overlay").style.display = mostrar ? "flex" : "none";
+    }
+
+    async function carregarSaldos() {
+      mostrarOverlay(true);
+      const res = await fetch(endpointSaldos);
+      const dados = await res.json();
+      const cards = document.getElementById("cardsSaldos");
+      cards.innerHTML = "";
+      const filtro = dados.filter(s => empresasSelecionadas.includes(s.Empresa.toLowerCase()));
+      filtro.forEach(s=>{
+        const card=document.createElement("div");
+        card.className="card";
         card.innerHTML=`<h3>${s.Empresa}</h3><div class="valor">Saldo: R$ ${Number(s.Saldo).toLocaleString("pt-BR",{minimumFractionDigits:2})}</div>`;
         cards.appendChild(card);
       });
+      mostrarOverlay(false);
     }
 
-    async function carregarTitulos(){
-      const tbody=document.querySelector("#tabelaTitulos tbody");tbody.innerHTML="";
-      const lista=document.getElementById("listaTitulos");lista.innerHTML="";
-      let somaModalidades={};let totalSelecionado=0;selecionados={};
+    async function carregarTitulos() {
+      mostrarOverlay(true);
+      const tbody=document.querySelector("#tabelaTitulos tbody");
+      tbody.innerHTML="";
+      let somaModalidades={};
+
+      const inicio=document.getElementById("dataInicio").value;
+      const fim=document.getElementById("dataFim").value;
 
       for(const empresa of empresasSelecionadas){
         const res=await fetch(endpointTitulos+"?action=listar&empresa="+encodeURIComponent(empresa));
         const dados=await res.json();
-        dados.titulos.forEach((item,i)=>{
+        let titulos=dados.titulos;
+
+        // Filtro por data
+        if(inicio||fim){
+          titulos=titulos.filter(t=>{
+            let d=new Date(t.vencimento);
+            return(!inicio||d>=new Date(inicio))&&(!fim||d<=new Date(fim));
+          });
+        }
+
+        titulos.forEach((item,i)=>{
           const valorNum=parseValor(item.valor);
           somaModalidades[item.meio_pagamento]=(somaModalidades[item.meio_pagamento]||0)+valorNum;
 
-          // TABELA
           const tr=document.createElement("tr");
           tr.innerHTML=`
-            <td><input type="checkbox" onchange="toggleSelecionado('${empresa}',${i},${valorNum},this)"></td>
             <td>
-              <button class="btn-aprovar" onclick="atualizarStatus('${empresa}',${i},'Aprovado')">✓</button>
-              <button class="btn-negar" onclick="atualizarStatus('${empresa}',${i},'Negado')">✗</button>
+              <button class="btn-aprovar" onclick="atualizarStatus('${empresa}',${i},'Aprovado')">✔</button>
+              <button class="btn-negar" onclick="atualizarStatus('${empresa}',${i},'Negado')">✖</button>
             </td>
-            <td>${item.empresa}</td><td>${item.fornecedor}</td>
+            <td>${item.empresa}</td>
+            <td>${item.fornecedor}</td>
             <td>${formatarData(item.vencimento)}</td>
             <td>R$ ${valorNum.toLocaleString("pt-BR",{minimumFractionDigits:2})}</td>
-            <td>${item.meio_pagamento}</td><td>${item.historico}</td>
-            <td>${item.status||'Pendente'}</td>`;
+            <td>${item.meio_pagamento}</td>
+            <td>${item.historico}</td>
+            <td class="${item.status==='Aprovado'?'status-aprovado':item.status==='Negado'?'status-negado':'status-pendente'}">${item.status||'Pendente'}</td>
+          `;
           tbody.appendChild(tr);
-
-          // LISTA MOBILE
-          const card=document.createElement("div");card.className="titulo-card";
-          card.innerHTML=`
-            <div class="titulo-header">
-              <div><input type="checkbox" onchange="toggleSelecionado('${empresa}',${i},${valorNum},this)"> 
-              <button class="btn-aprovar" onclick="atualizarStatus('${empresa}',${i},'Aprovado')">✓</button>
-              <button class="btn-negar" onclick="atualizarStatus('${empresa}',${i},'Negado')">✗</button></div>
-              <strong>R$ ${valorNum.toLocaleString("pt-BR",{minimumFractionDigits:2})}</strong>
-            </div>
-            <div class="titulo-info"><b>Empresa:</b> ${item.empresa}</div>
-            <div class="titulo-info"><b>Fornecedor:</b> ${item.fornecedor}</div>
-            <div class="titulo-info"><b>Vencimento:</b> ${formatarData(item.vencimento)}</div>
-            <div class="titulo-info"><b>Meio:</b> ${item.meio_pagamento}</div>
-            <div class="titulo-info"><b>Histórico:</b> ${item.historico}</div>
-            <div class="titulo-info"><b>Status:</b> ${item.status||'Pendente'}</div>`;
-          lista.appendChild(card);
         });
       }
 
-      atualizarBalao();
-      desenharGrafico(somaModalidades);
-    }
-
-    function toggleSelecionado(empresa,index,valor,chk){
-      if(chk.checked) selecionados[empresa+"_"+index]=valor;
-      else delete selecionados[empresa+"_"+index];
-      atualizarBalao();
-    }
-    function atualizarBalao(){
-      const total=Object.values(selecionados).reduce((a,b)=>a+b,0);
-      const balao=document.getElementById("balaoTotal");
-      const massa=document.getElementById("acoesMassa");
-      if(total>0){balao.style.display="block";massa.style.display="block";balao.innerText=`Selecionados: R$ ${total.toLocaleString("pt-BR",{minimumFractionDigits:2})}`;}
-      else{balao.style.display="none";massa.style.display="none";}
-    }
-
-    async function aprovarMassa(){
-      for(const key in selecionados){
-        const [empresa,index]=key.split("_");
-        await atualizarStatus(empresa,parseInt(index),"Aprovado",true);
-      }
-      carregarTitulos();
-    }
-
-    async function atualizarStatus(empresa,index,status,silencioso=false){
-      await fetch(endpointTitulos,{method:"POST",body:JSON.stringify({action:"atualizar",empresa,index,status}),headers:{"Content-Type":"application/json"}});
-      if(!silencioso) carregarTitulos();
-    }
-
-    function desenharGrafico(soma){
+      // Atualiza gráfico
       const ctx=document.getElementById("graficoModalidades").getContext("2d");
       if(grafico) grafico.destroy();
-      grafico=new Chart(ctx,{type:"pie",data:{labels:Object.keys(soma),datasets:[{data:Object.values(soma),backgroundColor:["#2563eb","#16a34a","#dc2626","#f59e0b","#9333ea"]}]},options:{responsive:true,plugins:{legend:{position:"bottom"},tooltip:{callbacks:{label:c=>`${c.label}: R$ ${c.raw.toLocaleString("pt-BR",{minimumFractionDigits:2})}`}}}}});
+      grafico=new Chart(ctx,{
+        type:"pie",
+        data:{labels:Object.keys(somaModalidades),datasets:[{data:Object.values(somaModalidades),backgroundColor:["#2563eb","#16a34a","#dc2626","#f59e0b","#9333ea"]}]},
+        options:{responsive:true,plugins:{legend:{position:"bottom"}}}
+      });
+
+      // Atualiza resumo modalidades
+      const lista=document.getElementById("listaModalidades");
+      lista.innerHTML="";
+      Object.entries(somaModalidades).forEach(([mod,val])=>{
+        const li=document.createElement("li");
+        li.textContent=`${mod}: R$ ${val.toLocaleString("pt-BR",{minimumFractionDigits:2})}`;
+        lista.appendChild(li);
+      });
+
+      mostrarOverlay(false);
+    }
+
+    async function atualizarStatus(empresa,index,status){
+      mostrarOverlay(true);
+      await fetch(endpointTitulos,{method:"POST",body:JSON.stringify({action:"atualizar",empresa,index,status}),headers:{"Content-Type":"application/json"}});
+      await carregarTitulos();
+      mostrarOverlay(false);
     }
 
     function carregarTudo(){carregarSaldos();carregarTitulos();}
