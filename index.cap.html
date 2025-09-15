@@ -5,9 +5,6 @@
   <title>Painel Financeiro • Aprovação & Saldos</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-  <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/pt.js"></script>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 
   <style>
     body { font-family: Arial, sans-serif; margin: 0; background: #f6f7fb; color: #111827; }
@@ -16,7 +13,7 @@
       padding: 12px; display: flex; justify-content: space-between; align-items: center;
       position: sticky; top: 0; z-index: 100;
     }
-    header h1 { font-size: 1.2em; margin: 0; }
+    header h1 { font-size: 1.1em; margin: 0; }
 
     /* Menu flutuante */
     .menu-empresas { position: relative; }
@@ -30,57 +27,56 @@
       position: absolute; right: 0; top: 40px;
       background: #fff; border: 1px solid #ccc; border-radius: 8px;
       box-shadow: 0 2px 8px rgba(0,0,0,.15); padding: 10px; z-index: 200;
-      min-width: 180px;
+      min-width: 200px;
     }
     .dropdown label {
       display: block; font-size: 14px; margin-bottom: 6px; cursor: pointer;
       color: #2563eb; font-weight: bold;
     }
-    .dropdown input { margin-right: 6px; }
 
-    .filtros { display: flex; gap: 10px; padding: 10px; flex-wrap: wrap; align-items: center; }
-    .filtros input, .filtros select {
-      padding: 6px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px;
-    }
+    .filtros { display: flex; gap: 10px; padding: 10px; flex-wrap: wrap; }
+    .filtros input, .filtros select { padding: 5px; border: 1px solid #ccc; border-radius: 6px; }
 
-    .cards { display: flex; flex-wrap: wrap; gap: 15px; padding: 15px; }
+    .cards { display: flex; flex-wrap: wrap; gap: 12px; padding: 15px; }
     .card {
-      flex: 1; min-width: 180px; padding: 15px;
-      border-radius: 10px; background: #fff;
-      box-shadow: 0 2px 6px rgba(0,0,0,.1);
-      text-align: center;
+      flex: 1; min-width: 160px; padding: 12px;
+      border-radius: 10px; color: #fff; font-weight: bold;
+      box-shadow: 0 2px 6px rgba(0,0,0,.1); text-align: center;
     }
-    .card h3 { margin: 0 0 8px; font-size: 1em; color: #374151; }
-    .card .valor { font-size: 1.2em; font-weight: bold; }
+    .card .valor { font-size: 1.3em; margin-top: 6px; }
 
-    .grafico-area { display: flex; flex-wrap: wrap; gap: 20px; padding: 15px; align-items: flex-start; }
+    /* cores diferentes */
+    .delicia { background: #f59e0b; }
+    .villa { background: #10b981; }
+    .padaria { background: #6366f1; }
+    .mercatto { background: #2563eb; }
+    .mkids { background: #ec4899; }
+
+    .grafico-area { display: flex; flex-wrap: wrap; gap: 15px; padding: 15px; align-items: center; }
     .grafico-container {
-      flex: 1; min-width: 220px; max-width: 280px;
-      background: #fff; border-radius: 10px;
-      box-shadow: 0 2px 6px rgba(0,0,0,.1); padding: 15px;
+      flex: 1; min-width: 220px; max-width: 300px;
+      background: #fff; border-radius: 10px; padding: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,.1);
     }
     .resumo-modalidades {
-      flex: 1; min-width: 200px; font-size: 14px;
-      background: #fff; padding: 15px; border-radius: 10px;
+      flex: 1; min-width: 180px; font-size: 14px;
+      background: #fff; padding: 10px; border-radius: 10px;
       box-shadow: 0 2px 6px rgba(0,0,0,.1);
     }
     .resumo-modalidades h3 { margin-top: 0; color: #2563eb; }
 
-    .lista-titulos { padding: 15px; display: flex; flex-direction: column; gap: 12px; }
-    .titulo-card {
-      background: #fff; border-radius: 10px;
-      box-shadow: 0 2px 6px rgba(0,0,0,.1); padding: 12px;
-    }
-    .titulo-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
-    .titulo-info { font-size: 13px; margin: 2px 0; }
+    .tabela-container { overflow-x: auto; padding: 15px; }
+    table { width: 100%; border-collapse: collapse; background: #fff; }
+    th, td { padding: 8px; border: 1px solid #e5e7eb; font-size: 13px; text-align: center; }
+    th { background: #f3f4f6; }
     .status-aprovado { color: #16a34a; font-weight: bold; }
     .status-negado { color: #dc2626; font-weight: bold; }
     .status-pendente { color: #f59e0b; font-weight: bold; }
 
-    button { padding: 4px 8px; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold; }
-    .btn-aprovar { background: #16a34a; color: white; margin: 2px; }
-    .btn-negar { background: #dc2626; color: white; margin: 2px; }
-    .btn-revogar { background: #f59e0b; color: white; margin: 2px; }
+    button { padding: 5px 8px; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold; }
+    .btn-aprovar { background: #16a34a; color: white; }
+    .btn-negar { background: #dc2626; color: white; }
+    .btn-revogar { background: #f59e0b; color: white; }
 
     /* Overlay carregamento */
     #overlay {
@@ -93,11 +89,12 @@
       font-weight: bold; color: #2563eb; box-shadow: 0 2px 6px rgba(0,0,0,.2);
     }
 
-    /* Mobile */
     @media(max-width: 768px) {
       header h1 { font-size: 1em; }
       .cards { flex-direction: column; }
       .grafico-area { flex-direction: column; }
+      table { font-size: 11px; }
+      th, td { padding: 6px; }
     }
   </style>
 </head>
@@ -120,9 +117,12 @@
 
   <!-- FILTROS -->
   <div class="filtros">
-    <input type="text" id="filtroPeriodo" placeholder="Selecionar período">
-    <input type="text" id="pesquisa" placeholder="Pesquisar fornecedor ou valor" oninput="carregarTitulos()">
-    <select id="filtroPagamento" onchange="carregarTitulos()">
+    <label>Data Início:</label>
+    <input type="date" id="dataInicio" onchange="carregarTitulos()" value="">
+    <label>Data Fim:</label>
+    <input type="date" id="dataFim" onchange="carregarTitulos()" value="">
+    <input type="text" id="busca" placeholder="Buscar fornecedor ou valor" oninput="carregarTitulos()">
+    <select id="filtroModalidade" onchange="carregarTitulos()">
       <option value="">Todas Modalidades</option>
     </select>
   </div>
@@ -132,51 +132,58 @@
 
   <!-- GRÁFICO + MODALIDADES -->
   <div class="grafico-area">
-    <div class="grafico-container">
-      <canvas id="graficoModalidades"></canvas>
-    </div>
-    <div class="resumo-modalidades" id="resumoModalidades">
-      <h3>Resumo Modalidades</h3>
-      <ul id="listaModalidades"></ul>
-    </div>
+    <div class="grafico-container"><canvas id="graficoModalidades"></canvas></div>
+    <div class="resumo-modalidades"><h3>Resumo Modalidades</h3><ul id="listaModalidades"></ul></div>
   </div>
 
   <!-- LISTA DE TÍTULOS -->
-  <div class="lista-titulos" id="listaTitulos"></div>
+  <div class="tabela-container">
+    <table id="tabelaTitulos">
+      <thead>
+        <tr>
+          <th>Ações</th>
+          <th>Empresa</th>
+          <th>Fornecedor</th>
+          <th>Vencimento</th>
+          <th>Valor Bruto</th>
+          <th>Meio de Pagamento</th>
+          <th>Histórico</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
 
-  <!-- Overlay -->
   <div id="overlay"><span>Carregando...</span></div>
 
   <script>
     const endpointSaldos = "https://script.google.com/macros/s/AKfycbzz1sV5SYJ7zBjY6GYZuUd1HUM7ZmP_Oz798SNAxH36KXdAoTNtqARVsw7EJa9F2__Y/exec";
-    const endpointTitulos = "https://script.google.com/macros/s/AKfycbxGWgIORxK8qAWFltUgk8QENkraDLEQO2nuqU1HXUkqutREeeMi0pfaOGT5NLrCjsCf/exec";
+    const endpointTitulos = "https://script.google.com/macros/s/AKfycbwCpe51vPoH2lG8YR89kVR_uRfg6-T7SNkWwI3LbJAvbNiqEA1pddhG_3llm8tINMCB/exec";
 
     let empresasSelecionadas = ["cap mercatto"];
     let grafico;
-    let dataInicio = new Date(), dataFim = new Date();
-
-    const coresEmpresa = {
-      "cap delicia":"#dc2626","cap villa":"#16a34a","cap padaria":"#f59e0b","cap mercatto":"#2563eb","cap m.kids":"#9333ea"
-    };
 
     function parseValor(v){ if(!v) return 0; return Number(v.toString().replace("R$","").replace(/\./g,"").replace(",",".").trim())||0; }
-    function formatarData(iso){ try{ return new Date(iso).toLocaleDateString("pt-BR",{timeZone:"UTC"});}catch{return iso;} }
-    function toggleMenu(){ const dd=document.getElementById("dropdownEmpresas"); dd.style.display=dd.style.display==="block"?"none":"block"; }
-    function selecionarTodas(checkbox){ document.querySelectorAll("#dropdownEmpresas input[type=checkbox]").forEach(cb=>{ if(cb.value!=="todas") cb.checked=checkbox.checked; }); }
-    function aplicarEmpresas(){ empresasSelecionadas=Array.from(document.querySelectorAll("#dropdownEmpresas input[type=checkbox]:checked")).map(cb=>cb.value).filter(v=>v!=="todas"); toggleMenu(); carregarTudo(); }
-    function mostrarOverlay(mostrar){ document.getElementById("overlay").style.display=mostrar?"flex":"none"; }
+    function formatarData(iso){ try{return new Date(iso).toLocaleDateString("pt-BR",{timeZone:"UTC"});}catch{return iso;} }
+
+    function toggleMenu(){const dd=document.getElementById("dropdownEmpresas");dd.style.display=dd.style.display==="block"?"none":"block";}
+    function selecionarTodas(chk){document.querySelectorAll("#dropdownEmpresas input[type=checkbox]").forEach(cb=>{if(cb.value!=="todas")cb.checked=chk.checked;});}
+    function aplicarEmpresas(){empresasSelecionadas=Array.from(document.querySelectorAll("#dropdownEmpresas input[type=checkbox]:checked")).map(cb=>cb.value).filter(v=>v!=="todas");toggleMenu();carregarTudo();}
+    function mostrarOverlay(m){document.getElementById("overlay").style.display=m?"flex":"none";}
 
     async function carregarSaldos(){
       mostrarOverlay(true);
-      const res=await fetch(endpointSaldos);
-      const dados=await res.json();
-      const cards=document.getElementById("cardsSaldos"); cards.innerHTML="";
+      const res=await fetch(endpointSaldos);const dados=await res.json();
+      const cards=document.getElementById("cardsSaldos");cards.innerHTML="";
       const filtro=dados.filter(s=>empresasSelecionadas.includes(s.Empresa.toLowerCase()));
       filtro.forEach(s=>{
-        let cor=coresEmpresa[s.Empresa.toLowerCase()]||"#2563eb";
-        const card=document.createElement("div"); card.className="card";
-        card.style.borderTop=`6px solid ${cor}`;
-        card.innerHTML=`<h3>${s.Empresa}</h3><div class="valor" style="color:${cor}">R$ ${Number(s.Saldo).toLocaleString("pt-BR",{minimumFractionDigits:2})}</div>`;
+        let cls=s.Empresa.toLowerCase().includes("delicia")?"delicia":
+                s.Empresa.toLowerCase().includes("villa")?"villa":
+                s.Empresa.toLowerCase().includes("padaria")?"padaria":
+                s.Empresa.toLowerCase().includes("mercatto")?"mercatto":"mkids";
+        const card=document.createElement("div");card.className="card "+cls;
+        card.innerHTML=`<h3>${s.Empresa}</h3><div class="valor">R$ ${Number(s.Saldo).toLocaleString("pt-BR",{minimumFractionDigits:2})}</div>`;
         cards.appendChild(card);
       });
       mostrarOverlay(false);
@@ -184,49 +191,54 @@
 
     async function carregarTitulos(){
       mostrarOverlay(true);
-      const container=document.getElementById("listaTitulos"); container.innerHTML="";
-      let somaModalidades={}, modalidadesSet=new Set();
-      const pesquisa=document.getElementById("pesquisa").value.toLowerCase();
-      const filtroPagamento=document.getElementById("filtroPagamento").value.toLowerCase();
+      const tbody=document.querySelector("#tabelaTitulos tbody");tbody.innerHTML="";
+      let somaModalidades={}; let modalidadesSet=new Set();
+      const inicio=document.getElementById("dataInicio").value;
+      const fim=document.getElementById("dataFim").value;
+      const busca=document.getElementById("busca").value.toLowerCase();
+      const filtroMod=document.getElementById("filtroModalidade").value.toLowerCase();
 
       for(const empresa of empresasSelecionadas){
         const res=await fetch(endpointTitulos+"?action=listar&empresa="+encodeURIComponent(empresa));
-        const dados=await res.json();
-        let titulos=dados.titulos;
+        const dados=await res.json(); let titulos=dados.titulos;
 
-        titulos=titulos.filter(t=>{let d=new Date(t.vencimento);return(!dataInicio||d>=dataInicio)&&(!dataFim||d<=dataFim);});
-        if(pesquisa){ titulos=titulos.filter(t=>t.fornecedor.toLowerCase().includes(pesquisa)||t.valor.toString().includes(pesquisa)); }
-        if(filtroPagamento){ titulos=titulos.filter(t=>t.meio_pagamento&&t.meio_pagamento.toLowerCase().includes(filtroPagamento)); }
+        if(inicio||fim){titulos=titulos.filter(t=>{let d=new Date(t.vencimento);return(!inicio||d>=new Date(inicio))&&(!fim||d<=new Date(fim));});}
+        if(busca){titulos=titulos.filter(t=>t.fornecedor?.toLowerCase().includes(busca)||t.valor.toString().includes(busca));}
+        if(filtroMod){titulos=titulos.filter(t=>t.meio_pagamento?.toLowerCase().includes(filtroMod));}
 
         titulos.forEach((item,i)=>{
           const valorNum=parseValor(item.valor);
           somaModalidades[item.meio_pagamento]=(somaModalidades[item.meio_pagamento]||0)+valorNum;
-          if(item.meio_pagamento) modalidadesSet.add(item.meio_pagamento);
+          modalidadesSet.add(item.meio_pagamento);
 
-          let cor=coresEmpresa[empresa]||"#2563eb";
-          let status=item.status==="Sim"?"Pendente":(item.status||"Pendente");
-
-          const card=document.createElement("div"); card.className="titulo-card"; card.style.borderLeft=`6px solid ${cor}`;
-          card.innerHTML=`<div class="titulo-top"><strong>${item.fornecedor}</strong>
-            <div>${status==="Aprovado"?`<button class="btn-revogar" onclick="atualizarStatus('${empresa}',${i},'Pendente')">↺ Revogar</button>`:
-            `<button class="btn-aprovar" onclick="atualizarStatus('${empresa}',${i},'Aprovado')">✔</button><button class="btn-negar" onclick="atualizarStatus('${empresa}',${i},'Negado')">✖</button>`}</div></div>
-            <div class="titulo-info">Empresa: ${item.empresa} | Venc: ${formatarData(item.vencimento)} | Valor: R$ ${valorNum.toLocaleString("pt-BR",{minimumFractionDigits:2})}</div>
-            <div class="titulo-info">Pagamento: ${item.meio_pagamento} | Status: <span class="${status==='Aprovado'?'status-aprovado':status==='Negado'?'status-negado':'status-pendente'}">${status}</span></div>
-            <div class="titulo-info">Histórico: ${item.historico}</div>`;
-          container.appendChild(card);
+          let status=item.status; if(status==="Sim")status="Pendente";
+          const tr=document.createElement("tr");
+          tr.innerHTML=`
+            <td>
+              <button class="btn-aprovar" onclick="atualizarStatus('${empresa}',${i},'Aprovado')">✔</button>
+              <button class="btn-negar" onclick="atualizarStatus('${empresa}',${i},'Negado')">✖</button>
+              <button class="btn-revogar" onclick="atualizarStatus('${empresa}',${i},'Pendente')">↺</button>
+            </td>
+            <td>${item.empresa}</td>
+            <td>${item.fornecedor}</td>
+            <td>${formatarData(item.vencimento)}</td>
+            <td>R$ ${valorNum.toLocaleString("pt-BR",{minimumFractionDigits:2})}</td>
+            <td>${item.meio_pagamento||"-"}</td>
+            <td>${item.historico||"-"}</td>
+            <td class="${status==='Aprovado'?'status-aprovado':status==='Negado'?'status-negado':'status-pendente'}">${status}</td>
+          `;
+          tbody.appendChild(tr);
         });
       }
-
-      const select=document.getElementById("filtroPagamento");
-      const valorAtual=select.value;
-      select.innerHTML="<option value=''>Todas Modalidades</option>";
-      modalidadesSet.forEach(m=>{ let opt=document.createElement("option"); opt.value=m.toLowerCase(); opt.textContent=m; if(opt.value===valorAtual) opt.selected=true; select.appendChild(opt); });
 
       const ctx=document.getElementById("graficoModalidades").getContext("2d");
       if(grafico)grafico.destroy();
       grafico=new Chart(ctx,{type:"pie",data:{labels:Object.keys(somaModalidades),datasets:[{data:Object.values(somaModalidades),backgroundColor:["#2563eb","#16a34a","#dc2626","#f59e0b","#9333ea"]}]},options:{responsive:true,plugins:{legend:{position:"bottom"}}}});
-      const lista=document.getElementById("listaModalidades"); lista.innerHTML="";
+      const lista=document.getElementById("listaModalidades");lista.innerHTML="";
       Object.entries(somaModalidades).forEach(([mod,val])=>{const li=document.createElement("li");li.textContent=`${mod}: R$ ${val.toLocaleString("pt-BR",{minimumFractionDigits:2})}`;lista.appendChild(li);});
+
+      const filtro=document.getElementById("filtroModalidade");filtro.innerHTML='<option value="">Todas Modalidades</option>';
+      modalidadesSet.forEach(m=>{const opt=document.createElement("option");opt.value=m;opt.textContent=m;filtro.appendChild(opt);});
 
       mostrarOverlay(false);
     }
@@ -238,12 +250,14 @@
       mostrarOverlay(false);
     }
 
-    function carregarTudo(){ carregarSaldos(); carregarTitulos(); }
-
-    flatpickr("#filtroPeriodo",{mode:"range",dateFormat:"Y-m-d",locale:"pt",defaultDate:[new Date(),new Date()],altInput:true,altFormat:"d/m/Y",
-      onClose:function(sel){ if(sel.length===2){dataInicio=sel[0];dataFim=sel[1];carregarTitulos();} }});
-
-    carregarTudo();
+    function carregarTudo(){carregarSaldos();carregarTitulos();}
+    // Define datas padrão como hoje
+    window.onload=function(){
+      const hoje=new Date().toISOString().split("T")[0];
+      document.getElementById("dataInicio").value=hoje;
+      document.getElementById("dataFim").value=hoje;
+      carregarTudo();
+    }
   </script>
 </body>
 </html>
