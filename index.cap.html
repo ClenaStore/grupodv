@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <title>Painel Financeiro • Aprovação & Saldos</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <style>
     body { font-family: Arial, sans-serif; margin: 0; background: #f6f7fb; color: #111827; }
@@ -46,6 +47,15 @@
     .btn-aprovar { background: #16a34a; color: white; }
     .btn-negar { background: #dc2626; color: white; }
 
+    /* Balão flutuante */
+    #balaoTotal {
+      position: fixed; bottom: 20px; right: 20px;
+      background: #2563eb; color: #fff;
+      padding: 12px 18px; border-radius: 8px;
+      box-shadow: 0 4px 10px rgba(0,0,0,.2);
+      font-weight: bold; display: none; z-index: 999;
+    }
+
     /* Mobile */
     @media(max-width: 768px) {
       header h1 { font-size: 0.9em; }
@@ -75,6 +85,11 @@
   <!-- RESUMO DE SALDOS -->
   <div class="cards" id="cardsSaldos"></div>
 
+  <!-- GRÁFICO -->
+  <div style="padding:15px;">
+    <canvas id="graficoModalidades"></canvas>
+  </div>
+
   <!-- LISTA DE TÍTULOS -->
   <div style="padding: 10px;">
     <table id="tabelaTitulos">
@@ -94,11 +109,26 @@
     </table>
   </div>
 
+  <!-- BALÃO TOTAL -->
+  <div id="balaoTotal"></div>
+
   <script>
     const endpointSaldos = "https://script.google.com/macros/s/AKfycbzz1sV5SYJ7zBjY6GYZuUd1HUM7ZmP_Oz798SNAxH36KXdAoTNtqARVsw7EJa9F2__Y/exec";
     const endpointTitulos = "https://script.google.com/macros/s/AKfycbwCpe51vPoH2lG8YR89kVR_uRfg6-T7SNkWwI3LbJAvbNiqEA1pddhG_3llm8tINMCB/exec";
 
     let empresasSelecionadas = ["cap mercatto"];
+    let grafico;
+
+    function parseValor(v) {
+      if (!v) return 0;
+      return Number(
+        v.toString()
+         .replace("R$", "")
+         .replace(/\./g, "")
+         .replace(",", ".")
+         .trim()
+      ) || 0;
+    }
 
     function toggleMenu() {
       document.getElementById("dropdownEmpresas").style.display =
@@ -135,17 +165,23 @@
     async function carregarTitulos() {
       const tbody = document.querySelector("#tabelaTitulos tbody");
       tbody.innerHTML = "";
+      let somaModalidades = {};
+      let totalSelecionado = 0;
 
       for (const empresa of empresasSelecionadas) {
         const res = await fetch(endpointTitulos + "?action=listar&empresa=" + encodeURIComponent(empresa));
         const dados = await res.json();
         dados.titulos.forEach((item, i) => {
+          const valorNum = parseValor(item.valor);
+          totalSelecionado += valorNum;
+          somaModalidades[item.meio_pagamento] = (somaModalidades[item.meio_pagamento] || 0) + valorNum;
+
           const tr = document.createElement("tr");
           tr.innerHTML = `
             <td>${item.empresa}</td>
             <td>${item.fornecedor}</td>
             <td>${item.vencimento}</td>
-            <td>R$ ${item.valor}</td>
+            <td>R$ ${valorNum.toLocaleString("pt-BR",{minimumFractionDigits:2})}</td>
             <td>${item.meio_pagamento}</td>
             <td>${item.historico}</td>
             <td class="${item.status === 'Aprovado' ? 'status-aprovado' : item.status === 'Negado' ? 'status-negado' : ''}">
@@ -159,6 +195,38 @@
           tbody.appendChild(tr);
         });
       }
+
+      // Balão total
+      const balao = document.getElementById("balaoTotal");
+      balao.style.display = "block";
+      balao.innerText = `Total Selecionado: R$ ${totalSelecionado.toLocaleString("pt-BR",{minimumFractionDigits:2})}`;
+
+      // Gráfico
+      const ctx = document.getElementById("graficoModalidades").getContext("2d");
+      if (grafico) grafico.destroy();
+      grafico = new Chart(ctx, {
+        type: "pie",
+        data: {
+          labels: Object.keys(somaModalidades),
+          datasets: [{
+            data: Object.values(somaModalidades),
+            backgroundColor: ["#2563eb","#16a34a","#dc2626","#f59e0b","#9333ea"]
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  let valor = context.raw || 0;
+                  return `${context.label}: R$ ${valor.toLocaleString("pt-BR",{minimumFractionDigits:2})}`;
+                }
+              }
+            }
+          }
+        }
+      });
     }
 
     async function atualizarStatus(empresa, index, status) {
