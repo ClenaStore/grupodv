@@ -4,7 +4,13 @@
   <meta charset="UTF-8">
   <title>Painel Financeiro • Aprovação & Saldos</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+  <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Flatpickr -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/pt.js"></script>
 
   <style>
     body { font-family: Arial, sans-serif; margin: 0; background: #f6f7fb; color: #111827; }
@@ -13,7 +19,7 @@
       padding: 12px; display: flex; justify-content: space-between; align-items: center;
       position: sticky; top: 0; z-index: 100;
     }
-    header h1 { font-size: 1.2em; margin: 0; }
+    header h1 { font-size: 1.1em; margin: 0; }
 
     /* Menu flutuante */
     .menu-empresas { position: relative; }
@@ -27,55 +33,60 @@
       position: absolute; right: 0; top: 40px;
       background: #fff; border: 1px solid #ccc; border-radius: 8px;
       box-shadow: 0 2px 8px rgba(0,0,0,.15); padding: 10px; z-index: 200;
-      min-width: 180px;
+      min-width: 200px;
     }
-    .dropdown label {
-      display: block; font-size: 14px; margin-bottom: 6px; cursor: pointer;
-      color: #2563eb; font-weight: bold;
-    }
+    .dropdown label { display: block; font-size: 14px; margin-bottom: 6px; cursor: pointer; color:#2563eb; font-weight:bold; }
+    .dropdown input { margin-right: 6px; }
 
+    /* Filtros */
     .filtros { display: flex; gap: 10px; padding: 10px; flex-wrap: wrap; align-items: center; }
-    .filtros input, .filtros select {
-      padding: 6px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px;
-    }
+    .filtros input, .filtros select { padding: 6px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; }
 
-    .cards { display: flex; flex-wrap: wrap; gap: 15px; padding: 15px; }
+    /* Cards de saldo */
+    .cards { display: flex; flex-wrap: wrap; gap: 12px; padding: 10px; }
     .card {
-      flex: 1; min-width: 180px; padding: 15px;
-      border-radius: 10px; background: #fff;
-      box-shadow: 0 2px 6px rgba(0,0,0,.1);
+      flex: 1; min-width: 160px; padding: 12px;
+      border-radius: 10px; background: #fff; box-shadow: 0 2px 6px rgba(0,0,0,.1);
       text-align: center;
     }
-    .card h3 { margin: 0 0 8px; font-size: 1em; color: #374151; }
-    .card .valor { font-size: 1.4em; font-weight: bold; color: #2563eb; }
+    .card h3 { margin: 0; font-size: 0.9em; }
+    .card .valor { font-size: 1.2em; font-weight: bold; }
+    .saldo { margin-top: 6px; font-size: 0.9em; font-weight: bold; padding:4px; border-radius:6px; }
 
-    .grafico-area { display: flex; flex-wrap: wrap; gap: 20px; padding: 15px; align-items: center; }
+    /* Gráfico */
+    .grafico-area { display: flex; flex-wrap: wrap; gap: 15px; padding: 10px; align-items: center; }
     .grafico-container {
-      flex: 1; min-width: 250px; max-width: 350px;
-      background: #fff; border-radius: 10px;
-      box-shadow: 0 2px 6px rgba(0,0,0,.1); padding: 15px;
+      flex: 1; min-width: 200px; max-width: 250px;
+      background: #fff; border-radius: 10px; box-shadow: 0 2px 6px rgba(0,0,0,.1);
+      padding: 10px;
     }
     .resumo-modalidades {
       flex: 1; min-width: 200px; font-size: 14px;
-      background: #fff; padding: 15px; border-radius: 10px;
+      background: #fff; padding: 10px; border-radius: 10px;
       box-shadow: 0 2px 6px rgba(0,0,0,.1);
     }
-    .resumo-modalidades h3 { margin-top: 0; color: #2563eb; }
+    .resumo-modalidades h3 { margin: 0 0 8px; color:#2563eb; }
 
-    .tabela-container { overflow-x: auto; padding: 15px; }
-    table { width: 100%; border-collapse: collapse; background: #fff; }
-    th, td { padding: 10px; border: 1px solid #e5e7eb; font-size: 14px; text-align: center; }
-    th { background: #f3f4f6; }
+    /* Títulos */
+    .tabela-container { padding: 10px; }
+    .titulo-card {
+      background:#fff; border-radius:10px; box-shadow:0 2px 6px rgba(0,0,0,.1);
+      padding:10px; margin-bottom:10px;
+    }
+    .titulo-top { display:flex; justify-content:space-between; align-items:center; }
+    .titulo-info { font-size:13px; margin-top:6px; }
     .status-aprovado { color: #16a34a; font-weight: bold; }
     .status-negado { color: #dc2626; font-weight: bold; }
     .status-pendente { color: #f59e0b; font-weight: bold; }
 
-    button { padding: 6px 10px; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold; }
-    .btn-aprovar { background: #16a34a; color: white; margin: 2px; }
-    .btn-negar { background: #dc2626; color: white; margin: 2px; }
-    .btn-revogar { background: #f59e0b; color: white; margin: 2px; }
+    .btn-aprovar, .btn-negar, .btn-revogar {
+      padding: 4px 8px; border:none; border-radius:6px; font-size:12px; cursor:pointer; margin-left:4px;
+    }
+    .btn-aprovar { background:#16a34a; color:#fff; }
+    .btn-negar { background:#dc2626; color:#fff; }
+    .btn-revogar { background:#f59e0b; color:#fff; }
 
-    /* Overlay carregamento */
+    /* Overlay */
     #overlay {
       position: fixed; top: 0; left: 0; width: 100%; height: 100%;
       background: rgba(0,0,0,0.4); display: flex; justify-content: center; align-items: center;
@@ -86,31 +97,36 @@
       font-weight: bold; color: #2563eb; box-shadow: 0 2px 6px rgba(0,0,0,.2);
     }
 
-    /* Mobile */
-    @media(max-width: 768px) {
-      header h1 { font-size: 1em; }
-      .cards { flex-direction: column; }
-      .grafico-area { flex-direction: column; }
-      table { font-size: 12px; }
-      th, td { padding: 6px; }
+    @media(max-width:768px){
+      .cards{flex-direction:column;}
+      .grafico-area{flex-direction:column;}
+      .titulo-info{font-size:12px;}
     }
   </style>
 </head>
 <body>
   <header>
     <h1>Painel Financeiro</h1>
+    <div class="menu-empresas">
+      <button class="menu-btn" onclick="toggleMenu()">Selecionar Empresas</button>
+      <div class="dropdown" id="dropdownEmpresas">
+        <label><input type="checkbox" value="todas" onchange="selecionarTodas(this)"> Todas</label>
+        <label><input type="checkbox" value="cap delicia"> CAP Delícia</label>
+        <label><input type="checkbox" value="cap villa"> CAP Villa</label>
+        <label><input type="checkbox" value="cap padaria"> CAP Padaria</label>
+        <label><input type="checkbox" value="cap mercatto"> CAP Mercatto</label>
+        <label><input type="checkbox" value="cap m.kids"> CAP M.Kids</label>
+        <button class="menu-btn" style="margin-top:8px;" onclick="aplicarEmpresas()">Aplicar</button>
+      </div>
+    </div>
   </header>
 
   <!-- FILTROS -->
   <div class="filtros">
-    <label>Data Início:</label>
-    <input type="date" id="dataInicio" onchange="carregarTitulos()">
-    <label>Data Fim:</label>
-    <input type="date" id="dataFim" onchange="carregarTitulos()">
-
+    <label>Período:</label>
+    <input type="text" id="filtroPeriodo" placeholder="Selecione o período">
     <label>Pesquisar:</label>
     <input type="text" id="pesquisa" placeholder="Fornecedor ou Valor" onkeyup="carregarTitulos()">
-
     <label>Pagamento:</label>
     <select id="filtroPagamento" onchange="carregarTitulos()">
       <option value="">Todos</option>
@@ -122,176 +138,120 @@
     </select>
   </div>
 
-  <!-- RESUMO DE SALDOS -->
+  <!-- CARDS SALDOS -->
   <div class="cards" id="cardsSaldos"></div>
 
-  <!-- GRÁFICO + MODALIDADES -->
+  <!-- GRÁFICO -->
   <div class="grafico-area">
-    <div class="grafico-container">
-      <canvas id="graficoModalidades"></canvas>
-    </div>
-    <div class="resumo-modalidades" id="resumoModalidades">
-      <h3>Resumo Modalidades</h3>
-      <ul id="listaModalidades"></ul>
-    </div>
+    <div class="grafico-container"><canvas id="graficoModalidades"></canvas></div>
+    <div class="resumo-modalidades"><h3>Resumo Modalidades</h3><ul id="listaModalidades"></ul></div>
   </div>
 
-  <!-- LISTA DE TÍTULOS -->
-  <div class="tabela-container">
-    <table id="tabelaTitulos">
-      <thead>
-        <tr>
-          <th>Ações</th>
-          <th>Empresa</th>
-          <th>Fornecedor</th>
-          <th>Vencimento</th>
-          <th>Valor Bruto</th>
-          <th>Meio de Pagamento</th>
-          <th>Histórico</th>
-          <th>Status</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-  </div>
+  <!-- LISTA TÍTULOS -->
+  <div class="tabela-container" id="listaTitulos"></div>
 
   <!-- Overlay -->
   <div id="overlay"><span>Carregando...</span></div>
 
-  <script>
-    const endpointSaldos = "https://script.google.com/macros/s/AKfycbzz1sV5SYJ7zBjY6GYZuUd1HUM7ZmP_Oz798SNAxH36KXdAoTNtqARVsw7EJa9F2__Y/exec";
-    const endpointTitulos = "https://script.google.com/macros/s/AKfycbwCpe51vPoH2lG8YR89kVR_uRfg6-T7SNkWwI3LbJAvbNiqEA1pddhG_3llm8tINMCB/exec";
+<script>
+const endpointSaldos="https://script.google.com/macros/s/AKfycbzz1sV5SYJ7zBjY6GYZuUd1HUM7ZmP_Oz798SNAxH36KXdAoTNtqARVsw7EJa9F2__Y/exec";
+const endpointTitulos="https://script.google.com/macros/s/AKfycbwCpe51vPoH2lG8YR89kVR_uRfg6-T7SNkWwI3LbJAvbNiqEA1pddhG_3llm8tINMCB/exec";
+let empresasSelecionadas=["cap mercatto"],grafico;
+let dataInicio=new Date(),dataFim=new Date();
 
-    let empresasSelecionadas = ["cap mercatto"];
-    let grafico;
+// cores por empresa
+const coresEmpresa={
+  "cap delicia":"#e11d48",
+  "cap villa":"#2563eb",
+  "cap padaria":"#16a34a",
+  "cap mercatto":"#9333ea",
+  "cap m.kids":"#f59e0b"
+};
 
-    function parseValor(v) {
-      if (!v) return 0;
-      return Number(v.toString().replace("R$","").replace(/\./g,"").replace(",",".").trim()) || 0;
-    }
+function toggleMenu(){let dd=document.getElementById("dropdownEmpresas");dd.style.display=dd.style.display==="block"?"none":"block";}
+function selecionarTodas(cb){document.querySelectorAll("#dropdownEmpresas input[type=checkbox]").forEach(c=>{if(c.value!=="todas")c.checked=cb.checked;});}
+function aplicarEmpresas(){empresasSelecionadas=Array.from(document.querySelectorAll("#dropdownEmpresas input[type=checkbox]:checked")).map(c=>c.value).filter(v=>v!=="todas");toggleMenu();carregarTudo();}
+function mostrarOverlay(m){document.getElementById("overlay").style.display=m?"flex":"none";}
+function parseValor(v){if(!v)return 0;return Number(v.toString().replace("R$","").replace(/\./g,"").replace(",",".").trim())||0;}
+function formatarData(d){try{return new Date(d).toLocaleDateString("pt-BR",{timeZone:"UTC"});}catch{return d;}}
 
-    function formatarData(iso) {
-      try { return new Date(iso).toLocaleDateString("pt-BR", { timeZone: "UTC" }); }
-      catch { return iso; }
-    }
+async function carregarSaldos(){
+  mostrarOverlay(true);
+  const res=await fetch(endpointSaldos);const dados=await res.json();
+  const cards=document.getElementById("cardsSaldos");cards.innerHTML="";
+  const filtro=dados.filter(s=>empresasSelecionadas.includes(s.Empresa.toLowerCase()));
+  filtro.forEach(s=>{
+    let cor=coresEmpresa[s.Empresa.toLowerCase()]||"#2563eb";
+    const card=document.createElement("div");card.className="card";
+    card.style.borderTop=`4px solid ${cor}`;
+    card.innerHTML=`<h3>${s.Empresa}</h3>
+    <div class="valor" style="color:${cor}">R$ ${Number(s.Saldo).toLocaleString("pt-BR",{minimumFractionDigits:2})}</div>
+    <div class="saldo" style="background:${cor};color:#fff">Saldo da Conta</div>`;
+    cards.appendChild(card);
+  });
+  mostrarOverlay(false);
+}
 
-    function mostrarOverlay(mostrar) {
-      document.getElementById("overlay").style.display = mostrar ? "flex" : "none";
-    }
+async function carregarTitulos(){
+  mostrarOverlay(true);
+  let container=document.getElementById("listaTitulos");container.innerHTML="";
+  let somaModalidades={};
+  const pesquisa=document.getElementById("pesquisa").value.toLowerCase();
+  const filtroPagamento=document.getElementById("filtroPagamento").value.toLowerCase();
 
-    async function carregarSaldos() {
-      mostrarOverlay(true);
-      const res = await fetch(endpointSaldos);
-      const dados = await res.json();
-      const cards = document.getElementById("cardsSaldos");
-      cards.innerHTML = "";
+  for(const empresa of empresasSelecionadas){
+    const res=await fetch(endpointTitulos+"?action=listar&empresa="+encodeURIComponent(empresa));
+    const dados=await res.json();let titulos=dados.titulos;
 
-      const filtro = dados.filter(s => empresasSelecionadas.includes(s.Empresa.toLowerCase()));
-      filtro.forEach(s=>{
-        const card=document.createElement("div");
-        card.className="card";
-        card.innerHTML=`<h3>${s.Empresa}</h3><div class="valor">Saldo: R$ ${Number(s.Saldo).toLocaleString("pt-BR",{minimumFractionDigits:2})}</div>`;
-        cards.appendChild(card);
-      });
-      mostrarOverlay(false);
-    }
+    // filtro data
+    titulos=titulos.filter(t=>{let d=new Date(t.vencimento);return(!dataInicio||d>=dataInicio)&&(!dataFim||d<=dataFim);});
+    // filtro pesquisa
+    if(pesquisa){titulos=titulos.filter(t=>t.fornecedor.toLowerCase().includes(pesquisa)||t.valor.toString().includes(pesquisa));}
+    // filtro pagamento
+    if(filtroPagamento){titulos=titulos.filter(t=>t.meio_pagamento&&t.meio_pagamento.toLowerCase().includes(filtroPagamento));}
 
-    async function carregarTitulos() {
-      mostrarOverlay(true);
-      const tbody=document.querySelector("#tabelaTitulos tbody");
-      tbody.innerHTML="";
-      let somaModalidades={};
+    titulos.forEach((item,i)=>{
+      const valorNum=parseValor(item.valor);
+      somaModalidades[item.meio_pagamento]=(somaModalidades[item.meio_pagamento]||0)+valorNum;
+      let cor=coresEmpresa[empresa]||"#2563eb";
+      const card=document.createElement("div");card.className="titulo-card";card.style.borderLeft=`6px solid ${cor}`;
+      let status=item.status==="Sim"?"Pendente":item.status;
+      card.innerHTML=`<div class="titulo-top">
+        <strong>${item.fornecedor}</strong>
+        <div>
+          ${status==="Aprovado"?`<button class="btn-revogar" onclick="atualizarStatus('${empresa}',${i},'Pendente')">↺ Revogar</button>`:
+          `<button class="btn-aprovar" onclick="atualizarStatus('${empresa}',${i},'Aprovado')">✔</button>
+           <button class="btn-negar" onclick="atualizarStatus('${empresa}',${i},'Negado')">✖</button>`}
+        </div></div>
+        <div class="titulo-info">Empresa: ${item.empresa} | Venc: ${formatarData(item.vencimento)} | Valor: R$ ${valorNum.toLocaleString("pt-BR",{minimumFractionDigits:2})}</div>
+        <div class="titulo-info">Pagamento: ${item.meio_pagamento} | Status: <span class="${status==='Aprovado'?'status-aprovado':status==='Negado'?'status-negado':'status-pendente'}">${status}</span></div>
+        <div class="titulo-info">Histórico: ${item.historico}</div>`;
+      container.appendChild(card);
+    });
+  }
 
-      const inicio=document.getElementById("dataInicio").value;
-      const fim=document.getElementById("dataFim").value;
-      const pesquisa=document.getElementById("pesquisa").value.toLowerCase();
-      const filtroPagamento=document.getElementById("filtroPagamento").value;
+  // gráfico
+  const ctx=document.getElementById("graficoModalidades").getContext("2d");
+  if(grafico)grafico.destroy();
+  grafico=new Chart(ctx,{type:"pie",data:{labels:Object.keys(somaModalidades),datasets:[{data:Object.values(somaModalidades),backgroundColor:["#2563eb","#16a34a","#dc2626","#f59e0b","#9333ea"]}]},options:{responsive:true,plugins:{legend:{position:"bottom"}}}});
+  const lista=document.getElementById("listaModalidades");lista.innerHTML="";
+  Object.entries(somaModalidades).forEach(([mod,val])=>{const li=document.createElement("li");li.textContent=`${mod}: R$ ${val.toLocaleString("pt-BR",{minimumFractionDigits:2})}`;lista.appendChild(li);});
+  mostrarOverlay(false);
+}
 
-      for(const empresa of empresasSelecionadas){
-        const res=await fetch(endpointTitulos+"?action=listar&empresa="+encodeURIComponent(empresa));
-        const dados=await res.json();
-        let titulos=dados.titulos;
+async function atualizarStatus(empresa,index,status){
+  mostrarOverlay(true);
+  await fetch(endpointTitulos,{method:"POST",body:JSON.stringify({action:"atualizar",empresa,index,status}),headers:{"Content-Type":"application/json"}});
+  await carregarTitulos();
+  mostrarOverlay(false);
+}
 
-        // Filtro por data
-        if(inicio||fim){
-          titulos=titulos.filter(t=>{
-            let d=new Date(t.vencimento);
-            return(!inicio||d>=new Date(inicio))&&(!fim||d<=new Date(fim));
-          });
-        }
+// flatpickr
+flatpickr("#filtroPeriodo",{mode:"range",dateFormat:"Y-m-d",locale:"pt",defaultDate:[new Date(),new Date()],altInput:true,altFormat:"d/m/Y",
+  onClose:function(sel){if(sel.length===2){dataInicio=sel[0];dataFim=sel[1];carregarTitulos();}}});
 
-        // Filtro por pesquisa
-        if(pesquisa){
-          titulos=titulos.filter(t=>
-            (t.fornecedor && t.fornecedor.toLowerCase().includes(pesquisa)) ||
-            (t.valor && parseValor(t.valor).toString().includes(pesquisa))
-          );
-        }
-
-        // Filtro por forma de pagamento
-        if(filtroPagamento){
-          titulos=titulos.filter(t=> t.meio_pagamento && t.meio_pagamento.toLowerCase().includes(filtroPagamento));
-        }
-
-        titulos.forEach((item,i)=>{
-          const valorNum=parseValor(item.valor);
-          somaModalidades[item.meio_pagamento]=(somaModalidades[item.meio_pagamento]||0)+valorNum;
-
-          // status "Sim" tratado como "Pendente"
-          let status=item.status==="Sim"?"Pendente":item.status||"Pendente";
-
-          const tr=document.createElement("tr");
-          tr.innerHTML=`
-            <td>
-              ${status==="Pendente" ? `
-                <button class="btn-aprovar" onclick="atualizarStatus('${empresa}',${i},'Aprovado')">✔</button>
-                <button class="btn-negar" onclick="atualizarStatus('${empresa}',${i},'Negado')">✖</button>
-              ` : `
-                <button class="btn-revogar" onclick="atualizarStatus('${empresa}',${i},'Pendente')">↩ Revogar</button>
-              `}
-            </td>
-            <td>${item.empresa}</td>
-            <td>${item.fornecedor}</td>
-            <td>${formatarData(item.vencimento)}</td>
-            <td>R$ ${valorNum.toLocaleString("pt-BR",{minimumFractionDigits:2})}</td>
-            <td>${item.meio_pagamento}</td>
-            <td>${item.historico}</td>
-            <td class="${status==='Aprovado'?'status-aprovado':status==='Negado'?'status-negado':'status-pendente'}">${status}</td>
-          `;
-          tbody.appendChild(tr);
-        });
-      }
-
-      // Atualiza gráfico
-      const ctx=document.getElementById("graficoModalidades").getContext("2d");
-      if(grafico) grafico.destroy();
-      grafico=new Chart(ctx,{
-        type:"pie",
-        data:{labels:Object.keys(somaModalidades),datasets:[{data:Object.values(somaModalidades),backgroundColor:["#2563eb","#16a34a","#dc2626","#f59e0b","#9333ea"]}]},
-        options:{responsive:true,plugins:{legend:{position:"bottom"}}}
-      });
-
-      // Atualiza resumo modalidades
-      const lista=document.getElementById("listaModalidades");
-      lista.innerHTML="";
-      Object.entries(somaModalidades).forEach(([mod,val])=>{
-        const li=document.createElement("li");
-        li.textContent=`${mod}: R$ ${val.toLocaleString("pt-BR",{minimumFractionDigits:2})}`;
-        lista.appendChild(li);
-      });
-
-      mostrarOverlay(false);
-    }
-
-    async function atualizarStatus(empresa,index,status){
-      mostrarOverlay(true);
-      await fetch(endpointTitulos,{method:"POST",body:JSON.stringify({action:"atualizar",empresa,index,status}),headers:{"Content-Type":"application/json"}});
-      await carregarTitulos();
-      mostrarOverlay(false);
-    }
-
-    function carregarTudo(){carregarSaldos();carregarTitulos();}
-    carregarTudo();
-  </script>
+function carregarTudo(){carregarSaldos();carregarTitulos();}
+carregarTudo();
+</script>
 </body>
 </html>
