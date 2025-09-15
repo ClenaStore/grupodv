@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Painel Financeiro • Aprovação & Saldos</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; background: #f6f7fb; color: #111827; }
+    header { background: #2563eb; color: white; padding: 15px; text-align: center; font-size: 1.4em; font-weight: bold; }
+
+    .filtros { display: flex; gap: 10px; padding: 15px; flex-wrap: wrap; }
+    select, input { padding: 6px; border-radius: 6px; border: 1px solid #ccc; }
+
+    .cards { display: flex; flex-wrap: wrap; gap: 15px; padding: 15px; }
+    .card { flex: 1; min-width: 200px; padding: 15px; border-radius: 8px; background: #fff; box-shadow: 0 2px 6px rgba(0,0,0,.1); }
+    .card h3 { margin: 0 0 10px; font-size: 1em; color: #374151; }
+    .card .valor { font-size: 1.4em; font-weight: bold; }
+
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; background: #fff; }
+    th, td { padding: 10px; border: 1px solid #e5e7eb; font-size: 14px; }
+    th { background: #f3f4f6; }
+    .status-aprovado { color: #16a34a; font-weight: bold; }
+    .status-negado { color: #dc2626; font-weight: bold; }
+
+    button { padding: 6px 12px; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: bold; }
+    .btn-aprovar { background: #16a34a; color: white; }
+    .btn-negar { background: #dc2626; color: white; }
+  </style>
+</head>
+<body>
+  <header>Painel Financeiro • Saldos e Aprovação de Títulos</header>
+
+  <!-- FILTROS -->
+  <div class="filtros">
+    <label>Empresa:</label>
+    <select id="empresaSelect" onchange="carregarTudo()">
+      <option value="cap delicia">CAP Delícia</option>
+      <option value="cap villa">CAP Villa</option>
+      <option value="cap padaria">CAP Padaria</option>
+      <option value="cap mercatto">CAP Mercatto</option>
+      <option value="cap m.kids">CAP M.Kids</option>
+    </select>
+
+    <label>Data Inicial:</label>
+    <input type="date" id="dataInicio" onchange="carregarTitulos()">
+
+    <label>Data Final:</label>
+    <input type="date" id="dataFim" onchange="carregarTitulos()">
+  </div>
+
+  <!-- RESUMO DE SALDOS -->
+  <div class="cards" id="cardsSaldos">
+    <!-- Preenchido via JS -->
+  </div>
+
+  <!-- LISTA DE TÍTULOS -->
+  <div style="padding: 15px;">
+    <table id="tabelaTitulos">
+      <thead>
+        <tr>
+          <th>Empresa</th>
+          <th>Cliente / Fornecedor</th>
+          <th>Vencimento</th>
+          <th>Valor Bruto</th>
+          <th>Meio de Pagamento</th>
+          <th>Histórico</th>
+          <th>Status</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <script>
+    const endpointSaldos = "https://script.google.com/macros/s/AKfycbzz1sV5SYJ7zBjY6GYZuUd1HUM7ZmP_Oz798SNAxH36KXdAoTNtqARVsw7EJa9F2__Y/exec";
+    const endpointTitulos = "https://script.google.com/macros/s/AKfycbwCpe51vPoH2lG8YR89kVR_uRfg6-T7SNkWwI3LbJAvbNiqEA1pddhG_3llm8tINMCB/exec"; // substitua pelo GAS dos títulos
+
+    // --------------------
+    // Carrega Saldos
+    // --------------------
+    async function carregarSaldos() {
+      const res = await fetch(endpointSaldos);
+      const dados = await res.json();
+
+      const empresa = document.getElementById("empresaSelect").value;
+      const cards = document.getElementById("cardsSaldos");
+      cards.innerHTML = "";
+
+      // Filtro por empresa
+      const filtro = dados.filter(s => s.Empresa.toLowerCase() === empresa.toLowerCase());
+
+      filtro.forEach(s => {
+        const card = document.createElement("div");
+        card.className = "card";
+        card.innerHTML = `
+          <h3>${s.Empresa}</h3>
+          <div class="valor">R$ ${Number(s.Saldo).toLocaleString("pt-BR", {minimumFractionDigits:2})}</div>
+        `;
+        cards.appendChild(card);
+      });
+    }
+
+    // --------------------
+    // Carrega Títulos
+    // --------------------
+    async function carregarTitulos() {
+      const empresa = document.getElementById("empresaSelect").value;
+      const inicio = document.getElementById("dataInicio").value;
+      const fim = document.getElementById("dataFim").value;
+
+      const res = await fetch(endpointTitulos + "?action=listar&empresa=" + encodeURIComponent(empresa));
+      const dados = await res.json();
+
+      let titulos = dados.titulos;
+
+      // Filtro por datas
+      if (inicio || fim) {
+        titulos = titulos.filter(t => {
+          const d = new Date(t.vencimento.split("/").reverse().join("-")); // formato dd/mm/yyyy
+          return (!inicio || d >= new Date(inicio)) && (!fim || d <= new Date(fim));
+        });
+      }
+
+      // Soma modalidades
+      const soma = {};
+      titulos.forEach(t => {
+        soma[t.meio_pagamento] = (soma[t.meio_pagamento] || 0) + Number(t.valor);
+      });
+
+      // Mostra resumo das modalidades
+      const cards = document.getElementById("cardsSaldos");
+      for (const [modalidade, valor] of Object.entries(soma)) {
+        const card = document.createElement("div");
+        card.className = "card";
+        card.innerHTML = `
+          <h3>${modalidade}</h3>
+          <div class="valor">R$ ${valor.toLocaleString("pt-BR", {minimumFractionDigits:2})}</div>
+        `;
+        cards.appendChild(card);
+      }
+
+      // Preenche tabela
+      const tbody = document.querySelector("#tabelaTitulos tbody");
+      tbody.innerHTML = "";
+      titulos.forEach((item, i) => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${item.empresa}</td>
+          <td>${item.fornecedor}</td>
+          <td>${item.vencimento}</td>
+          <td>R$ ${item.valor}</td>
+          <td>${item.meio_pagamento}</td>
+          <td>${item.historico}</td>
+          <td class="${item.status === 'Aprovado' ? 'status-aprovado' : item.status === 'Negado' ? 'status-negado' : ''}">
+            ${item.status || 'Pendente'}
+          </td>
+          <td>
+            <button class="btn-aprovar" onclick="atualizarStatus('${empresa}', ${i}, 'Aprovado')">Aprovar</button>
+            <button class="btn-negar" onclick="atualizarStatus('${empresa}', ${i}, 'Negado')">Negar</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // --------------------
+    // Atualiza status do título
+    // --------------------
+    async function atualizarStatus(empresa, index, status) {
+      await fetch(endpointTitulos, {
+        method: "POST",
+        body: JSON.stringify({ action: "atualizar", empresa, index, status }),
+        headers: { "Content-Type": "application/json" }
+      });
+      carregarTitulos();
+    }
+
+    // --------------------
+    // Carrega tudo
+    // --------------------
+    function carregarTudo() {
+      carregarSaldos();
+      carregarTitulos();
+    }
+
+    carregarTudo();
+  </script>
+</body>
+</html>
