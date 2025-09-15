@@ -51,7 +51,7 @@
 
     .grafico-area { display: flex; flex-wrap: wrap; gap: 20px; padding: 15px; align-items: center; }
     .grafico-container {
-      flex: 1; min-width: 280px; max-width: 400px;
+      flex: 1; min-width: 250px; max-width: 350px;
       background: #fff; border-radius: 10px;
       box-shadow: 0 2px 6px rgba(0,0,0,.1); padding: 15px;
     }
@@ -62,7 +62,8 @@
     }
     .resumo-modalidades h3 { margin-top: 0; color: #2563eb; }
 
-    table { width: 100%; border-collapse: collapse; margin-top: 20px; background: #fff; }
+    .tabela-container { overflow-x: auto; padding: 15px; }
+    table { width: 100%; border-collapse: collapse; background: #fff; }
     th, td { padding: 10px; border: 1px solid #e5e7eb; font-size: 14px; text-align: center; }
     th { background: #f3f4f6; }
     .status-aprovado { color: #16a34a; font-weight: bold; }
@@ -70,8 +71,8 @@
     .status-pendente { color: #f59e0b; font-weight: bold; }
 
     button { padding: 6px 10px; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold; }
-    .btn-aprovar { background: #16a34a; color: white; }
-    .btn-negar { background: #dc2626; color: white; }
+    .btn-aprovar { background: #16a34a; color: white; margin: 2px; }
+    .btn-negar { background: #dc2626; color: white; margin: 2px; }
 
     /* Overlay carregamento */
     #overlay {
@@ -134,7 +135,7 @@
   </div>
 
   <!-- LISTA DE TÍTULOS -->
-  <div style="padding: 15px;">
+  <div class="tabela-container">
     <table id="tabelaTitulos">
       <thead>
         <tr>
@@ -196,6 +197,7 @@
       const dados = await res.json();
       const cards = document.getElementById("cardsSaldos");
       cards.innerHTML = "";
+
       const filtro = dados.filter(s => empresasSelecionadas.includes(s.Empresa.toLowerCase()));
       filtro.forEach(s=>{
         const card=document.createElement("div");
