@@ -13,7 +13,7 @@
       padding: 12px; display: flex; justify-content: space-between; align-items: center;
       position: sticky; top: 0; z-index: 100;
     }
-    header h1 { font-size: 1.1em; margin: 0; }
+    header h1 { font-size: 1.2em; margin: 0; }
 
     /* Menu flutuante */
     .menu-empresas { position: relative; }
@@ -32,13 +32,24 @@
     .dropdown label { display: block; font-size: 14px; margin-bottom: 6px; cursor: pointer; }
     .dropdown input { margin-right: 6px; }
 
-    .cards { display: flex; flex-wrap: wrap; gap: 10px; padding: 10px; }
-    .card { flex: 1; min-width: 160px; padding: 10px; border-radius: 8px; background: #fff; box-shadow: 0 2px 6px rgba(0,0,0,.1); }
-    .card h3 { margin: 0 0 8px; font-size: 0.9em; color: #374151; }
-    .card .valor { font-size: 1.2em; font-weight: bold; }
+    .cards { display: flex; flex-wrap: wrap; gap: 15px; padding: 15px; }
+    .card {
+      flex: 1; min-width: 180px; padding: 15px;
+      border-radius: 10px; background: #fff;
+      box-shadow: 0 2px 6px rgba(0,0,0,.1);
+      text-align: center;
+    }
+    .card h3 { margin: 0 0 8px; font-size: 1em; color: #374151; }
+    .card .valor { font-size: 1.4em; font-weight: bold; color: #2563eb; }
 
-    table { width: 100%; border-collapse: collapse; margin-top: 10px; background: #fff; }
-    th, td { padding: 8px; border: 1px solid #e5e7eb; font-size: 13px; }
+    .grafico-container {
+      max-width: 500px; margin: 0 auto; padding: 20px;
+      background: #fff; border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,.1);
+    }
+
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; background: #fff; }
+    th, td { padding: 10px; border: 1px solid #e5e7eb; font-size: 14px; text-align: center; }
     th { background: #f3f4f6; }
     .status-aprovado { color: #16a34a; font-weight: bold; }
     .status-negado { color: #dc2626; font-weight: bold; }
@@ -58,8 +69,9 @@
 
     /* Mobile */
     @media(max-width: 768px) {
-      header h1 { font-size: 0.9em; }
+      header h1 { font-size: 1em; }
       .cards { flex-direction: column; }
+      .grafico-container { max-width: 100%; }
       table { font-size: 12px; }
       th, td { padding: 6px; }
     }
@@ -86,12 +98,12 @@
   <div class="cards" id="cardsSaldos"></div>
 
   <!-- GRÁFICO -->
-  <div style="padding:15px;">
+  <div class="grafico-container">
     <canvas id="graficoModalidades"></canvas>
   </div>
 
   <!-- LISTA DE TÍTULOS -->
-  <div style="padding: 10px;">
+  <div style="padding: 15px;">
     <table id="tabelaTitulos">
       <thead>
         <tr>
@@ -130,6 +142,13 @@
       ) || 0;
     }
 
+    function formatarData(iso) {
+      try {
+        let d = new Date(iso);
+        return d.toLocaleDateString("pt-BR", { timeZone: "UTC" });
+      } catch { return iso; }
+    }
+
     function toggleMenu() {
       document.getElementById("dropdownEmpresas").style.display =
         document.getElementById("dropdownEmpresas").style.display === "block" ? "none" : "block";
@@ -157,7 +176,7 @@
       filtro.forEach(s => {
         const card = document.createElement("div");
         card.className = "card";
-        card.innerHTML = `<h3>${s.Empresa}</h3><div class="valor">R$ ${Number(s.Saldo).toLocaleString("pt-BR",{minimumFractionDigits:2})}</div>`;
+        card.innerHTML = `<h3>${s.Empresa}</h3><div class="valor">Saldo: R$ ${Number(s.Saldo).toLocaleString("pt-BR",{minimumFractionDigits:2})}</div>`;
         cards.appendChild(card);
       });
     }
@@ -180,7 +199,7 @@
           tr.innerHTML = `
             <td>${item.empresa}</td>
             <td>${item.fornecedor}</td>
-            <td>${item.vencimento}</td>
+            <td>${formatarData(item.vencimento)}</td>
             <td>R$ ${valorNum.toLocaleString("pt-BR",{minimumFractionDigits:2})}</td>
             <td>${item.meio_pagamento}</td>
             <td>${item.historico}</td>
@@ -216,6 +235,7 @@
         options: {
           responsive: true,
           plugins: {
+            legend: { position: "bottom" },
             tooltip: {
               callbacks: {
                 label: function(context) {
