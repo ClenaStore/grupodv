@@ -9,7 +9,7 @@
     header { background:#1e3a8a; color:#fff; padding:12px; font-weight:bold; }
     .container { padding:20px; }
 
-    select, button {
+    select {
       padding:6px 10px; margin:5px;
       border-radius:6px; border:1px solid #ccc;
       font-size:14px;
@@ -19,8 +19,8 @@
     th, td { border:1px solid #e5e7eb; padding:8px; text-align:center; }
     th { background:#f3f4f6; }
 
-    .btn-aprovar { background:#16a34a; color:#fff; border:none; cursor:pointer; }
-    .btn-negar { background:#dc2626; color:#fff; border:none; cursor:pointer; }
+    .btn-aprovar { background:#16a34a; color:#fff; border:none; padding:5px 10px; cursor:pointer; border-radius:4px; }
+    .btn-negar { background:#dc2626; color:#fff; border:none; padding:5px 10px; cursor:pointer; border-radius:4px; }
   </style>
 </head>
 <body>
@@ -52,8 +52,8 @@
   </div>
 
   <script>
-    // ⚠️ Troque pelo link da sua implantação do Apps Script (/exec)
-    const endpoint = "https://script.google.com/macros/s/AKfycbw9tJz1W_VXNT7hGgoQ_R_Ba1f6SqQ7RLw4gbqi2N7ZZsx3jrzqipmtVbYBKG_g9_Y4/exec";
+    // ⚠️ Substitua pelo link da sua implantação /exec
+    const endpoint = "https://script.google.com/macros/s/AKfycbwt9y43T8Ya0AhNusue3PTekaBPDnrqSK33dsbnmOKezcm3wnSrUz3z2jO_9BoJd8MH/exec";
 
     async function carregarTitulos() {
       const empresa = document.getElementById("empresaSelect").value;
@@ -94,14 +94,10 @@
 
     async function atualizarStatus(empresa, index, status) {
       try {
-        const res = await fetch(endpoint, {
-          method:"POST",
-          headers:{"Content-Type":"application/json"},
-          body:JSON.stringify({action:"atualizar",empresa,index,status})
-        });
-
+        const url = `${endpoint}?action=atualizar&empresa=${encodeURIComponent(empresa)}&index=${index}&status=${encodeURIComponent(status)}`;
+        const res = await fetch(url);
         const dados = await res.json();
-        console.log("POST - Resposta do servidor:", dados);
+        console.log("Atualizar - resposta:", dados);
 
         if (dados.erro) {
           alert("Erro: " + dados.erro);
@@ -109,7 +105,7 @@
           carregarTitulos();
         }
       } catch (err) {
-        console.error("Erro no fetch:", err);
+        console.error("Erro ao atualizar:", err);
         alert("Erro ao atualizar status: " + err.message);
       }
     }
