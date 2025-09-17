@@ -38,15 +38,10 @@
       max-width: 420px; text-align:center;
     }
     canvas { max-height: 180px; margin: auto; }
+    .modalidades-list { margin-top: 10px; display:flex; flex-wrap:wrap; justify-content:center; gap:10px; }
+    .modalidade-item { background:#f3f4f6; padding:4px 8px; border-radius:6px; font-size:12px; }
 
-    .modalidades-list {
-      margin-top: 10px; display:flex; flex-wrap:wrap; justify-content:center; gap:10px;
-    }
-    .modalidade-item {
-      background:#f3f4f6; padding:4px 8px; border-radius:6px; font-size:12px;
-    }
-
-    /* TABELA DESKTOP */
+    /* TABELA */
     table { width: 100%; border-collapse: collapse; background: #fff; margin-top: 10px; border-radius: 6px; overflow:hidden; }
     th, td { padding: 8px; border: 1px solid #e5e7eb; font-size: 13px; text-align: center; }
     th { background: #f3f4f6; }
@@ -82,6 +77,28 @@
       box-shadow:0 2px 6px rgba(0,0,0,.2); min-width:160px; text-align:center;
     }
 
+    /* MENU FLUTUANTE EMPRESAS */
+    .menu-flutuante {
+      position:fixed; top:60px; right:15px; background:#fff; border:1px solid #ddd; border-radius:8px;
+      box-shadow:0 2px 8px rgba(0,0,0,.2); padding:10px; display:none; z-index:1000;
+    }
+    .menu-flutuante label { display:block; margin-bottom:6px; font-size:14px; color:#111; }
+    .menu-toggle { background:#fff; color:#1e3a8a; padding:6px 10px; border-radius:6px; cursor:pointer; border:none; font-weight:bold; }
+    .menu-toggle:hover { background:#f3f4f6; }
+
+    /* TOAST CONFIRMAÇÃO */
+    .toast {
+      position: fixed; bottom: 20px; left: 20px;
+      background:#16a34a; color:white; padding:12px 16px;
+      border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,.2);
+      display:flex; align-items:center; gap:10px;
+      animation: fadein 0.4s;
+    }
+    .toast button {
+      background:transparent; color:white; border:none; font-size:16px; cursor:pointer;
+    }
+    @keyframes fadein { from{opacity:0; transform:translateY(20px);} to{opacity:1; transform:translateY(0);} }
+
     /* Loading */
     .loading::after {
       content: ""; display: inline-block; width: 12px; height: 12px;
@@ -98,12 +115,16 @@
       <label>Status:</label>
       <select id="filtroStatus" onchange="carregarTitulos()">
         <option value="Pendente" selected>Pendentes</option>
-        <option value="Liquidado">Liquidados</option>
+        <option value="Aprovado">Aprovados</option>
         <option value="Todos">Todos</option>
       </select>
+      <input type="date" id="filtroData" onchange="carregarTitulos()">
+      <button class="menu-toggle" onclick="toggleMenu()">Empresas ⚙️</button>
     </div>
-    <div id="filtrosEmpresas"></div>
   </header>
+
+  <!-- MENU FLUTUANTE -->
+  <div id="menuEmpresas" class="menu-flutuante"></div>
 
   <div class="container">
     <div id="saldosGrid" class="saldos-grid"></div>
@@ -132,14 +153,19 @@
 
   <div class="footer-actions">
     <div id="popupTotal" class="popup-total" style="display:none;"></div>
-    <button id="btnMassa" class="btn-massa" style="display:none;" onclick="liquidarMassa()">Liquidar em Massa</button>
+    <button id="btnMassa" class="btn-massa" style="display:none;" onclick="aprovarMassa()">Aprovar em Massa</button>
+  </div>
+
+  <div id="toast" class="toast" style="display:none;">
+    <span id="toastMsg">✔ Aprovados com sucesso!</span>
+    <button onclick="fecharToast()">✖</button>
   </div>
 
 <script>
   const endpointTitulos = "https://script.google.com/macros/s/AKfycbwt9y43T8Ya0AhNusue3PTekaBPDnrqSK33dsbnmOKezcm3wnSrUz3z2jO_9BoJd8MH/exec";
   const endpointSaldos  = "https://script.google.com/macros/s/AKfycbxsQCx_Aw0PXnAIPQsj1Hjq35BSolRmvpY3ye3DwKLLz_oTfKfQAGi3mT3Ygl-Tm3yl/exec";
 
-  let grafico, selecionados = [], saldosPlanilha = {};
+  let grafico, selecionados = [], saldosPlanilha = {}, somaTitulosPorEmpresa = {};
 
   async function carregarSaldos() {
     const res = await fetch(endpointSaldos);
@@ -149,23 +175,22 @@
   }
 
   async function carregarTitulos() {
-    const hoje = new Date().toISOString().split("T")[0];
-    const empresas = [...document.querySelectorAll("#filtrosEmpresas input:checked")].map(e=>e.value);
+    const dataSelecionada = document.getElementById("filtroData").value;
+    const empresas = [...document.querySelectorAll("#menuEmpresas input:checked")].map(e=>e.value);
     const filtro = document.getElementById("filtroStatus").value;
     const tbody = document.querySelector("#tabelaTitulos tbody");
     tbody.innerHTML = "";
     selecionados = [];
-    let somaModalidades = {}, somaTitulosPorEmpresa = {};
+    let somaModalidades = {}; somaTitulosPorEmpresa = {};
 
-    // Busca em paralelo
     const promises = empresas.map(emp => fetch(`${endpointTitulos}?action=listar&empresa=${encodeURIComponent(emp)}`).then(r=>r.json().then(d=>({emp, d}))));
     const resultados = await Promise.all(promises);
 
     resultados.forEach(({emp,d})=>{
       d.titulos.forEach((t,i)=>{
-        if (t.vencimento && t.vencimento.startsWith(hoje)) {
+        if (t.vencimento && t.vencimento.startsWith(dataSelecionada)) {
           if (filtro!=="Todos" && t.status!==filtro) return;
-          const valor = Number(t.valor.toString().replace("R$","").replace(/\./g,"").replace(",","."));
+          const valor = Number(t.valor.toString().replace("R$","").replace(/\./g,"").replace(",","."))||0;
           somaModalidades[t.meio_pagamento] = (somaModalidades[t.meio_pagamento]||0)+valor;
           somaTitulosPorEmpresa[emp] = (somaTitulosPorEmpresa[emp]||0)+valor;
 
@@ -253,16 +278,17 @@
     } else popup.style.display="none";
   }
 
-  async function liquidarMassa(){
+  async function aprovarMassa(){
     const btn=document.getElementById("btnMassa");
     btn.classList.add("loading");
     for(let s of selecionados){
-      await fetch(`${endpointTitulos}?action=atualizar&empresa=${encodeURIComponent(s.empresa)}&index=${s.index}&status=Liquidado`);
-      document.querySelector(`#tabelaTitulos tbody tr:nth-child(${s.index+1}) .status`).innerText="Liquidado";
+      await fetch(`${endpointTitulos}?action=atualizar&empresa=${encodeURIComponent(s.empresa)}&index=${s.index}&status=Aprovado`);
+      document.querySelector(`#tabelaTitulos tbody tr:nth-child(${s.index+1}) .status`).innerText="Aprovado";
     }
     btn.classList.remove("loading");
     selecionados=[];document.getElementById("btnMassa").style.display="none";
     document.getElementById("popupTotal").style.display="none";
+    mostrarToast("✔ Títulos aprovados com sucesso!");
   }
 
   function toggleAll(chk){
@@ -274,14 +300,36 @@
     return ("0"+dt.getDate()).slice(-2)+("0"+(dt.getMonth()+1)).slice(-2)+dt.getFullYear();
   }
 
+  function toggleMenu(){
+    const menu=document.getElementById("menuEmpresas");
+    menu.style.display=menu.style.display==="block"?"none":"block";
+  }
+
+  function mostrarToast(msg){
+    const toast=document.getElementById("toast");
+    document.getElementById("toastMsg").innerText=msg;
+    toast.style.display="flex";
+  }
+  function fecharToast(){
+    document.getElementById("toast").style.display="none";
+  }
+
   window.onload=()=>{
-    const filtros=document.getElementById("filtrosEmpresas");
-    ["cap delicia","cap villa","cap padaria","cap mercatto","cap m.kids"].forEach(emp=>{
+    // seta data padrão
+    document.getElementById("filtroData").value=new Date().toISOString().split("T")[0];
+
+    // empresas
+    const menu=document.getElementById("menuEmpresas");
+    const empresas=["cap delicia","cap villa","cap padaria","cap mercatto","cap m.kids"];
+    empresas.forEach(emp=>{
       const lbl=document.createElement("label");
-      lbl.style.marginRight="10px";
-      lbl.innerHTML=`<input type="checkbox" value="${emp}" checked onchange="carregarTitulos()"> ${emp.toUpperCase()}`;
-      filtros.appendChild(lbl);
+      const checked=emp==="cap villa"?"":"checked";
+      lbl.innerHTML=`<input type="checkbox" value="${emp}" ${checked} onchange="carregarTitulos()">
+
+      lbl.innerHTML=`<input type="checkbox" value="${emp}" ${emp==="cap villa"?"":"checked"} onchange="carregarTitulos()"> ${emp.toUpperCase()}`;
+      menu.appendChild(lbl);
     });
+
     carregarSaldos();
     carregarTitulos();
   }
