@@ -15,7 +15,9 @@
     }
     header h1 { font-size: 1.2em; margin: 0; font-weight: bold; }
 
-    .menu-empresas { position: relative; display: flex; gap: 10px; align-items: center; }
+    .menu-empresas, .menu-datas {
+      position: relative; display: flex; gap: 10px; align-items: center;
+    }
     .menu-btn {
       background: white; color: #1e3a8a; border: none;
       padding: 8px 12px; border-radius: 6px; cursor: pointer;
@@ -26,17 +28,27 @@
     .dropdown {
       display: none; position: absolute; right: 0; top: 40px;
       background: #fff; border: 1px solid #ccc; border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0,0,0,.15); padding: 10px; z-index: 200; min-width: 180px;
+      box-shadow: 0 2px 8px rgba(0,0,0,.15); padding: 10px; z-index: 200; min-width: 220px;
     }
     .dropdown label { display: block; font-size: 14px; margin-bottom: 6px; cursor: pointer; }
     .dropdown input { margin-right: 6px; }
+
+    .dropdown input[type="date"] {
+      width: 100%; margin-bottom: 8px; padding: 6px; font-size: 14px;
+      border: 1px solid #ccc; border-radius: 6px;
+    }
+    .dropdown button {
+      margin-top: 5px; width: 48%; padding: 6px; font-size: 13px;
+      border: none; border-radius: 6px; cursor: pointer;
+    }
+    .btn-aplicar { background: #16a34a; color: white; }
+    .btn-cancelar { background: #dc2626; color: white; }
 
     .grafico-card {
       margin: 20px auto; padding: 20px;
       background: #fff; border-radius: 10px;
       box-shadow: 0 2px 6px rgba(0,0,0,.1);
-      max-width: 1000px;
-      text-align: center;
+      max-width: 1000px; text-align: center;
     }
     .grafico-container { width: 100%; max-width: 380px; margin: auto; }
     #graficoModalidades { height: 260px !important; }
@@ -47,8 +59,7 @@
       gap: 12px;
     }
     .saldo-card {
-      background: #f3f4f6;
-      padding: 12px; border-radius: 8px;
+      background: #f3f4f6; padding: 12px; border-radius: 8px;
       box-shadow: 0 1px 3px rgba(0,0,0,.1);
       font-size: 14px; font-weight: bold; text-align: center;
     }
@@ -91,24 +102,38 @@
 <body>
   <header>
     <h1>Painel Financeiro</h1>
-    <div class="menu-empresas">
-      <button class="menu-btn" onclick="toggleMenu()">Selecionar Empresas</button>
-      <button class="menu-btn btn-refresh" onclick="carregarTudo()">🔄 Atualizar</button>
-      <div class="dropdown" id="dropdownEmpresas">
-        <label><input type="checkbox" value="todas" onchange="selecionarTodas(this)"> Todas</label>
-        <label><input type="checkbox" value="cap delicia"> CAP Delícia</label>
-        <label><input type="checkbox" value="cap villa"> CAP Villa</label>
-        <label><input type="checkbox" value="cap padaria"> CAP Padaria</label>
-        <label><input type="checkbox" value="cap mercatto"> CAP Mercatto</label>
-        <label><input type="checkbox" value="cap m.kids"> CAP M.Kids</label>
-        <button class="menu-btn" style="margin-top:8px;" onclick="aplicarEmpresas()">Aplicar</button>
+    <div style="display:flex; gap:15px;">
+      <div class="menu-empresas">
+        <button class="menu-btn" onclick="toggleMenu('dropdownEmpresas')">Selecionar Empresas</button>
+        <div class="dropdown" id="dropdownEmpresas">
+          <label><input type="checkbox" value="todas" onchange="selecionarTodas(this)" checked> Todas</label>
+          <label><input type="checkbox" value="cap delicia" checked> CAP Delícia</label>
+          <label><input type="checkbox" value="cap villa" checked> CAP Villa</label>
+          <label><input type="checkbox" value="cap padaria" checked> CAP Padaria</label>
+          <label><input type="checkbox" value="cap mercatto" checked> CAP Mercatto</label>
+          <label><input type="checkbox" value="cap m.kids" checked> CAP M.Kids</label>
+          <button class="menu-btn" style="margin-top:8px;" onclick="aplicarEmpresas()">Aplicar</button>
+        </div>
       </div>
+
+      <div class="menu-datas">
+        <button class="menu-btn" onclick="toggleMenu('dropdownDatas')">Selecionar Datas</button>
+        <div class="dropdown" id="dropdownDatas">
+          <input type="date" id="dataInicio">
+          <input type="date" id="dataFim">
+          <div style="display:flex; justify-content:space-between; gap:5px;">
+            <button class="btn-aplicar" onclick="aplicarDatas()">Aplicar</button>
+            <button class="btn-cancelar" onclick="cancelarDatas()">Cancelar</button>
+          </div>
+        </div>
+      </div>
+
+      <button class="menu-btn btn-refresh" onclick="carregarTudo()">🔄 Atualizar</button>
     </div>
   </header>
 
   <div id="overlay">⏳ Carregando...</div>
 
-  <!-- Card do gráfico com saldos -->
   <div class="grafico-card">
     <div class="grafico-container"><canvas id="graficoModalidades"></canvas></div>
     <div id="saldosGrid" class="saldos-grid"></div>
@@ -140,17 +165,27 @@
     const endpointSaldos = "https://script.google.com/macros/s/AKfycbxsQCx_Aw0PXnAIPQsj1Hjq35BSolRmvpY3ye3DwKLLz_oTfKfQAGi3mT3Ygl-Tm3yl/exec";
     const endpointTitulos = "https://script.google.com/macros/s/AKfycbwCpe51vPoH2lG8YR89kVR_uRfg6-T7SNkWwI3LbJAvbNiqEA1pddhG_3llm8tINMCB/exec";
 
-    let empresasSelecionadas=["cap delicia"];
-    let grafico,saldos=[],selecionados={};
+    let empresasSelecionadas = ["cap delicia","cap villa","cap padaria","cap mercatto","cap m.kids"];
+    let grafico,saldos=[],selecionados={},dataInicio,dataFim;
 
-    function mostrarOverlay(s=true){document.getElementById("overlay").style.display=s?"flex":"none";}
-
-    function toggleMenu(){const d=document.getElementById("dropdownEmpresas");d.style.display=d.style.display==="block"?"none":"block";}
+    function toggleMenu(id){const d=document.getElementById(id);d.style.display=d.style.display==="block"?"none":"block";}
     function selecionarTodas(chk){document.querySelectorAll("#dropdownEmpresas input[type=checkbox]").forEach(cb=>{if(cb.value!=="todas")cb.checked=chk.checked;});}
     function aplicarEmpresas(){
       const inputs=document.querySelectorAll("#dropdownEmpresas input[type=checkbox]:checked");
       empresasSelecionadas=Array.from(inputs).map(cb=>cb.value).filter(v=>v!=="todas");
-      toggleMenu();carregarTitulos();
+      carregarTitulos();
+    }
+
+    function aplicarDatas(){
+      dataInicio=document.getElementById("dataInicio").value;
+      dataFim=document.getElementById("dataFim").value;
+      carregarTitulos();
+    }
+    function cancelarDatas(){
+      document.getElementById("dataInicio").value="";
+      document.getElementById("dataFim").value="";
+      dataInicio=dataFim=null;
+      carregarTitulos();
     }
 
     async function carregarSaldos(){
@@ -166,7 +201,12 @@
     }
 
     async function carregarTitulos(){
-      const promises=empresasSelecionadas.map(emp=>fetch(endpointTitulos+"?action=listar&empresa="+encodeURIComponent(emp)).then(r=>r.json().then(d=>({empresa:emp,data:d}))));
+      const promises=empresasSelecionadas.map(emp=>{
+        let url=endpointTitulos+"?action=listar&empresa="+encodeURIComponent(emp);
+        if(dataInicio) url+="&inicio="+dataInicio;
+        if(dataFim) url+="&fim="+dataFim;
+        return fetch(url).then(r=>r.json().then(d=>({empresa:emp,data:d})));
+      });
       const resultados=await Promise.all(promises);
 
       const tbody=document.querySelector("#tabelaTitulos tbody");tbody.innerHTML="";
@@ -215,8 +255,20 @@
       grafico=new Chart(ctx,{type:"pie",data:{labels:Object.keys(soma),datasets:[{data:Object.values(soma),backgroundColor:["#2563eb","#16a34a","#dc2626","#f59e0b","#9333ea"]}]},options:{plugins:{legend:{position:"right"},datalabels:{color:"#fff",formatter:v=>"R$ "+v.toLocaleString("pt-BR",{minimumFractionDigits:2})}}},plugins:[ChartDataLabels]});
     }
 
-    async function carregarTudo(){mostrarOverlay(true);await carregarSaldos();await carregarTitulos();mostrarOverlay(false);}
-    carregarTudo();
+    async function carregarTudo(){
+      document.getElementById("overlay").style.display="flex";
+      await carregarSaldos();await carregarTitulos();
+      document.getElementById("overlay").style.display="none";
+    }
+
+    // inicializa com a data de hoje
+    window.onload=()=>{
+      const hoje=new Date().toISOString().split("T")[0];
+      document.getElementById("dataInicio").value=hoje;
+      document.getElementById("dataFim").value=hoje;
+      dataInicio=hoje;dataFim=hoje;
+      carregarTudo();
+    }
   </script>
 </body>
 </html>
