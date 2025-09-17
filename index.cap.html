@@ -199,8 +199,13 @@ async function carregarTitulos() {
       if(t.vencimento && t.vencimento.startsWith(dataFiltro)){
         if(filtro!=="Todos" && t.status!==filtro) return;
         const valor=Number(t.valor.toString().replace("R$","").replace(/\./g,"").replace(",","."))||0;
+
+        // ✅ Para saldo final: considerar Pendente + Aprovado
+        if(t.status==="Pendente" || t.status==="Aprovado"){
+          somaTitulosPorEmpresa[emp]=(somaTitulosPorEmpresa[emp]||0)+valor;
+        }
+
         somaModalidades[t.meio_pagamento]=(somaModalidades[t.meio_pagamento]||0)+valor;
-        somaTitulosPorEmpresa[emp]=(somaTitulosPorEmpresa[emp]||0)+valor;
         if(!titulosFiltrados[emp]) titulosFiltrados[emp]=[];
         titulosFiltrados[emp].push({meio:t.meio_pagamento,valor});
 
@@ -292,4 +297,61 @@ function toggleSelecionado(empresa,index,chk,valor){
   const total=selecionados.reduce((a,b)=>a+b.valor,0);
   document.getElementById("btnMassa").style.display=selecionados.length>0?"inline-block":"none";
   const popup=document.getElementById("popupTotal");
- 
+  if(selecionados.length>0){
+    popup.innerText="Total Selecionado: R$ "+total.toLocaleString("pt-BR",{minimumFractionDigits:2});
+    popup.style.display="block";
+  }else popup.style.display="none";
+}
+
+async function aprovarMassa(){
+  const btn=document.getElementById("btnMassa");
+  btn.classList.add("loading");
+  for(let s of selecionados){
+    await fetch(`${endpointTitulos}?action=atualizar&empresa=${encodeURIComponent(s.empresa)}&index=${s.index}&status=Aprovado`);
+    document.querySelector(`#tabelaTitulos tbody tr:nth-child(${s.index+1}) .status`).innerText="Aprovado";
+    salvarHistorico(`${s.empresa}-${s.index}`,"Aprovado",s.valor);
+  }
+  btn.classList.remove("loading");
+  selecionados=[];document.getElementById("btnMassa").style.display="none";
+  document.getElementById("popupTotal").style.display="none";
+  document.getElementById("popupConfirm").style.display="block";
+  setTimeout(()=>{document.getElementById("popupConfirm").style.display="none";},5000);
+}
+
+function toggleAll(chk){
+  document.querySelectorAll("#tabelaTitulos tbody input[type=checkbox]").forEach(c=>{c.checked=chk.checked;c.dispatchEvent(new Event("change"));});
+}
+
+function formatarData(d){
+  const dt=new Date(d);
+  return ("0"+dt.getDate()).slice(-2)+"/"+("0"+(dt.getMonth()+1)).slice(-2)+"/"+dt.getFullYear();
+}
+
+function toggleMenu(){
+  const menu=document.getElementById("menuEmpresas");
+  menu.style.display=menu.style.display==="flex"?"none":"flex";
+}
+document.addEventListener("click", e=>{
+  const menu=document.getElementById("menuEmpresas");
+  const btn=document.querySelector(".btn-menu");
+  if(menu.style.display==="flex" && !menu.contains(e.target) && !btn.contains(e.target)){
+    menu.style.display="none";
+  }
+});
+
+window.onload=()=>{
+  const hoje=new Date().toISOString().split("T")[0];
+  document.getElementById("filtroData").value=hoje;
+  const menu=document.getElementById("menuEmpresas");
+  ["cap delicia","cap villa","cap padaria","cap mercatto","cap m.kids"].forEach(emp=>{
+    const lbl=document.createElement("label");
+    const checked=emp!=="cap villa"?"checked":""; // ✅ só villa desmarcado
+    lbl.innerHTML=`<input type="checkbox" value="${emp}" ${checked} onchange="carregarTitulos()"> ${emp.toUpperCase()}`;
+    menu.appendChild(lbl);
+  });
+  carregarSaldos();
+  carregarTitulos();
+};
+</script>
+</body>
+</html>
