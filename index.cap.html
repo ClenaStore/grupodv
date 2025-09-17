@@ -3,18 +3,21 @@
 <head>
   <meta charset="UTF-8">
   <title>Painel Financeiro • CAP</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     body { font-family: Arial, sans-serif; margin: 0; background: #f6f7fb; color: #111827; }
     header {
       background: #1e3a8a; color: white; padding: 12px;
-      display: flex; align-items: center; justify-content: space-between;
+      display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap;
     }
     header h1 { font-size: 1.2em; margin: 0; }
+
     .container { padding: 20px; }
 
-    /* ==== SALDOS ==== */
+    .empresa-selector { display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; }
+    .empresa-selector label { background:#fff; padding:6px 10px; border-radius:6px; box-shadow:0 1px 3px rgba(0,0,0,.1); cursor:pointer; }
+
     .saldos-grid {
       display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
       gap: 12px; margin: 20px 0;
@@ -22,59 +25,53 @@
     .saldo-card {
       background: #fff; padding: 12px; border-radius: 8px;
       box-shadow: 0 2px 6px rgba(0,0,0,.1);
-      font-size: 14px; text-align: center; cursor: pointer;
+      font-size: 14px; text-align: center;
     }
-    .saldo-card strong { display:block; margin-top:4px; font-weight:bold; color:#1e3a8a; }
-    .saldo-card .final { margin-top:6px; font-weight:bold; }
-    .saldo-card.positivo { border:2px solid #16a34a; }
-    .saldo-card.negativo { border:2px solid #dc2626; }
-    .saldo-card .final.verde { color:#16a34a; }
-    .saldo-card .final.vermelho { color:#dc2626; }
+    .saldo-card span { display:block; margin-top:4px; font-weight:bold; color:#1e3a8a; }
 
-    /* ==== TABELA ==== */
+    .grafico-card {
+      background: #fff; border-radius: 8px; padding: 15px;
+      box-shadow: 0 2px 6px rgba(0,0,0,.1); margin-bottom: 20px;
+      max-width: 420px; margin-left:auto; margin-right:auto;
+    }
+    canvas { max-width: 400px; max-height: 400px; }
+
     table { width: 100%; border-collapse: collapse; background: #fff; margin-top: 10px; }
     th, td { padding: 10px; border: 1px solid #e5e7eb; font-size: 14px; text-align: center; }
     th { background: #f3f4f6; }
 
-    button { padding: 6px 10px; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold; }
+    button { padding: 6px 10px; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold; position: relative; }
     .btn-aprovar { background: #16a34a; color: white; margin-right: 4px; }
     .btn-negar { background: #dc2626; color: white; }
-    .btn-massa { background:#2563eb; color:white; margin:10px 0; padding:8px 14px; display:none; }
 
-    /* Loading overlay no botão */
+    /* loader circular */
     .loading::after {
-      content: ""; display: inline-block; width: 14px; height: 14px;
-      border: 2px solid #fff; border-top-color: transparent; border-radius: 50%;
-      margin-left: 6px; animation: spin 0.8s linear infinite;
+      content: ""; width: 14px; height: 14px;
+      border: 2px solid white; border-top: 2px solid transparent;
+      border-radius: 50%; animation: spin 0.8s linear infinite;
+      position: absolute; top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
     }
-    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes spin { from {transform:translate(-50%,-50%) rotate(0deg);} to {transform:translate(-50%,-50%) rotate(360deg);} }
 
-    /* ==== RESPONSIVO ==== */
-    @media(max-width:768px){
-      table, thead, tbody, th, td, tr { display:block; }
-      thead { display:none; }
-      tr { background:#fff; margin:10px 0; padding:10px; border-radius:8px; box-shadow:0 2px 6px rgba(0,0,0,.1); }
-      td { border:none; text-align:left; padding:6px; }
-      td::before { font-weight:bold; display:block; }
-      td:nth-child(2)::before { content:"Empresa"; }
-      td:nth-child(3)::before { content:"Fornecedor"; }
-      td:nth-child(4)::before { content:"Vencimento"; }
-      td:nth-child(5)::before { content:"Valor"; }
-      td:nth-child(6)::before { content:"Meio de Pagamento"; }
-      td:nth-child(7)::before { content:"Status"; }
+    .total-selecionado {
+      margin: 15px 0; font-size: 16px; font-weight: bold; color: #1e3a8a;
     }
-
-    /* ==== MODAL ==== */
-    .modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,.5);
-      justify-content:center; align-items:center; z-index:1000; }
-    .modal-content { background:#fff; padding:20px; border-radius:10px; width:90%; max-width:400px; }
-    .close { float:right; cursor:pointer; font-size:18px; }
   </style>
 </head>
 <body>
   <header>
     <h1>Painel Financeiro • CAP</h1>
-    <div id="filtrosEmpresas"></div>
+    <div>
+      <span>Selecione empresas:</span>
+      <div class="empresa-selector">
+        <label><input type="checkbox" value="cap delicia" checked> CAP Delícia</label>
+        <label><input type="checkbox" value="cap villa" checked> CAP Villa</label>
+        <label><input type="checkbox" value="cap padaria" checked> CAP Padaria</label>
+        <label><input type="checkbox" value="cap mercatto" checked> CAP Mercatto</label>
+        <label><input type="checkbox" value="cap m.kids" checked> CAP M.Kids</label>
+      </div>
+    </div>
   </header>
 
   <div class="container">
@@ -86,44 +83,38 @@
       <canvas id="graficoModalidades"></canvas>
     </div>
 
-    <!-- Botão massa -->
-    <button id="btnMassa" class="btn-massa" onclick="liquidarMassa()">Liquidar em Massa</button>
+    <!-- Soma Selecionados -->
+    <div class="total-selecionado" id="totalSelecionado">Total selecionado: R$ 0,00</div>
 
     <!-- Tabela -->
     <table id="tabelaTitulos">
       <thead>
         <tr>
-          <th><input type="checkbox" onclick="toggleAll(this)"></th>
+          <th><input type="checkbox" id="selectAll"></th>
+          <th>Ações</th>
           <th>Empresa</th>
           <th>Fornecedor</th>
           <th>Vencimento</th>
           <th>Valor</th>
           <th>Meio de Pagamento</th>
           <th>Status</th>
-          <th>Ações</th>
         </tr>
       </thead>
       <tbody></tbody>
     </table>
   </div>
 
-  <!-- Modal -->
-  <div id="modal" class="modal">
-    <div class="modal-content">
-      <span class="close" onclick="fecharModal()">&times;</span>
-      <h3 id="modalEmpresa"></h3>
-      <p><b>Valor em conta:</b> <span id="valorConta"></span></p>
-      <p><b>Contas a pagar:</b></p>
-      <ul id="listaModalidades"></ul>
-      <p><b>Saldo final:</b> <span id="saldoFinal"></span></p>
-    </div>
-  </div>
-
 <script>
-  const endpointTitulos = "SEU_LINK_GAS_TITULOS";
+  const endpointTitulos = "https://script.google.com/macros/s/AKfycbwt9y43T8Ya0AhNusue3PTekaBPDnrqSK33dsbnmOKezcm3wnSrUz3z2jO_9BoJd8MH/exec";
   const endpointSaldos  = "https://script.google.com/macros/s/AKfycbxsQCx_Aw0PXnAIPQsj1Hjq35BSolRmvpY3ye3DwKLLz_oTfKfQAGi3mT3Ygl-Tm3yl/exec";
 
-  let grafico, selecionados = [];
+  let grafico;
+  let totalSelecionado = 0;
+
+  function formatarData(iso) {
+    const d = new Date(iso);
+    return d.toLocaleDateString("pt-BR");
+  }
 
   async function carregarSaldos() {
     const res = await fetch(endpointSaldos);
@@ -132,53 +123,64 @@
     grid.innerHTML = "";
     dados.forEach(s => {
       const div = document.createElement("div");
-      div.className = "saldo-card " + (s.Saldo >= 0 ? "positivo" : "negativo");
-      div.innerHTML = `
-        <span style="color:black">${s.Empresa.toUpperCase()}</span>
-        <strong>R$ ${Number(s.Saldo).toLocaleString("pt-BR",{minimumFractionDigits:2})}</strong>
-        <div class="final ${s.Saldo >=0 ? "verde":"vermelho"}">
-          Saldo Final: R$ ${Number(s.Saldo).toLocaleString("pt-BR",{minimumFractionDigits:2})}
-        </div>`;
-      div.onclick = ()=>abrirModal(s);
+      div.className = "saldo-card";
+      div.innerHTML = `${s.Empresa.toUpperCase()}<span>R$ ${Number(s.Saldo).toLocaleString("pt-BR",{minimumFractionDigits:2})}</span>`;
       grid.appendChild(div);
     });
   }
 
   async function carregarTitulos() {
-    const empresas = [...document.querySelectorAll("#filtrosEmpresas input:checked")].map(e=>e.value);
+    const selecionadas = Array.from(document.querySelectorAll(".empresa-selector input:checked"))
+      .map(cb => cb.value);
+
     const tbody = document.querySelector("#tabelaTitulos tbody");
     tbody.innerHTML = "";
-    selecionados = [];
-
     let somaModalidades = {};
 
-    for (let empresa of empresas) {
+    const hoje = new Date().toISOString().split("T")[0]; // AAAA-MM-DD
+    totalSelecionado = 0;
+    atualizarTotal();
+
+    for (const empresa of selecionadas) {
       const res = await fetch(`${endpointTitulos}?action=listar&empresa=${encodeURIComponent(empresa)}`);
       const dados = await res.json();
 
       dados.titulos.forEach((t, i) => {
+        const data = new Date(t.vencimento);
+        const venc = data.toISOString().split("T")[0];
+        if (venc !== hoje) return; // só do dia
+
         const valor = Number(t.valor.toString().replace("R$","").replace(/\./g,"").replace(",",".")) || 0;
         somaModalidades[t.meio_pagamento] = (somaModalidades[t.meio_pagamento]||0)+valor;
 
         const tr = document.createElement("tr");
         tr.innerHTML = `
-          <td><input type="checkbox" onchange="toggleSelecionado('${empresa}',${i},this,${valor})"></td>
-          <td style="color:black">${t.empresa}</td>
-          <td>${t.fornecedor}</td>
-          <td>${formatarData(t.vencimento)}</td>
-          <td>R$ ${valor.toLocaleString("pt-BR",{minimumFractionDigits:2})}</td>
-          <td>${t.meio_pagamento}</td>
-          <td class="status">${t.status}</td>
+          <td><input type="checkbox" class="chkTitulo" data-valor="${valor}"></td>
           <td>
             <button class="btn-aprovar" onclick="atualizarStatus(this,'${empresa}',${i},'Aprovado')">✓</button>
             <button class="btn-negar" onclick="atualizarStatus(this,'${empresa}',${i},'Negado')">✗</button>
           </td>
+          <td>${t.empresa}</td>
+          <td>${t.fornecedor}</td>
+          <td>${formatarData(t.vencimento)}</td>
+          <td>R$ ${valor.toLocaleString("pt-BR",{minimumFractionDigits:2})}</td>
+          <td>${t.meio_pagamento}</td>
+          <td>${t.status}</td>
         `;
         tbody.appendChild(tr);
       });
     }
 
     desenharGrafico(somaModalidades);
+
+    // Eventos de seleção
+    document.querySelectorAll(".chkTitulo").forEach(chk => {
+      chk.addEventListener("change", e => {
+        const val = Number(e.target.dataset.valor);
+        totalSelecionado += e.target.checked ? val : -val;
+        atualizarTotal();
+      });
+    });
   }
 
   function desenharGrafico(soma) {
@@ -186,65 +188,56 @@
     if (grafico) grafico.destroy();
     grafico = new Chart(ctx, {
       type: "pie",
-      data: { labels: Object.keys(soma), datasets: [{ data: Object.values(soma),
-        backgroundColor: ["#2563eb","#16a34a","#dc2626","#f59e0b","#9333ea"] }]},
-      options: { plugins: { legend: { position: "right" } } }
+      data: {
+        labels: Object.keys(soma),
+        datasets: [{
+          data: Object.values(soma),
+          backgroundColor: ["#2563eb","#16a34a","#dc2626","#f59e0b","#9333ea"]
+        }]
+      },
+      options: { plugins: { legend: { position: "bottom" } } }
     });
   }
 
-  async function atualizarStatus(btn, empresa, index, status) {
+async function atualizarStatus(btn, empresa, index, status) {
+  try {
     btn.classList.add("loading");
-    try {
-      const url = `${endpointTitulos}?action=atualizar&empresa=${encodeURIComponent(empresa)}&index=${index}&status=${encodeURIComponent(status)}`;
-      await fetch(url);
-      btn.closest("tr").querySelector(".status").innerText = status;
-    } finally { btn.classList.remove("loading"); }
+
+    // Chama GAS para salvar
+    const url = `${endpointTitulos}?action=atualizar&empresa=${encodeURIComponent(empresa)}&index=${index}&status=${encodeURIComponent(status)}`;
+    await fetch(url);
+
+    // Atualiza localmente na tabela
+    const linha = btn.closest("tr");
+    linha.querySelector("td:last-child").innerText = status;
+
+  } catch (err) {
+    alert("Erro ao atualizar: " + err.message);
+  } finally {
+    btn.classList.remove("loading");
+  }
+}
+
+
+  function atualizarTotal() {
+    document.getElementById("totalSelecionado").innerText =
+      "Total selecionado: R$ " + totalSelecionado.toLocaleString("pt-BR",{minimumFractionDigits:2});
   }
 
-  function toggleSelecionado(empresa,index,chk,valor){
-    if(chk.checked) selecionados.push({empresa,index,valor});
-    else selecionados = selecionados.filter(s=>!(s.empresa===empresa && s.index===index));
-    document.getElementById("btnMassa").style.display = selecionados.length>0 ? "inline-block":"none";
-  }
-  async function liquidarMassa(){
-    for(let s of selecionados){
-      await fetch(`${endpointTitulos}?action=atualizar&empresa=${encodeURIComponent(s.empresa)}&index=${s.index}&status=Liquidado`);
-      document.querySelector(`#tabelaTitulos tbody tr:nth-child(${s.index+1}) .status`).innerText="Liquidado";
+  // Selecionar todos
+  document.addEventListener("change", e => {
+    if (e.target.id === "selectAll") {
+      const checks = document.querySelectorAll(".chkTitulo");
+      checks.forEach(chk => { chk.checked = e.target.checked; chk.dispatchEvent(new Event("change")); });
     }
-    selecionados=[];
-    document.getElementById("btnMassa").style.display="none";
-  }
-  function toggleAll(chk){
-    document.querySelectorAll("#tabelaTitulos tbody input[type=checkbox]").forEach(c=>{c.checked=chk.checked;c.dispatchEvent(new Event("change"));});
-  }
+  });
 
-  function formatarData(d){ 
-    if(!d) return ""; 
-    const dt=new Date(d); 
-    return ("0"+dt.getDate()).slice(-2)+("0"+(dt.getMonth()+1)).slice(-2)+dt.getFullYear();
-  }
-
-  // Modal
-  function abrirModal(s){
-    document.getElementById("modalEmpresa").innerText = s.Empresa.toUpperCase();
-    document.getElementById("valorConta").innerText = "R$ "+Number(s.Saldo).toLocaleString("pt-BR",{minimumFractionDigits:2});
-    document.getElementById("listaModalidades").innerHTML = "<li>Pix: R$ 2000,00</li><li>Boleto: R$ 1500,00</li>";
-    document.getElementById("saldoFinal").innerText = "R$ "+Number(s.Saldo).toLocaleString("pt-BR",{minimumFractionDigits:2});
-    document.getElementById("modal").style.display="flex";
-  }
-  function fecharModal(){ document.getElementById("modal").style.display="none"; }
-
-  window.onload = ()=>{
-    // filtros empresas
-    const filtros=document.getElementById("filtrosEmpresas");
-    ["cap delicia","cap villa","cap padaria","cap mercatto","cap m.kids"].forEach(emp=>{
-      const lbl=document.createElement("label");
-      lbl.innerHTML=`<input type="checkbox" value="${emp}" checked onchange="carregarTitulos()"> ${emp.toUpperCase()}`;
-      filtros.appendChild(lbl);
-    });
+  window.onload = () => {
     carregarSaldos();
     carregarTitulos();
-  }
+    document.querySelectorAll(".empresa-selector input")
+      .forEach(cb => cb.addEventListener("change", carregarTitulos));
+  };
 </script>
 </body>
 </html>
