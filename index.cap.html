@@ -5,6 +5,7 @@
   <title>Painel Financeiro • Aprovação & Saldos</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script> <!-- plugin labels -->
 
   <style>
     body { font-family: Arial, sans-serif; margin: 0; background: #f6f7fb; color: #111827; }
@@ -47,7 +48,6 @@
       box-shadow: 0 2px 6px rgba(0,0,0,.1);
     }
 
-    /* TABELA - DESKTOP */
     table { width: 100%; border-collapse: collapse; margin-top: 20px; background: #fff; display: none; }
     th, td { padding: 10px; border: 1px solid #e5e7eb; font-size: 14px; text-align: center; }
     th { background: #f3f4f6; }
@@ -59,7 +59,6 @@
     .btn-aprovar { background: #16a34a; color: white; margin-right: 4px; }
     .btn-negar { background: #dc2626; color: white; }
 
-    /* LISTA - MOBILE */
     .lista-titulos { display: flex; flex-direction: column; gap: 10px; padding: 15px; }
     .titulo-card {
       background: #fff; border-radius: 10px; padding: 10px;
@@ -70,10 +69,8 @@
       display: flex; justify-content: space-between; align-items: center;
       border-bottom: 1px solid #e5e7eb; padding-bottom: 6px; margin-bottom: 6px;
     }
-    .titulo-header input { margin-right: 8px; }
     .titulo-info { font-size: 13px; color: #374151; }
 
-    /* Balão flutuante */
     #balaoTotal {
       position: fixed; bottom: 20px; right: 20px;
       background: #2563eb; color: #fff;
@@ -82,7 +79,6 @@
       font-weight: bold; display: none; z-index: 999;
     }
 
-    /* Botão massa */
     #acoesMassa {
       position: fixed; bottom: 70px; right: 20px;
       display: none; z-index: 999;
@@ -117,18 +113,14 @@
     </div>
   </header>
 
-  <!-- RESUMO DE SALDOS -->
   <div class="cards" id="cardsSaldos"></div>
 
-  <!-- GRÁFICO -->
   <div class="grafico-container">
     <canvas id="graficoModalidades"></canvas>
   </div>
 
-  <!-- LISTA MOBILE -->
   <div class="lista-titulos" id="listaTitulos"></div>
 
-  <!-- LISTA DESKTOP -->
   <div style="padding: 15px;">
     <table id="tabelaTitulos">
       <thead>
@@ -148,9 +140,7 @@
     </table>
   </div>
 
-  <!-- BALÃO TOTAL -->
   <div id="balaoTotal"></div>
-  <!-- BOTÃO MASSA -->
   <div id="acoesMassa"><button onclick="aprovarMassa()">Aprovar Selecionados</button></div>
 
   <script>
@@ -187,7 +177,7 @@
     async function carregarTitulos(){
       const tbody=document.querySelector("#tabelaTitulos tbody");tbody.innerHTML="";
       const lista=document.getElementById("listaTitulos");lista.innerHTML="";
-      let somaModalidades={};let totalSelecionado=0;selecionados={};
+      let somaModalidades={};selecionados={};
 
       for(const empresa of empresasSelecionadas){
         const res=await fetch(endpointTitulos+"?action=listar&empresa="+encodeURIComponent(empresa));
@@ -196,7 +186,6 @@
           const valorNum=parseValor(item.valor);
           somaModalidades[item.meio_pagamento]=(somaModalidades[item.meio_pagamento]||0)+valorNum;
 
-          // TABELA
           const tr=document.createElement("tr");
           tr.innerHTML=`
             <td><input type="checkbox" onchange="toggleSelecionado('${empresa}',${i},${valorNum},this)"></td>
@@ -211,7 +200,6 @@
             <td>${item.status||'Pendente'}</td>`;
           tbody.appendChild(tr);
 
-          // LISTA MOBILE
           const card=document.createElement("div");card.className="titulo-card";
           card.innerHTML=`
             <div class="titulo-header">
@@ -263,7 +251,33 @@
     function desenharGrafico(soma){
       const ctx=document.getElementById("graficoModalidades").getContext("2d");
       if(grafico) grafico.destroy();
-      grafico=new Chart(ctx,{type:"pie",data:{labels:Object.keys(soma),datasets:[{data:Object.values(soma),backgroundColor:["#2563eb","#16a34a","#dc2626","#f59e0b","#9333ea"]}]},options:{responsive:true,plugins:{legend:{position:"bottom"},tooltip:{callbacks:{label:c=>`${c.label}: R$ ${c.raw.toLocaleString("pt-BR",{minimumFractionDigits:2})}`}}}}});
+      grafico=new Chart(ctx,{
+        type:"pie",
+        data:{labels:Object.keys(soma),datasets:[{data:Object.values(soma),backgroundColor:["#2563eb","#16a34a","#dc2626","#f59e0b","#9333ea"]}]},
+        options:{
+          responsive:true,
+          plugins:{
+            legend:{
+              position:"bottom",
+              labels:{
+                generateLabels:(chart)=>{
+                  const data=chart.data;
+                  return data.labels.map((label,i)=>({
+                    text:`${label}: R$ ${data.datasets[0].data[i].toLocaleString("pt-BR",{minimumFractionDigits:2})}`,
+                    fillStyle:data.datasets[0].backgroundColor[i]
+                  }));
+                }
+              }
+            },
+            datalabels:{
+              color:"#fff",
+              font:{weight:"bold"},
+              formatter:(value)=>`R$ ${value.toLocaleString("pt-BR",{minimumFractionDigits:2})}`
+            }
+          }
+        },
+        plugins:[ChartDataLabels]
+      });
     }
 
     function carregarTudo(){carregarSaldos();carregarTitulos();}
