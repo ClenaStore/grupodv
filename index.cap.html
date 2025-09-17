@@ -20,8 +20,8 @@
     .card.active { border: 2px solid #2563eb; }
     .card h3 { margin: 0 0 6px; font-size: 0.95em; color: #000; font-weight: bold; }
     .card .valor { font-size: 1.1em; font-weight: bold; color: #2563eb; }
-    .grafico-wrapper { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 15px; margin: 10px auto; padding: 12px; background: #fff; border-radius: 10px; box-shadow: 0 2px 6px rgba(0,0,0,.1); max-width: 650px; }
-    .grafico-container { flex: 0 0 200px; }
+    .grafico-wrapper { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 15px; margin: 10px auto; padding: 12px; background: #fff; border-radius: 10px; box-shadow: 0 2px 6px rgba(0,0,0,.1); max-width: 650px; min-height: 220px; }
+    .grafico-container { flex: 0 0 200px; text-align:center; }
     #graficoModalidades { height: 200px !important; }
     .legenda-valores { flex: 1; display: flex; flex-direction: column; gap: 6px; font-size: 13px; }
     .legenda-item { display: flex; justify-content: space-between; }
@@ -37,6 +37,7 @@
     .titulo-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e5e7eb; padding-bottom: 4px; margin-bottom: 4px; }
     .titulo-header strong { font-size: 1em; color: #2563eb; }
     #overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.85); display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: bold; color: #2563eb; z-index: 9999; display: none; }
+    .loading { text-align:center; color:#2563eb; font-size:14px; padding:10px; }
     @media(min-width: 769px) { .lista-titulos { display: none; } table { display: table; } }
   </style>
 </head>
@@ -63,7 +64,7 @@
   <div class="cards" id="cardsSaldos"></div>
 
   <div class="grafico-wrapper">
-    <div class="grafico-container"><canvas id="graficoModalidades"></canvas></div>
+    <div class="grafico-container"><canvas id="graficoModalidades"></canvas><div id="graficoLoader" class="loading">⏳ Carregando gráfico...</div></div>
     <div class="legenda-valores" id="legendaValores"></div>
   </div>
 
@@ -75,6 +76,7 @@
       </thead>
       <tbody></tbody>
     </table>
+    <div id="tabelaLoader" class="loading">⏳ Carregando títulos...</div>
   </div>
 
   <script>
@@ -102,6 +104,8 @@
     }
 
     async function carregarTitulos(){
+      document.getElementById("tabelaLoader").style.display="block";
+      document.getElementById("graficoLoader").style.display="block";
       const promises=empresasSelecionadas.map(emp=>fetch(endpointTitulos+"?action=listar&empresa="+encodeURIComponent(emp)).then(r=>r.json().then(d=>({empresa:emp,data:d}))));
       const resultados=await Promise.all(promises);
 
@@ -128,6 +132,8 @@
         });
       });
       desenharGrafico(somaModalidades);
+      document.getElementById("tabelaLoader").style.display="none";
+      document.getElementById("graficoLoader").style.display="none";
     }
 
     async function atualizarStatus(empresa,index,status){
@@ -146,7 +152,11 @@
       const legenda=document.getElementById("legendaValores");legenda.innerHTML="";labels.forEach((label,i)=>{const div=document.createElement("div");div.className="legenda-item";div.innerHTML=`<span><span class="legenda-cor" style="background:${cores[i]}"></span>${label}</span><span>R$ ${valores[i].toLocaleString("pt-BR",{minimumFractionDigits:2})}</span>`;legenda.appendChild(div);});
     }
 
-    async function carregarTudo(){mostrarOverlay(true);setTimeout(async()=>{await carregarSaldos();await carregarTitulos();mostrarOverlay(false);},50);}
+    async function carregarTudo(){
+      mostrarOverlay(true);
+      await Promise.all([carregarSaldos(),carregarTitulos()]);
+      mostrarOverlay(false);
+    }
     carregarTudo();
   </script>
 </body>
