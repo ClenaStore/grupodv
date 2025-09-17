@@ -6,3 +6,147 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; background: #f6f7fb; color: #111827; }
+    header { background: #2563eb; color: white; padding: 12px; display: flex; justify-content: space-between; align-items: center; }
+    header h1 { font-size: 1.1em; margin: 0; }
+    .menu-empresas { display: flex; gap: 10px; align-items: center; position: relative; }
+    .menu-btn { background: white; color: #2563eb; border: none; padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: bold; }
+    .btn-refresh { background: #f59e0b; color: white; }
+    .dropdown { display: none; position: absolute; right: 0; top: 40px; background: #fff; border: 1px solid #ccc; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,.15); padding: 10px; z-index: 200; min-width: 180px; }
+    .dropdown label { display: block; font-size: 14px; margin-bottom: 6px; cursor: pointer; }
+    .cards { display: flex; flex-wrap: wrap; gap: 10px; padding: 10px; }
+    .card { flex: 1; min-width: 140px; padding: 12px; border-radius: 10px; background: #fff; box-shadow: 0 2px 6px rgba(0,0,0,.1); text-align: center; cursor: pointer; }
+    .card.active { border: 2px solid #2563eb; }
+    .card h3 { margin: 0 0 6px; font-size: 0.95em; color: #000; font-weight: bold; }
+    .card .valor { font-size: 1.1em; font-weight: bold; color: #2563eb; }
+    .grafico-wrapper { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 15px; margin: 10px auto; padding: 12px; background: #fff; border-radius: 10px; box-shadow: 0 2px 6px rgba(0,0,0,.1); max-width: 650px; }
+    .grafico-container { flex: 0 0 200px; }
+    #graficoModalidades { height: 200px !important; }
+    .legenda-valores { flex: 1; display: flex; flex-direction: column; gap: 6px; font-size: 13px; }
+    .legenda-item { display: flex; justify-content: space-between; }
+    .legenda-cor { width: 14px; height: 14px; border-radius: 4px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 15px; background: #fff; display: none; }
+    th, td { padding: 8px; border: 1px solid #e5e7eb; font-size: 12px; text-align: center; }
+    th { background: #f3f4f6; font-size: 13px; }
+    button { padding: 5px 8px; border: none; border-radius: 6px; cursor: pointer; font-size: 11px; font-weight: bold; }
+    .btn-aprovar { background: #16a34a; color: white; margin-right: 4px; }
+    .btn-negar { background: #dc2626; color: white; }
+    .lista-titulos { display: flex; flex-direction: column; gap: 10px; padding: 10px; }
+    .titulo-card { background: #fff; border-radius: 10px; padding: 10px; box-shadow: 0 2px 6px rgba(0,0,0,.1); display: flex; flex-direction: column; gap: 6px; font-size: 13px; }
+    .titulo-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e5e7eb; padding-bottom: 4px; margin-bottom: 4px; }
+    .titulo-header strong { font-size: 1em; color: #2563eb; }
+    #overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.85); display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: bold; color: #2563eb; z-index: 9999; display: none; }
+    @media(min-width: 769px) { .lista-titulos { display: none; } table { display: table; } }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Painel Financeiro</h1>
+    <div class="menu-empresas">
+      <button class="menu-btn" onclick="toggleMenu()">Selecionar Empresas</button>
+      <button class="menu-btn btn-refresh" onclick="forcarAtualizacao()">🔄 Atualizar</button>
+      <div class="dropdown" id="dropdownEmpresas">
+        <label><input type="checkbox" value="todas" onchange="selecionarTodas(this)"> Todas</label>
+        <label><input type="checkbox" value="cap delicia"> CAP Delícia</label>
+        <label><input type="checkbox" value="cap villa"> CAP Villa</label>
+        <label><input type="checkbox" value="cap padaria"> CAP Padaria</label>
+        <label><input type="checkbox" value="cap mercatto"> CAP Mercatto</label>
+        <label><input type="checkbox" value="cap m.kids"> CAP M.Kids</label>
+        <button class="menu-btn" style="margin-top:8px;" onclick="aplicarEmpresas()">Aplicar</button>
+      </div>
+    </div>
+  </header>
+
+  <div id="overlay">⏳ Carregando...</div>
+
+  <div class="cards" id="cardsSaldos"></div>
+
+  <div class="grafico-wrapper">
+    <div class="grafico-container"><canvas id="graficoModalidades"></canvas></div>
+    <div class="legenda-valores" id="legendaValores"></div>
+  </div>
+
+  <div class="lista-titulos" id="listaTitulos"></div>
+  <div style="padding: 10px;">
+    <table id="tabelaTitulos">
+      <thead>
+        <tr><th>Ações</th><th>Empresa</th><th>Fornecedor</th><th>Vencimento</th><th>Valor</th><th>Meio</th><th>Histórico</th><th>Status</th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <script>
+    const endpointSaldos="https://script.google.com/macros/s/AKfycbzz1sV5SYJ7zBjY6GYZuUd1HUM7ZmP_Oz798SNAxH36KXdAoTNtqARVsw7EJa9F2__Y/exec";
+    const endpointTitulos="https://script.google.com/macros/s/AKfycbwCpe51vPoH2lG8YR89kVR_uRfg6-T7SNkWwI3LbJAvbNiqEA1pddhG_3llm8tINMCB/exec";
+    let empresasSelecionadas=[];let grafico;const CACHE_TTL=6*60*60*1000;
+
+    function mostrarOverlay(s=true){const ov=document.getElementById("overlay");ov.style.display=s?"flex":"none";}
+
+    function parseValor(v){if(!v)return 0;return Number(v.toString().replace("R$","").replace(/\./g,"").replace(",",".").trim())||0;}
+    function formatarData(iso){try{return new Date(iso).toLocaleDateString("pt-BR",{timeZone:"UTC"});}catch{return iso;}}
+    function toggleMenu(){const d=document.getElementById("dropdownEmpresas");d.style.display=d.style.display==="block"?"none":"block";}
+    function selecionarTodas(chk){document.querySelectorAll("#dropdownEmpresas input[type=checkbox]").forEach(cb=>{if(cb.value!=="todas")cb.checked=chk.checked;});}
+    function aplicarEmpresas(){const inputs=document.querySelectorAll("#dropdownEmpresas input[type=checkbox]:checked");if([...inputs].some(cb=>cb.value==="todas"))empresasSelecionadas=["cap delicia","cap villa","cap padaria","cap mercatto","cap m.kids"];else empresasSelecionadas=[...inputs].map(cb=>cb.value).filter(v=>v!=="todas");toggleMenu();carregarTudo();}
+    function forcarAtualizacao(){localStorage.clear();carregarTudo();}
+
+    async function carregarSaldos(){
+      const agora=Date.now();let dados;const cache=JSON.parse(localStorage.getItem("cacheSaldos")||"null");
+      if(cache&&(agora-cache.time)<CACHE_TTL){dados=cache.data;}
+      else{const res=await fetch(endpointSaldos);dados=await res.json();localStorage.setItem("cacheSaldos",JSON.stringify({time:agora,data:dados}));}
+      const cards=document.getElementById("cardsSaldos");cards.innerHTML="";
+      dados.forEach(s=>{
+        const card=document.createElement("div");card.className="card";card.dataset.empresa=s.Empresa.toLowerCase();
+        if(empresasSelecionadas.includes(card.dataset.empresa))card.classList.add("active");
+        card.innerHTML=`<h3>${s.Empresa}</h3><div class="valor">R$ ${Number(s.Saldo).toLocaleString("pt-BR",{minimumFractionDigits:2})}</div>`;
+        card.onclick=()=>{empresasSelecionadas=[s.Empresa.toLowerCase()];carregarTudo();};
+        cards.appendChild(card);
+      });
+    }
+
+    async function carregarTitulos(){
+      const agora=Date.now();let resultados=[];const cache=JSON.parse(localStorage.getItem("cacheTitulos")||"null");
+      if(cache&&(agora-cache.time)<CACHE_TTL&&cache.empresas.toString()===empresasSelecionadas.toString()){resultados=cache.data;}
+      else{const promises=empresasSelecionadas.map(emp=>fetch(endpointTitulos+"?action=listar&empresa="+encodeURIComponent(emp)).then(r=>r.json().then(d=>({empresa:emp,data:d}))));resultados=await Promise.all(promises);localStorage.setItem("cacheTitulos",JSON.stringify({time:agora,empresas:empresasSelecionadas,data:resultados}));}
+
+      const tbody=document.querySelector("#tabelaTitulos tbody");tbody.innerHTML="";const lista=document.getElementById("listaTitulos");lista.innerHTML="";let somaModalidades={};
+      resultados.forEach(({empresa,data})=>{
+        data.titulos.forEach((item,i)=>{
+          const valorNum=parseValor(item.valor);somaModalidades[item.meio_pagamento]=(somaModalidades[item.meio_pagamento]||0)+valorNum;
+          const tr=document.createElement("tr");tr.innerHTML=`<td>
+              <button class="btn-aprovar" onclick="atualizarStatus('${empresa}',${i},'Aprovado')">✓</button>
+              <button class="btn-negar" onclick="atualizarStatus('${empresa}',${i},'Negado')">✗</button></td>
+              <td>${item.empresa}</td><td>${item.fornecedor}</td><td>${formatarData(item.vencimento)}</td>
+              <td>R$ ${valorNum.toLocaleString("pt-BR",{minimumFractionDigits:2})}</td><td>${item.meio_pagamento}</td>
+              <td>${item.historico}</td><td>${item.status||'Pendente'}</td>`;tbody.appendChild(tr);
+          const card=document.createElement("div");card.className="titulo-card";card.innerHTML=`<div class="titulo-header"><div>
+              <button class="btn-aprovar" onclick="atualizarStatus('${empresa}',${i},'Aprovado')">✓</button>
+              <button class="btn-negar" onclick="atualizarStatus('${empresa}',${i},'Negado')">✗</button></div>
+              <strong>R$ ${valorNum.toLocaleString("pt-BR",{minimumFractionDigits:2})}</strong></div>
+              <div><b>Empresa:</b> ${item.empresa}</div><div><b>Fornecedor:</b> ${item.fornecedor}</div>
+              <div><b>Vencimento:</b> ${formatarData(item.vencimento)}</div><div><b>Meio:</b> ${item.meio_pagamento}</div>
+              <div><b>Histórico:</b> ${item.historico}</div><div><b>Status:</b> ${item.status||'Pendente'}</div>`;lista.appendChild(card);
+        });
+      });
+      desenharGrafico(somaModalidades);
+    }
+
+    async function atualizarStatus(empresa,index,status){
+      mostrarOverlay(true);await fetch(endpointTitulos,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"atualizar",empresa,index,status})});localStorage.removeItem("cacheTitulos");await carregarTitulos();mostrarOverlay(false);
+    }
+
+    function desenharGrafico(soma){
+      const ctx=document.getElementById("graficoModalidades").getContext("2d");if(grafico)grafico.destroy();
+      const labels=Object.keys(soma);const valores=Object.values(soma);const cores=["#2563eb","#16a34a","#dc2626","#f59e0b","#9333ea"];
+      grafico=new Chart(ctx,{type:"pie",data:{labels:labels,datasets:[{data:valores,backgroundColor:cores}]},
+        options:{responsive:true,plugins:{legend:{display:false},datalabels:{color:"#fff",font:{weight:"bold"},formatter:(value)=>`R$ ${value.toLocaleString("pt-BR",{minimumFractionDigits:2})}`}}},
+        plugins:[ChartDataLabels]});
+      const legenda=document.getElementById("legendaValores");legenda.innerHTML="";labels.forEach((label,i)=>{const div=document.createElement("div");div.className="legenda-item";div.innerHTML=`<span><span class="legenda-cor" style="background:${cores[i]}"></span>${label}</span><span>R$ ${valores[i].toLocaleString("pt-BR",{minimumFractionDigits:2})}</span>`;legenda.appendChild(div);});
+    }
+
+    async function carregarTudo(){mostrarOverlay(true);setTimeout(async()=>{await carregarSaldos();await carregarTitulos();mostrarOverlay(false);},50);}
+    carregarTudo();
+  </script>
+</body>
+</html>
