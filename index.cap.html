@@ -9,7 +9,7 @@
     body { font-family: Arial, sans-serif; margin: 0; background: #f6f7fb; color: #111827; }
     header {
       background: #1e3a8a; color: white; padding: 12px;
-      display: flex; align-items: center; justify-content: space-between;
+      display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap;
     }
     header h1 { font-size: 1.2em; margin: 0; }
 
@@ -40,9 +40,23 @@
     th, td { padding: 10px; border: 1px solid #e5e7eb; font-size: 14px; text-align: center; }
     th { background: #f3f4f6; }
 
-    button { padding: 6px 10px; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold; }
+    button { padding: 6px 10px; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold; position: relative; }
     .btn-aprovar { background: #16a34a; color: white; margin-right: 4px; }
     .btn-negar { background: #dc2626; color: white; }
+
+    /* loader circular */
+    .loading::after {
+      content: ""; width: 14px; height: 14px;
+      border: 2px solid white; border-top: 2px solid transparent;
+      border-radius: 50%; animation: spin 0.8s linear infinite;
+      position: absolute; top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+    }
+    @keyframes spin { from {transform:translate(-50%,-50%) rotate(0deg);} to {transform:translate(-50%,-50%) rotate(360deg);} }
+
+    .total-selecionado {
+      margin: 15px 0; font-size: 16px; font-weight: bold; color: #1e3a8a;
+    }
   </style>
 </head>
 <body>
@@ -64,15 +78,19 @@
     <!-- Cards de Saldos -->
     <div id="saldosGrid" class="saldos-grid"></div>
 
-    <!-- Gráfico de Modalidades -->
+    <!-- Gráfico -->
     <div class="grafico-card">
       <canvas id="graficoModalidades"></canvas>
     </div>
+
+    <!-- Soma Selecionados -->
+    <div class="total-selecionado" id="totalSelecionado">Total selecionado: R$ 0,00</div>
 
     <!-- Tabela -->
     <table id="tabelaTitulos">
       <thead>
         <tr>
+          <th><input type="checkbox" id="selectAll"></th>
           <th>Ações</th>
           <th>Empresa</th>
           <th>Fornecedor</th>
@@ -91,6 +109,12 @@
   const endpointSaldos  = "https://script.google.com/macros/s/AKfycbxsQCx_Aw0PXnAIPQsj1Hjq35BSolRmvpY3ye3DwKLLz_oTfKfQAGi3mT3Ygl-Tm3yl/exec";
 
   let grafico;
+  let totalSelecionado = 0;
+
+  function formatarData(iso) {
+    const d = new Date(iso);
+    return d.toLocaleDateString("pt-BR");
+  }
 
   async function carregarSaldos() {
     const res = await fetch(endpointSaldos);
@@ -113,23 +137,32 @@
     tbody.innerHTML = "";
     let somaModalidades = {};
 
+    const hoje = new Date().toISOString().split("T")[0]; // AAAA-MM-DD
+    totalSelecionado = 0;
+    atualizarTotal();
+
     for (const empresa of selecionadas) {
       const res = await fetch(`${endpointTitulos}?action=listar&empresa=${encodeURIComponent(empresa)}`);
       const dados = await res.json();
 
       dados.titulos.forEach((t, i) => {
+        const data = new Date(t.vencimento);
+        const venc = data.toISOString().split("T")[0];
+        if (venc !== hoje) return; // só do dia
+
         const valor = Number(t.valor.toString().replace("R$","").replace(/\./g,"").replace(",",".")) || 0;
         somaModalidades[t.meio_pagamento] = (somaModalidades[t.meio_pagamento]||0)+valor;
 
         const tr = document.createElement("tr");
         tr.innerHTML = `
+          <td><input type="checkbox" class="chkTitulo" data-valor="${valor}"></td>
           <td>
-            <button class="btn-aprovar" onclick="atualizarStatus('${empresa}',${i},'Aprovado')">✓</button>
-            <button class="btn-negar" onclick="atualizarStatus('${empresa}',${i},'Negado')">✗</button>
+            <button class="btn-aprovar" onclick="atualizarStatus(this,'${empresa}',${i},'Aprovado')">✓</button>
+            <button class="btn-negar" onclick="atualizarStatus(this,'${empresa}',${i},'Negado')">✗</button>
           </td>
           <td>${t.empresa}</td>
           <td>${t.fornecedor}</td>
-          <td>${t.vencimento}</td>
+          <td>${formatarData(t.vencimento)}</td>
           <td>R$ ${valor.toLocaleString("pt-BR",{minimumFractionDigits:2})}</td>
           <td>${t.meio_pagamento}</td>
           <td>${t.status}</td>
@@ -139,6 +172,15 @@
     }
 
     desenharGrafico(somaModalidades);
+
+    // Eventos de seleção
+    document.querySelectorAll(".chkTitulo").forEach(chk => {
+      chk.addEventListener("change", e => {
+        const val = Number(e.target.dataset.valor);
+        totalSelecionado += e.target.checked ? val : -val;
+        atualizarTotal();
+      });
+    });
   }
 
   function desenharGrafico(soma) {
@@ -153,23 +195,36 @@
           backgroundColor: ["#2563eb","#16a34a","#dc2626","#f59e0b","#9333ea"]
         }]
       },
-      options: {
-        plugins: { legend: { position: "bottom" } }
-      }
+      options: { plugins: { legend: { position: "bottom" } } }
     });
   }
 
-  async function atualizarStatus(empresa,index,status) {
+  async function atualizarStatus(btn,empresa,index,status) {
     try {
+      btn.classList.add("loading");
       const url = `${endpointTitulos}?action=atualizar&empresa=${encodeURIComponent(empresa)}&index=${index}&status=${encodeURIComponent(status)}`;
       const res = await fetch(url);
-      const dados = await res.json();
-      console.log("Atualizar:", dados);
+      await res.json();
       carregarTitulos();
     } catch (err) {
       alert("Erro ao atualizar: " + err.message);
+    } finally {
+      btn.classList.remove("loading");
     }
   }
+
+  function atualizarTotal() {
+    document.getElementById("totalSelecionado").innerText =
+      "Total selecionado: R$ " + totalSelecionado.toLocaleString("pt-BR",{minimumFractionDigits:2});
+  }
+
+  // Selecionar todos
+  document.addEventListener("change", e => {
+    if (e.target.id === "selectAll") {
+      const checks = document.querySelectorAll(".chkTitulo");
+      checks.forEach(chk => { chk.checked = e.target.checked; chk.dispatchEvent(new Event("change")); });
+    }
+  });
 
   window.onload = () => {
     carregarSaldos();
