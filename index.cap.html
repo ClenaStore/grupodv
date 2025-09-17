@@ -1,83 +1,149 @@
-<!DOCTYPE html>
+<!DOCTYPE html> 
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
   <title>Painel Financeiro • Aprovação & Saldos</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
-
   <style>
-    body { margin: 0; font-family: "Inter", sans-serif; background: #f8fafc; color: #111; }
-    header { background: #1e3a8a; color: #fff; padding: 12px; text-align: center; font-weight: bold; position: sticky; top: 0; z-index: 10; }
-
-    .container { padding: 12px; display: flex; flex-direction: column; gap: 16px; }
-
-    /* Gráfico */
-    .grafico-card { background: #fff; border-radius: 12px; box-shadow: 0 2px 6px rgba(0,0,0,.1); padding: 16px; }
-    #graficoModalidades { max-height: 240px; }
-
-    .saldos-grid { margin-top: 12px; display: grid; grid-template-columns: repeat(auto-fit, minmax(120px,1fr)); gap: 8px; }
-    .saldo-card { background: #f1f5f9; padding: 10px; border-radius: 8px; font-size: 13px; font-weight: bold; text-align: center; color: #111; }
-    .saldo-card span { display: block; color: #1e3a8a; font-size: 14px; margin-top: 4px; }
-
-    /* Filtros */
-    .filtros { display: flex; flex-wrap: wrap; gap: 10px; justify-content: space-between; }
-    .filtros button, .filtros input[type="date"] {
-      font-size: 13px; padding: 6px 10px; border-radius: 6px; border: 1px solid #ccc; cursor: pointer;
+    body { font-family: Arial, sans-serif; margin: 0; background: #f6f7fb; color: #111827; }
+    header {
+      background: #1e3a8a; color: white;
+      padding: 12px; display: flex; justify-content: space-between; align-items: center;
+      position: sticky; top: 0; z-index: 100;
     }
-    .btn-refresh { background: #f59e0b; color: #fff; border: none; }
+    header h1 { font-size: 1.2em; margin: 0; font-weight: bold; }
 
-    /* Cards títulos (mobile) */
-    .lista-titulos { display: flex; flex-direction: column; gap: 10px; }
-    .titulo-card { background: #fff; border-radius: 10px; padding: 12px; box-shadow: 0 2px 6px rgba(0,0,0,.1); font-size: 14px; }
-    .titulo-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
-    .titulo-actions button { margin-left: 4px; }
+    .menu-empresas, .menu-datas {
+      position: relative; display: flex; gap: 10px; align-items: center;
+    }
+    .menu-btn {
+      background: white; color: #1e3a8a; border: none;
+      padding: 8px 12px; border-radius: 6px; cursor: pointer;
+      font-size: 14px; font-weight: bold;
+    }
+    .btn-refresh { background: #f59e0b; color: white; }
 
-    /* Botões */
-    button { cursor: pointer; }
-    .btn-aprovar { background: #16a34a; color: #fff; border: none; padding: 4px 8px; border-radius: 6px; font-size: 12px; }
-    .btn-negar { background: #dc2626; color: #fff; border: none; padding: 4px 8px; border-radius: 6px; font-size: 12px; }
+    .dropdown {
+      display: none; position: absolute; right: 0; top: 40px;
+      background: #fff; border: 1px solid #ccc; border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,.15); padding: 10px; z-index: 200; min-width: 220px;
+    }
+    .dropdown label {
+      display: block; font-size: 14px; margin-bottom: 6px; cursor: pointer;
+      color: #000; /* nomes das empresas em preto */
+    }
+    .dropdown input { margin-right: 6px; }
 
-    /* Desktop: tabela */
-    @media(min-width: 768px){
-      .lista-titulos { display: none; }
-      table { display: table; width: 100%; border-collapse: collapse; background: #fff; font-size: 14px; }
-      th, td { border: 1px solid #e5e7eb; padding: 8px; text-align: center; }
-      th { background: #f1f5f9; }
+    .dropdown input[type="date"] {
+      width: 100%; margin-bottom: 8px; padding: 6px; font-size: 14px;
+      border: 1px solid #ccc; border-radius: 6px;
+    }
+    .dropdown button {
+      margin-top: 5px; width: 48%; padding: 6px; font-size: 13px;
+      border: none; border-radius: 6px; cursor: pointer;
+    }
+    .btn-aplicar { background: #16a34a; color: white; }
+    .btn-cancelar { background: #dc2626; color: white; }
+
+    .grafico-card {
+      margin: 20px auto; padding: 20px;
+      background: #fff; border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,.1);
+      max-width: 1000px; text-align: center;
+    }
+    .grafico-container { width: 100%; max-width: 380px; margin: auto; }
+    #graficoModalidades { height: 260px !important; }
+
+    .saldos-grid {
+      margin-top: 20px;
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+    }
+    .saldo-card {
+      background: #f3f4f6; padding: 12px; border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,.1);
+      font-size: 14px; text-align: center; font-weight: bold;
+      color: #000; /* nomes das empresas em preto */
+    }
+    .saldo-card span { color: #1e3a8a; display: block; margin-top: 4px; font-size: 15px; font-weight: bold; }
+
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; background: #fff; }
+    th, td { padding: 10px; border: 1px solid #e5e7eb; font-size: 14px; text-align: center; }
+    th { background: #f3f4f6; }
+
+    button { padding: 6px 10px; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold; }
+    .btn-aprovar { background: #16a34a; color: white; margin-right: 4px; }
+    .btn-negar { background: #dc2626; color: white; }
+
+    #balaoTotal {
+      position: fixed; bottom: 20px; right: 20px;
+      background: #2563eb; color: #fff;
+      padding: 12px 18px; border-radius: 8px;
+      box-shadow: 0 4px 10px rgba(0,0,0,.2);
+      font-weight: bold; display: none; z-index: 999;
+    }
+    #acoesMassa {
+      position: fixed; bottom: 70px; right: 20px;
+      display: none; z-index: 999;
+    }
+    #acoesMassa button {
+      background: #16a34a; color: white; border: none;
+      padding: 10px 15px; border-radius: 8px; cursor: pointer;
+      font-size: 14px; font-weight: bold;
+      box-shadow: 0 2px 6px rgba(0,0,0,.2);
     }
 
-    /* Overlay */
-    #overlay { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,.9); display:none; align-items:center; justify-content:center; font-weight:bold; color:#1e3a8a; font-size:18px; z-index:9999; }
+    #overlay {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(255,255,255,0.85);
+      display: none; align-items: center; justify-content: center;
+      font-size: 18px; font-weight: bold; color: #1e3a8a; z-index: 9999;
+    }
   </style>
 </head>
 <body>
-  <header>Painel Financeiro</header>
+  <header>
+    <h1>Painel Financeiro</h1>
+    <div style="display:flex; gap:15px;">
+      <div class="menu-empresas">
+        <button class="menu-btn" onclick="toggleMenu('dropdownEmpresas')">Selecionar Empresas</button>
+        <div class="dropdown" id="dropdownEmpresas">
+          <label><input type="checkbox" value="todas" onchange="selecionarTodas(this)" checked> Todas</label>
+          <label><input type="checkbox" value="cap delicia" checked> CAP Delícia</label>
+          <label><input type="checkbox" value="cap villa" checked> CAP Villa</label>
+          <label><input type="checkbox" value="cap padaria" checked> CAP Padaria</label>
+          <label><input type="checkbox" value="cap mercatto" checked> CAP Mercatto</label>
+          <label><input type="checkbox" value="cap m.kids" checked> CAP M.Kids</label>
+          <button class="menu-btn" style="margin-top:8px;" onclick="aplicarEmpresas()">Aplicar</button>
+        </div>
+      </div>
+
+      <div class="menu-datas">
+        <button class="menu-btn" onclick="toggleMenu('dropdownDatas')">Selecionar Datas</button>
+        <div class="dropdown" id="dropdownDatas">
+          <input type="date" id="dataInicio">
+          <input type="date" id="dataFim">
+          <div style="display:flex; justify-content:space-between; gap:5px;">
+            <button class="btn-aplicar" onclick="aplicarDatas()">Aplicar</button>
+            <button class="btn-cancelar" onclick="cancelarDatas()">Cancelar</button>
+          </div>
+        </div>
+      </div>
+
+      <button class="menu-btn btn-refresh" onclick="carregarTudo()">🔄 Atualizar</button>
+    </div>
+  </header>
+
   <div id="overlay">⏳ Carregando...</div>
 
-  <div class="container">
+  <div class="grafico-card">
+    <div class="grafico-container"><canvas id="graficoModalidades"></canvas></div>
+    <div id="saldosGrid" class="saldos-grid"></div>
+  </div>
 
-    <div class="filtros">
-      <div>
-        <label>Início</label>
-        <input type="date" id="dataInicio">
-        <label>Fim</label>
-        <input type="date" id="dataFim">
-        <button onclick="aplicarDatas()">Aplicar</button>
-      </div>
-      <button class="btn-refresh" onclick="carregarTudo()">🔄 Atualizar</button>
-    </div>
-
-    <div class="grafico-card">
-      <canvas id="graficoModalidades"></canvas>
-      <div id="saldosGrid" class="saldos-grid"></div>
-    </div>
-
-    <!-- Mobile -->
-    <div class="lista-titulos" id="listaTitulos"></div>
-
-    <!-- Desktop -->
+  <div style="padding: 15px;">
     <table id="tabelaTitulos">
       <thead>
         <tr>
@@ -94,21 +160,42 @@
       </thead>
       <tbody></tbody>
     </table>
-
   </div>
+
+  <div id="balaoTotal"></div>
+  <div id="acoesMassa"><button onclick="aprovarMassa()">Aprovar Selecionados</button></div>
 
   <script>
     const endpointSaldos = "https://script.google.com/macros/s/AKfycbxsQCx_Aw0PXnAIPQsj1Hjq35BSolRmvpY3ye3DwKLLz_oTfKfQAGi3mT3Ygl-Tm3yl/exec";
     const endpointTitulos = "https://script.google.com/macros/s/AKfycbwCpe51vPoH2lG8YR89kVR_uRfg6-T7SNkWwI3LbJAvbNiqEA1pddhG_3llm8tINMCB/exec";
 
-    let grafico, selecionados = {}, dataInicio, dataFim;
+    let empresasSelecionadas = ["cap delicia","cap villa","cap padaria","cap mercatto","cap m.kids"];
+    let grafico,saldos=[],selecionados={},dataInicio,dataFim;
 
-    function parseValor(v){ if(!v) return 0; return Number(v.toString().replace("R$","").replace(/\./g,"").replace(",",".").trim())||0; }
-    function formatarData(iso){ try{return new Date(iso).toLocaleDateString("pt-BR");}catch{return iso;} }
+    function toggleMenu(id){const d=document.getElementById(id);d.style.display=d.style.display==="block"?"none":"block";}
+    function selecionarTodas(chk){document.querySelectorAll("#dropdownEmpresas input[type=checkbox]").forEach(cb=>{if(cb.value!=="todas")cb.checked=chk.checked;});}
+    function aplicarEmpresas(){
+      const inputs=document.querySelectorAll("#dropdownEmpresas input[type=checkbox]:checked");
+      empresasSelecionadas=Array.from(inputs).map(cb=>cb.value).filter(v=>v!=="todas");
+      carregarTitulos();
+    }
+
+    function aplicarDatas(){
+      dataInicio=document.getElementById("dataInicio").value;
+      dataFim=document.getElementById("dataFim").value;
+      carregarTitulos();
+    }
+    function cancelarDatas(){
+      document.getElementById("dataInicio").value="";
+      document.getElementById("dataFim").value="";
+      dataInicio=dataFim=null;
+      carregarTitulos();
+    }
 
     async function carregarSaldos(){
-      const res = await fetch(endpointSaldos); const saldos = await res.json();
-      const grid = document.getElementById("saldosGrid"); grid.innerHTML="";
+      const res=await fetch(endpointSaldos);saldos=await res.json();
+      const grid=document.getElementById("saldosGrid");
+      grid.innerHTML="";
       saldos.forEach(s=>{
         const div=document.createElement("div");
         div.className="saldo-card";
@@ -118,80 +205,98 @@
     }
 
     async function carregarTitulos(){
-      const tbody=document.querySelector("#tabelaTitulos tbody"); tbody.innerHTML="";
-      const lista=document.getElementById("listaTitulos"); lista.innerHTML="";
+      const promises=empresasSelecionadas.map(emp=>{
+        let url=endpointTitulos+"?action=listar&empresa="+encodeURIComponent(emp);
+        if(dataInicio) url+="&inicio="+dataInicio;
+        if(dataFim) url+="&fim="+dataFim;
+        return fetch(url).then(r=>r.json().then(d=>({empresa:emp,data:d})));
+      });
+      const resultados=await Promise.all(promises);
+
+      const tbody=document.querySelector("#tabelaTitulos tbody");tbody.innerHTML="";
       selecionados={}; let somaModalidades={};
 
-      let url=endpointTitulos+"?action=listar";
-      if(dataInicio) url+="&inicio="+dataInicio;
-      if(dataFim) url+="&fim="+dataFim;
-      const res = await fetch(url); const dados = await res.json();
-
-      dados.titulos.forEach((item,i)=>{
-        const valorNum=parseValor(item.valor);
-        somaModalidades[item.meio_pagamento]=(somaModalidades[item.meio_pagamento]||0)+valorNum;
-
-        // tabela
-        const tr=document.createElement("tr");
-        tr.innerHTML=`<td><input type="checkbox" onchange="toggleSelecionado(${i},${valorNum},this)"></td>
-          <td><button class="btn-aprovar" onclick="atualizarStatus(${i},'Aprovado')">✓</button>
-              <button class="btn-negar" onclick="atualizarStatus(${i},'Negado')">✗</button></td>
-          <td>${item.empresa}</td><td>${item.fornecedor}</td>
-          <td>${formatarData(item.vencimento)}</td>
-          <td>R$ ${valorNum.toLocaleString("pt-BR",{minimumFractionDigits:2})}</td>
-          <td>${item.meio_pagamento}</td><td>${item.historico}</td><td>${item.status||"Pendente"}</td>`;
-        tbody.appendChild(tr);
-
-        // mobile card
-        const card=document.createElement("div");
-        card.className="titulo-card";
-        card.innerHTML=`<div class="titulo-header"><b>${item.empresa}</b>
-          <div class="titulo-actions">
-            <button class="btn-aprovar" onclick="atualizarStatus(${i},'Aprovado')">✓</button>
-            <button class="btn-negar" onclick="atualizarStatus(${i},'Negado')">✗</button>
-          </div></div>
-          <div><b>Fornecedor:</b> ${item.fornecedor}</div>
-          <div><b>Vencimento:</b> ${formatarData(item.vencimento)}</div>
-          <div><b>Valor:</b> R$ ${valorNum.toLocaleString("pt-BR",{minimumFractionDigits:2})}</div>
-          <div><b>Meio:</b> ${item.meio_pagamento}</div>
-          <div><b>Histórico:</b> ${item.historico}</div>
-          <div><b>Status:</b> ${item.status||"Pendente"}</div>`;
-        lista.appendChild(card);
+      resultados.forEach(({empresa,data})=>{
+        data.titulos.forEach((item,i)=>{
+          const valorNum=Number(item.valor.toString().replace("R$","").replace(/\./g,"").replace(",","."));
+          somaModalidades[item.meio_pagamento]=(somaModalidades[item.meio_pagamento]||0)+valorNum;
+          const tr=document.createElement("tr");
+          tr.innerHTML=`<td><input type="checkbox" onchange="toggleSelecionado('${empresa}',${i},${valorNum},this)"></td>
+              <td>
+                <button class="btn-aprovar" onclick="atualizarStatus('${empresa}',${i},'Aprovado')">✓</button>
+                <button class="btn-negar" onclick="atualizarStatus('${empresa}',${i},'Negado')">✗</button>
+              </td>
+              <td>${item.empresa}</td><td>${item.fornecedor}</td><td>${item.vencimento}</td>
+              <td>R$ ${valorNum.toLocaleString("pt-BR",{minimumFractionDigits:2})}</td>
+              <td>${item.meio_pagamento}</td><td>${item.historico}</td><td>${item.status||'Pendente'}</td>`;
+          tbody.appendChild(tr);
+        });
       });
-
       desenharGrafico(somaModalidades);
     }
 
-    async function atualizarStatus(index,status){
-      document.getElementById("overlay").style.display="flex";
-      await fetch(endpointTitulos,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"atualizar",index,status})});
-      await carregarTitulos();
-      document.getElementById("overlay").style.display="none";
+    function toggleSelecionado(empresa,index,valor,chk){
+      if(chk.checked) selecionados[empresa+"_"+index]=valor;
+      else delete selecionados[empresa+"_"+index];
+      atualizarBalao();
+    }
+    function atualizarBalao(){
+      const total=Object.values(selecionados).reduce((a,b)=>a+b,0);
+      const balao=document.getElementById("balaoTotal");
+      const massa=document.getElementById("acoesMassa");
+      if(total>0){balao.style.display="block";massa.style.display="block";balao.innerText=`Selecionados: R$ ${total.toLocaleString("pt-BR",{minimumFractionDigits:2})}`;}
+      else{balao.style.display="none";massa.style.display="none";}
+    }
+
+    async function atualizarStatus(empresa,index,status){
+      try {
+        document.getElementById("overlay").style.display="flex";
+        const resposta = await fetch(endpointTitulos,{
+          method:"POST",
+          headers:{"Content-Type":"application/json"},
+          body:JSON.stringify({
+            action:"atualizar",
+            empresa:empresa,
+            index:index,
+            status:status
+          })
+        });
+        const resultado = await resposta.json();
+        console.log("Servidor respondeu:",resultado);
+        await carregarTitulos();
+      } catch(e){
+        console.error("Erro:",e);
+        alert("❌ Erro ao atualizar título.");
+      } finally {
+        document.getElementById("overlay").style.display="none";
+      }
+    }
+
+    async function aprovarMassa(){
+      for(const key in selecionados){
+        const [empresa,index]=key.split("_");
+        await atualizarStatus(empresa,index,"Aprovado");
+      }
     }
 
     function desenharGrafico(soma){
       const ctx=document.getElementById("graficoModalidades").getContext("2d");
-      if(grafico) grafico.destroy();
-      grafico=new Chart(ctx,{type:"pie",data:{labels:Object.keys(soma),datasets:[{data:Object.values(soma),backgroundColor:["#2563eb","#16a34a","#dc2626","#f59e0b","#9333ea"]}]},
-        options:{plugins:{legend:{position:"right"},datalabels:{color:"#fff",formatter:v=>"R$ "+v.toLocaleString("pt-BR",{minimumFractionDigits:2})}}},plugins:[ChartDataLabels]});
+      if(grafico)grafico.destroy();
+      grafico=new Chart(ctx,{type:"pie",data:{labels:Object.keys(soma),datasets:[{data:Object.values(soma),backgroundColor:["#2563eb","#16a34a","#dc2626","#f59e0b","#9333ea"]}]},options:{plugins:{legend:{position:"right"},datalabels:{color:"#fff",formatter:v=>"R$ "+v.toLocaleString("pt-BR",{minimumFractionDigits:2})}}},plugins:[ChartDataLabels]});
     }
-
-    function toggleSelecionado(i,valor,chk){ if(chk.checked) selecionados[i]=valor; else delete selecionados[i]; }
-    function toggleTodos(chk){ document.querySelectorAll("#tabelaTitulos tbody input[type=checkbox]").forEach(c=>{c.checked=chk.checked; c.dispatchEvent(new Event("change"));}); }
-
-    function aplicarDatas(){ dataInicio=document.getElementById("dataInicio").value; dataFim=document.getElementById("dataFim").value; carregarTitulos(); }
 
     async function carregarTudo(){
       document.getElementById("overlay").style.display="flex";
-      await carregarSaldos(); await carregarTitulos();
+      await carregarSaldos();await carregarTitulos();
       document.getElementById("overlay").style.display="none";
     }
 
+    // inicializa com a data de hoje
     window.onload=()=>{
       const hoje=new Date().toISOString().split("T")[0];
       document.getElementById("dataInicio").value=hoje;
       document.getElementById("dataFim").value=hoje;
-      dataInicio=hoje; dataFim=hoje;
+      dataInicio=hoje;dataFim=hoje;
       carregarTudo();
     }
   </script>
