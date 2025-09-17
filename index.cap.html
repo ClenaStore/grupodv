@@ -17,7 +17,7 @@
 
     /* SALDOS */
     .saldos-grid {
-      display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
       gap: 10px; margin: 10px 0;
     }
     .saldo-card {
@@ -100,7 +100,7 @@
 
     /* MENU FLUTUANTE */
     .menu-empresas {
-      position:fixed; top:10px; right:10px; background:#fff; padding:10px; border-radius:8px;
+      position:fixed; top:50px; right:10px; background:#fff; padding:10px; border-radius:8px;
       box-shadow:0 2px 8px rgba(0,0,0,.2); display:none; flex-direction:column; gap:6px; z-index:1000;
     }
     .menu-empresas label { font-size:13px; }
@@ -302,6 +302,15 @@
     const menu=document.getElementById("menuEmpresas");
     menu.style.display=menu.style.display==="flex"?"none":"flex";
   }
+
+  // Fechar menu ao clicar fora
+  document.addEventListener("click", function(e){
+    const menu=document.getElementById("menuEmpresas");
+    const btn=document.querySelector(".btn-menu");
+    if(menu.style.display==="flex" && !menu.contains(e.target) && !btn.contains(e.target)){
+      menu.style.display="none";
+    }
+  });
 
   window.onload=()=>{
     const hoje=new Date().toISOString().split("T")[0];
