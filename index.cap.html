@@ -52,56 +52,54 @@
   </div>
 
   <script>
+    // ⚠️ Troque pelo link da sua implantação do Apps Script (/exec)
     const endpoint = "https://script.google.com/macros/s/AKfycbwxXahrJQlXnhes1ZOcrsGXywZRqWhyV5gE-h167GIkYhJZ7AjVFlj5Huh35cflogNw/exec";
 
     async function carregarTitulos() {
       const empresa = document.getElementById("empresaSelect").value;
-      const res = await fetch(`${endpoint}?action=listar&empresa=${encodeURIComponent(empresa)}`);
-      const dados = await res.json();
+      try {
+        const res = await fetch(`${endpoint}?action=listar&empresa=${encodeURIComponent(empresa)}`);
+        const dados = await res.json();
+        console.log("Dados recebidos:", dados);
 
-      const tbody = document.getElementById("tabelaTitulos");
-      tbody.innerHTML = "";
+        const tbody = document.getElementById("tabelaTitulos");
+        tbody.innerHTML = "";
 
-      dados.titulos.forEach((t, i) => {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td>
-            <button class="btn-aprovar" onclick="atualizarStatus('${empresa}',${i},'Aprovado')">✓</button>
-            <button class="btn-negar" onclick="atualizarStatus('${empresa}',${i},'Negado')">✗</button>
-          </td>
-          <td>${t.empresa}</td>
-          <td>${t.fornecedor}</td>
-          <td>${t.vencimento}</td>
-          <td>${t.valor}</td>
-          <td>${t.meio_pagamento}</td>
-          <td>${t.status}</td>
-        `;
-        tbody.appendChild(tr);
-      });
+        dados.titulos.forEach((t, i) => {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td>
+              <button class="btn-aprovar" onclick="atualizarStatus('${empresa}',${i},'Aprovado')">✓</button>
+              <button class="btn-negar" onclick="atualizarStatus('${empresa}',${i},'Negado')">✗</button>
+            </td>
+            <td>${t.empresa}</td>
+            <td>${t.fornecedor}</td>
+            <td>${t.vencimento}</td>
+            <td>${t.valor}</td>
+            <td>${t.meio_pagamento}</td>
+            <td>${t.status}</td>
+          `;
+          tbody.appendChild(tr);
+        });
+      } catch (err) {
+        console.error("Erro ao carregar titulos:", err);
+      }
     }
-async function atualizarStatus(empresa, index, status) {
-  try {
-    const res = await fetch(endpoint, {
-      method:"POST",
-      headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({action:"atualizar",empresa,index,status})
-    });
-    const dados = await res.json();
-    console.log("Resposta do servidor:", dados);
-    carregarTitulos();
-  } catch (err) {
-    console.error("Erro no fetch:", err);
-    alert("Erro ao atualizar status, veja o console");
-  }
-}
 
     async function atualizarStatus(empresa, index, status) {
-      await fetch(endpoint, {
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({action:"atualizar",empresa,index,status})
-      });
-      carregarTitulos();
+      try {
+        const res = await fetch(endpoint, {
+          method:"POST",
+          headers:{"Content-Type":"application/json"},
+          body:JSON.stringify({action:"atualizar",empresa,index,status})
+        });
+        const dados = await res.json();
+        console.log("Resposta do servidor:", dados);
+        carregarTitulos();
+      } catch (err) {
+        console.error("Erro ao atualizar status:", err);
+        alert("Erro ao atualizar status, veja o console.");
+      }
     }
 
     window.onload = carregarTitulos;
