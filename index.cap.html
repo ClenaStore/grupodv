@@ -12,6 +12,7 @@
       display: flex; align-items: center; justify-content: space-between; flex-wrap:wrap;
     }
     header h1 { font-size: 1.2em; margin: 0; }
+
     .container { padding: 12px; }
 
     /* SALDOS */
@@ -31,17 +32,22 @@
     .saldo-card .final.verde { color:#16a34a; }
     .saldo-card .final.vermelho { color:#dc2626; }
 
-    /* CARD DO GRÁFICO + MODALIDADES */
+    /* CARD DO GRÁFICO */
     .grafico-card {
       background: #fff; border-radius: 8px; padding: 10px;
       box-shadow: 0 2px 6px rgba(0,0,0,.08); margin: 15px auto;
       max-width: 420px; text-align:center;
     }
-    canvas { max-height: 180px; margin: auto; }
-    .modalidades-list { margin-top: 10px; display:flex; flex-wrap:wrap; justify-content:center; gap:10px; }
-    .modalidade-item { background:#f3f4f6; padding:4px 8px; border-radius:6px; font-size:12px; }
+    canvas { max-height: 160px; margin: auto; }
 
-    /* TABELA */
+    .modalidades-list {
+      margin-top: 10px; display:flex; flex-wrap:wrap; justify-content:center; gap:10px;
+    }
+    .modalidade-item {
+      background:#f3f4f6; padding:4px 8px; border-radius:6px; font-size:12px;
+    }
+
+    /* TABELA DESKTOP */
     table { width: 100%; border-collapse: collapse; background: #fff; margin-top: 10px; border-radius: 6px; overflow:hidden; }
     th, td { padding: 8px; border: 1px solid #e5e7eb; font-size: 13px; text-align: center; }
     th { background: #f3f4f6; }
@@ -77,27 +83,12 @@
       box-shadow:0 2px 6px rgba(0,0,0,.2); min-width:160px; text-align:center;
     }
 
-    /* MENU FLUTUANTE EMPRESAS */
-    .menu-flutuante {
-      position:fixed; top:60px; right:15px; background:#fff; border:1px solid #ddd; border-radius:8px;
-      box-shadow:0 2px 8px rgba(0,0,0,.2); padding:10px; display:none; z-index:1000;
+    .popup-confirm {
+      background:#16a34a; color:#fff; padding:10px 16px; border-radius:8px;
+      position:fixed; bottom:15px; left:15px; box-shadow:0 2px 6px rgba(0,0,0,.2);
+      display:none; font-size:14px;
     }
-    .menu-flutuante label { display:block; margin-bottom:6px; font-size:14px; color:#111; }
-    .menu-toggle { background:#fff; color:#1e3a8a; padding:6px 10px; border-radius:6px; cursor:pointer; border:none; font-weight:bold; }
-    .menu-toggle:hover { background:#f3f4f6; }
-
-    /* TOAST CONFIRMAÇÃO */
-    .toast {
-      position: fixed; bottom: 20px; left: 20px;
-      background:#16a34a; color:white; padding:12px 16px;
-      border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,.2);
-      display:flex; align-items:center; gap:10px;
-      animation: fadein 0.4s;
-    }
-    .toast button {
-      background:transparent; color:white; border:none; font-size:16px; cursor:pointer;
-    }
-    @keyframes fadein { from{opacity:0; transform:translateY(20px);} to{opacity:1; transform:translateY(0);} }
+    .popup-confirm span { margin-left:10px; cursor:pointer; font-weight:bold; }
 
     /* Loading */
     .loading::after {
@@ -106,6 +97,14 @@
       margin-left: 4px; animation: spin 0.8s linear infinite;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* MENU FLUTUANTE */
+    .menu-empresas {
+      position:fixed; top:10px; right:10px; background:#fff; padding:10px; border-radius:8px;
+      box-shadow:0 2px 8px rgba(0,0,0,.2); display:none; flex-direction:column; gap:6px; z-index:1000;
+    }
+    .menu-empresas label { font-size:13px; }
+    .btn-menu { background:#f3f4f6; padding:6px 10px; border-radius:6px; }
   </style>
 </head>
 <body>
@@ -116,15 +115,16 @@
       <select id="filtroStatus" onchange="carregarTitulos()">
         <option value="Pendente" selected>Pendentes</option>
         <option value="Aprovado">Aprovados</option>
+        <option value="Negado">Negados</option>
+        <option value="Liquidado">Liquidados</option>
         <option value="Todos">Todos</option>
       </select>
       <input type="date" id="filtroData" onchange="carregarTitulos()">
-      <button class="menu-toggle" onclick="toggleMenu()">Empresas ⚙️</button>
+      <button class="btn-menu" onclick="toggleMenu()">Empresas ⚙</button>
     </div>
   </header>
 
-  <!-- MENU FLUTUANTE -->
-  <div id="menuEmpresas" class="menu-flutuante"></div>
+  <div id="menuEmpresas" class="menu-empresas"></div>
 
   <div class="container">
     <div id="saldosGrid" class="saldos-grid"></div>
@@ -156,45 +156,41 @@
     <button id="btnMassa" class="btn-massa" style="display:none;" onclick="aprovarMassa()">Aprovar em Massa</button>
   </div>
 
-  <div id="toast" class="toast" style="display:none;">
-    <span id="toastMsg">✔ Aprovados com sucesso!</span>
-    <button onclick="fecharToast()">✖</button>
-  </div>
+  <div id="popupConfirm" class="popup-confirm">Títulos aprovados com sucesso <span onclick="this.parentElement.style.display='none'">✕</span></div>
 
 <script>
   const endpointTitulos = "https://script.google.com/macros/s/AKfycbwt9y43T8Ya0AhNusue3PTekaBPDnrqSK33dsbnmOKezcm3wnSrUz3z2jO_9BoJd8MH/exec";
   const endpointSaldos  = "https://script.google.com/macros/s/AKfycbxsQCx_Aw0PXnAIPQsj1Hjq35BSolRmvpY3ye3DwKLLz_oTfKfQAGi3mT3Ygl-Tm3yl/exec";
 
-  let grafico, selecionados = [], saldosPlanilha = {}, somaTitulosPorEmpresa = {};
+  let grafico, selecionados = [], saldosPlanilha = {};
 
   async function carregarSaldos() {
     const res = await fetch(endpointSaldos);
     const dados = await res.json();
     dados.forEach(s => saldosPlanilha[s.Empresa] = s.Saldo);
-    atualizarCards({});
   }
 
   async function carregarTitulos() {
-    const dataSelecionada = document.getElementById("filtroData").value;
+    const dataFiltro = document.getElementById("filtroData").value;
     const empresas = [...document.querySelectorAll("#menuEmpresas input:checked")].map(e=>e.value);
     const filtro = document.getElementById("filtroStatus").value;
     const tbody = document.querySelector("#tabelaTitulos tbody");
     tbody.innerHTML = "";
     selecionados = [];
-    let somaModalidades = {}; somaTitulosPorEmpresa = {};
+    let somaModalidades = {}, somaTitulosPorEmpresa = {};
 
-    const promises = empresas.map(emp => fetch(`${endpointTitulos}?action=listar&empresa=${encodeURIComponent(emp)}`).then(r=>r.json().then(d=>({emp, d}))));
+    const promises = empresas.map(emp => fetch(`${endpointTitulos}?action=listar&empresa=${encodeURIComponent(emp)}`).then(r=>r.json().then(d=>({emp,d}))));
     const resultados = await Promise.all(promises);
 
     resultados.forEach(({emp,d})=>{
       d.titulos.forEach((t,i)=>{
-        if (t.vencimento && t.vencimento.startsWith(dataSelecionada)) {
+        if (t.vencimento && t.vencimento.startsWith(dataFiltro)) {
           if (filtro!=="Todos" && t.status!==filtro) return;
           const valor = Number(t.valor.toString().replace("R$","").replace(/\./g,"").replace(",","."))||0;
           somaModalidades[t.meio_pagamento] = (somaModalidades[t.meio_pagamento]||0)+valor;
           somaTitulosPorEmpresa[emp] = (somaTitulosPorEmpresa[emp]||0)+valor;
 
-          const tr = document.createElement("tr");
+          const tr=document.createElement("tr");
           tr.innerHTML=`
             <td><input type="checkbox" onchange="toggleSelecionado('${emp}',${i},this,${valor})"></td>
             <td style="color:black">${t.empresa}</td>
@@ -247,35 +243,35 @@
     }
   }
 
-  function desenharGrafico(soma) {
-    const ctx = document.getElementById("graficoModalidades").getContext("2d");
-    if (grafico) grafico.destroy();
-    grafico = new Chart(ctx, {
-      type: "pie",
-      data: { labels:Object.keys(soma), datasets:[{ data:Object.values(soma),
-        backgroundColor:["#2563eb","#16a34a","#dc2626","#f59e0b","#9333ea"] }]},
-      options: { plugins:{ legend:{ display:false } } }
+  function desenharGrafico(soma){
+    const ctx=document.getElementById("graficoModalidades").getContext("2d");
+    if(grafico) grafico.destroy();
+    grafico=new Chart(ctx,{
+      type:"pie",
+      data:{labels:Object.keys(soma),datasets:[{data:Object.values(soma),
+        backgroundColor:["#2563eb","#16a34a","#dc2626","#f59e0b","#9333ea"]}]},
+      options:{plugins:{legend:{display:false}}}
     });
   }
 
   async function atualizarStatus(btn,empresa,index,status){
     btn.classList.add("loading");
-    try {
+    try{
       await fetch(`${endpointTitulos}?action=atualizar&empresa=${encodeURIComponent(empresa)}&index=${index}&status=${encodeURIComponent(status)}`);
       btn.closest("tr").querySelector(".status").innerText=status;
-    } finally { btn.classList.remove("loading"); }
+    }finally{btn.classList.remove("loading");}
   }
 
   function toggleSelecionado(empresa,index,chk,valor){
     if(chk.checked) selecionados.push({empresa,index,valor});
     else selecionados=selecionados.filter(s=>!(s.empresa===empresa && s.index===index));
-    const total = selecionados.reduce((a,b)=>a+b.valor,0);
+    const total=selecionados.reduce((a,b)=>a+b.valor,0);
     document.getElementById("btnMassa").style.display=selecionados.length>0?"inline-block":"none";
     const popup=document.getElementById("popupTotal");
     if(selecionados.length>0){
       popup.innerText="Total Selecionado: R$ "+total.toLocaleString("pt-BR",{minimumFractionDigits:2});
       popup.style.display="block";
-    } else popup.style.display="none";
+    }else popup.style.display="none";
   }
 
   async function aprovarMassa(){
@@ -286,53 +282,42 @@
       document.querySelector(`#tabelaTitulos tbody tr:nth-child(${s.index+1}) .status`).innerText="Aprovado";
     }
     btn.classList.remove("loading");
-    selecionados=[];document.getElementById("btnMassa").style.display="none";
+    selecionados=[];
+    document.getElementById("btnMassa").style.display="none";
     document.getElementById("popupTotal").style.display="none";
-    mostrarToast("✔ Títulos aprovados com sucesso!");
+    document.getElementById("popupConfirm").style.display="block";
+    setTimeout(()=>{document.getElementById("popupConfirm").style.display="none";},5000);
   }
 
   function toggleAll(chk){
     document.querySelectorAll("#tabelaTitulos tbody input[type=checkbox]").forEach(c=>{c.checked=chk.checked;c.dispatchEvent(new Event("change"));});
   }
 
-  function formatarData(d){ 
-    const dt=new Date(d); 
+  function formatarData(d){
+    const dt=new Date(d);
     return ("0"+dt.getDate()).slice(-2)+("0"+(dt.getMonth()+1)).slice(-2)+dt.getFullYear();
   }
 
   function toggleMenu(){
     const menu=document.getElementById("menuEmpresas");
-    menu.style.display=menu.style.display==="block"?"none":"block";
-  }
-
-  function mostrarToast(msg){
-    const toast=document.getElementById("toast");
-    document.getElementById("toastMsg").innerText=msg;
-    toast.style.display="flex";
-  }
-  function fecharToast(){
-    document.getElementById("toast").style.display="none";
+    menu.style.display=menu.style.display==="flex"?"none":"flex";
   }
 
   window.onload=()=>{
-    // seta data padrão
-    document.getElementById("filtroData").value=new Date().toISOString().split("T")[0];
+    const hoje=new Date().toISOString().split("T")[0];
+    document.getElementById("filtroData").value=hoje;
 
-    // empresas
     const menu=document.getElementById("menuEmpresas");
-    const empresas=["cap delicia","cap villa","cap padaria","cap mercatto","cap m.kids"];
-    empresas.forEach(emp=>{
+    ["cap delicia","cap villa","cap padaria","cap mercatto","cap m.kids"].forEach(emp=>{
       const lbl=document.createElement("label");
-      const checked=emp==="cap villa"?"":"checked";
-      lbl.innerHTML=`<input type="checkbox" value="${emp}" ${checked} onchange="carregarTitulos()">
-
-      lbl.innerHTML=`<input type="checkbox" value="${emp}" ${emp==="cap villa"?"":"checked"} onchange="carregarTitulos()"> ${emp.toUpperCase()}`;
+      const checked=emp!=="cap villa"?"checked":"";
+      lbl.innerHTML=`<input type="checkbox" value="${emp}" ${checked} onchange="carregarTitulos()"> ${emp.toUpperCase()}`;
       menu.appendChild(lbl);
     });
 
     carregarSaldos();
     carregarTitulos();
-  }
+  };
 </script>
 </body>
 </html>
