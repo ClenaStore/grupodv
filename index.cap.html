@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -12,19 +13,21 @@
       display: flex; align-items: center; justify-content: space-between; flex-wrap:wrap;
     }
     header h1 { font-size: 1.2em; margin: 0; }
-    .container { padding: 10px; }
+    .container { padding: 12px; }
 
     /* SALDOS */
     .saldos-grid {
-      display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      gap: 10px; margin: 15px 0;
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      gap: 12px; margin: 15px 0;
     }
     .saldo-card {
-      background: #fff; padding: 10px; border-radius: 8px;
-      box-shadow: 0 2px 6px rgba(0,0,0,.1);
-      font-size: 14px; text-align: center; cursor: pointer;
+      background: #fff; padding: 14px; border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,.08);
+      font-size: 15px; text-align: center; cursor: pointer;
+      transition: transform .2s;
     }
-    .saldo-card strong { display:block; margin-top:4px; font-weight:bold; color:#1e3a8a; }
+    .saldo-card:hover { transform: scale(1.03); }
+    .saldo-card strong { display:block; margin-top:6px; font-weight:bold; color:#1e3a8a; font-size:16px; }
     .saldo-card .final { margin-top:6px; font-weight:bold; }
     .saldo-card.positivo { border:2px solid #16a34a; }
     .saldo-card.negativo { border:2px solid #dc2626; }
@@ -32,35 +35,36 @@
     .saldo-card .final.vermelho { color:#dc2626; }
 
     /* TABELA DESKTOP */
-    table { width: 100%; border-collapse: collapse; background: #fff; margin-top: 10px; }
-    th, td { padding: 8px; border: 1px solid #e5e7eb; font-size: 13px; text-align: center; }
-    th { background: #f3f4f6; }
+    table { width: 100%; border-collapse: collapse; background: #fff; margin-top: 10px; border-radius: 6px; overflow:hidden; }
+    th, td { padding: 10px; border: 1px solid #e5e7eb; font-size: 14px; text-align: center; }
+    th { background: #f3f4f6; font-weight: bold; }
 
     /* CARDS MOBILE */
     @media(max-width:768px){
       table, thead, tbody, th, td, tr { display:block; }
       thead { display:none; }
-      tr { background:#fff; margin:10px 0; padding:10px; border-radius:8px; box-shadow:0 2px 6px rgba(0,0,0,.1); }
-      td { border:none; text-align:left; padding:4px 0; }
-      td::before { font-weight:bold; display:inline-block; width:120px; }
-      td:nth-child(2)::before { content:"Empresa:"; }
-      td:nth-child(3)::before { content:"Fornecedor:"; }
-      td:nth-child(4)::before { content:"Vencimento:"; }
-      td:nth-child(5)::before { content:"Valor:"; }
-      td:nth-child(6)::before { content:"Meio:"; }
-      td:nth-child(7)::before { content:"Status:"; }
+      tr { background:#fff; margin:12px 0; padding:12px; border-radius:10px; box-shadow:0 2px 6px rgba(0,0,0,.1); }
+      td { border:none; text-align:left; padding:6px 0; font-size:14px; }
+      td::before { font-weight:bold; display:block; margin-bottom:2px; color:#374151; }
+      td:nth-child(2)::before { content:"Empresa"; }
+      td:nth-child(3)::before { content:"Fornecedor"; }
+      td:nth-child(4)::before { content:"Vencimento"; }
+      td:nth-child(5)::before { content:"Valor"; }
+      td:nth-child(6)::before { content:"Meio"; }
+      td:nth-child(7)::before { content:"Status"; }
+      td:nth-child(8)::before { content:"Ações"; }
     }
 
-    button { padding: 5px 10px; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold; }
-    .btn-aprovar { background: #16a34a; color: white; margin-right: 3px; }
+    button { padding: 6px 12px; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: bold; }
+    .btn-aprovar { background: #16a34a; color: white; margin-right: 5px; }
     .btn-negar { background: #dc2626; color: white; }
-    .btn-massa { background:#2563eb; color:white; margin:10px 0; padding:8px 14px; display:none; }
+    .btn-massa { background:#2563eb; color:white; margin:12px 0; padding:10px 16px; display:none; border-radius:8px; font-size:14px; }
 
-    /* Loading */
+    /* Loading dentro do botão */
     .loading::after {
-      content: ""; display: inline-block; width: 12px; height: 12px;
+      content: ""; display: inline-block; width: 14px; height: 14px;
       border: 2px solid #fff; border-top-color: transparent; border-radius: 50%;
-      margin-left: 4px; animation: spin 0.8s linear infinite;
+      margin-left: 6px; animation: spin 0.8s linear infinite;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
   </style>
@@ -111,7 +115,8 @@
   }
 
   async function carregarTitulos() {
-    const hoje = new Date().toISOString().split("T")[0];
+    const hoje = new Date();
+    const dataHoje = hoje.toISOString().split("T")[0]; // yyyy-mm-dd
     const empresas = [...document.querySelectorAll("#filtrosEmpresas input:checked")].map(e=>e.value);
     const tbody = document.querySelector("#tabelaTitulos tbody");
     tbody.innerHTML = "";
@@ -123,8 +128,8 @@
       const dados = await res.json();
 
       dados.titulos.forEach((t,i) => {
-        if (t.vencimento && t.vencimento.startsWith(hoje)) {
-          const valor = Number(t.valor.toString().replace("R$","").replace(/\./g,"").replace(",",".")) || 0;
+        if (t.vencimento && t.vencimento.startsWith(dataHoje)) {
+          const valor = Number(t.valor.toString().replace("R$","").replace(/\./g,"").replace(",","."));
           somaModalidades[t.meio_pagamento] = (somaModalidades[t.meio_pagamento]||0)+valor;
           somaTitulosPorEmpresa[empresa] = (somaTitulosPorEmpresa[empresa]||0)+valor;
 
@@ -222,3 +227,9 @@
 </script>
 </body>
 </html>
+
+
+
+
+
+  
