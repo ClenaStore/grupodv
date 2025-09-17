@@ -17,13 +17,13 @@
 
     /* SALDOS */
     .saldos-grid {
-      display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
       gap: 10px; margin: 10px 0;
     }
     .saldo-card {
       background: #fff; padding: 10px; border-radius: 8px;
       box-shadow: 0 2px 6px rgba(0,0,0,.08);
-      font-size: 13px; text-align: center;
+      font-size: 13px; text-align: center; position:relative;
     }
     .saldo-card strong { display:block; margin-top:4px; font-weight:bold; color:#1e3a8a; }
     .saldo-card .final { margin-top:4px; font-weight:bold; }
@@ -31,6 +31,11 @@
     .saldo-card.negativo { border:2px solid #dc2626; }
     .saldo-card .final.verde { color:#16a34a; }
     .saldo-card .final.vermelho { color:#dc2626; }
+    .saldo-card small { display:block; margin-top:4px; font-size:11px; color:#6b7280; }
+    .livro-btn {
+      position:absolute; top:6px; right:6px; background:#f3f4f6; border:none; border-radius:50%;
+      width:24px; height:24px; cursor:pointer; font-size:14px;
+    }
 
     /* CARD DO GRÁFICO */
     .grafico-card {
@@ -82,21 +87,12 @@
       background:#1e3a8a; color:#fff; padding:8px 14px; border-radius:8px; font-size:14px;
       box-shadow:0 2px 6px rgba(0,0,0,.2); min-width:160px; text-align:center;
     }
-
     .popup-confirm {
       background:#16a34a; color:#fff; padding:10px 16px; border-radius:8px;
       position:fixed; bottom:15px; left:15px; box-shadow:0 2px 6px rgba(0,0,0,.2);
       display:none; font-size:14px;
     }
     .popup-confirm span { margin-left:10px; cursor:pointer; font-weight:bold; }
-
-    /* Loading */
-    .loading::after {
-      content: ""; display: inline-block; width: 12px; height: 12px;
-      border: 2px solid #fff; border-top-color: transparent; border-radius: 50%;
-      margin-left: 4px; animation: spin 0.8s linear infinite;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
 
     /* MENU FLUTUANTE */
     .menu-empresas {
@@ -105,6 +101,27 @@
     }
     .menu-empresas label { font-size:13px; }
     .btn-menu { background:#f3f4f6; padding:6px 10px; border-radius:6px; }
+
+    /* OVERLAY CARREGAMENTO */
+    .overlay {
+      position:fixed; top:0; left:0; width:100%; height:100%;
+      background:rgba(255,255,255,0.8); display:none;
+      align-items:center; justify-content:center; z-index:2000;
+    }
+    .spinner {
+      width:40px; height:40px; border:4px solid #2563eb; border-top-color:transparent;
+      border-radius:50%; animation:spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* POPUP HISTÓRICO */
+    .popup-historico {
+      position:fixed; top:50%; left:50%; transform:translate(-50%,-50%);
+      background:#fff; padding:20px; border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,.3);
+      display:none; z-index:3000; width:90%; max-width:400px;
+    }
+    .popup-historico h3 { margin-top:0; }
+    .popup-historico span { position:absolute; top:10px; right:14px; cursor:pointer; font-weight:bold; }
   </style>
 </head>
 <body>
@@ -158,11 +175,22 @@
 
   <div id="popupConfirm" class="popup-confirm">Títulos aprovados com sucesso <span onclick="this.parentElement.style.display='none'">✕</span></div>
 
+  <div class="overlay" id="overlay"><div class="spinner"></div></div>
+
+  <div class="popup-historico" id="popupHistorico">
+    <span onclick="this.parentElement.style.display='none'">✕</span>
+    <h3>Histórico</h3>
+    <div id="historicoContent"></div>
+  </div>
+
 <script>
   const endpointTitulos = "https://script.google.com/macros/s/AKfycbwt9y43T8Ya0AhNusue3PTekaBPDnrqSK33dsbnmOKezcm3wnSrUz3z2jO_9BoJd8MH/exec";
   const endpointSaldos  = "https://script.google.com/macros/s/AKfycbxsQCx_Aw0PXnAIPQsj1Hjq35BSolRmvpY3ye3DwKLLz_oTfKfQAGi3mT3Ygl-Tm3yl/exec";
 
   let grafico, selecionados = [], saldosPlanilha = {};
+
+  function showOverlay(){ document.getElementById("overlay").style.display="flex"; }
+  function hideOverlay(){ document.getElementById("overlay").style.display="none"; }
 
   async function carregarSaldos() {
     const res = await fetch(endpointSaldos);
@@ -171,6 +199,7 @@
   }
 
   async function carregarTitulos() {
+    showOverlay();
     const dataFiltro = document.getElementById("filtroData").value;
     const empresas = [...document.querySelectorAll("#menuEmpresas input:checked")].map(e=>e.value);
     const filtro = document.getElementById("filtroStatus").value;
@@ -211,6 +240,7 @@
     atualizarCards(somaTitulosPorEmpresa);
     atualizarModalidades(somaModalidades);
     desenharGrafico(somaModalidades);
+    hideOverlay();
   }
 
   function atualizarCards(somaTitulos){
@@ -220,16 +250,29 @@
       const saldoConta = saldosPlanilha[emp]||0;
       const titulos = somaTitulos[emp]||0;
       const saldoFinal = saldoConta - titulos;
+      const hora = new Date().toLocaleTimeString("pt-BR");
+      localStorage.setItem("hora_"+emp,hora);
+      const horaSalva = localStorage.getItem("hora_"+emp);
+
       const div=document.createElement("div");
       div.className="saldo-card "+(saldoFinal>=0?"positivo":"negativo");
       div.innerHTML=`
+        <button class="livro-btn" onclick="abrirHistorico('${emp}')">📖</button>
         <span style="color:black">${emp.toUpperCase()}</span>
         <strong>R$ ${saldoConta.toLocaleString("pt-BR",{minimumFractionDigits:2})}</strong>
         <div class="final ${saldoFinal>=0?"verde":"vermelho"}">
           Saldo Final: R$ ${saldoFinal.toLocaleString("pt-BR",{minimumFractionDigits:2})}
-        </div>`;
+        </div>
+        <small>Atualizado: ${horaSalva}</small>`;
       grid.appendChild(div);
     }
+  }
+
+  function abrirHistorico(emp){
+    const popup=document.getElementById("popupHistorico");
+    const content=document.getElementById("historicoContent");
+    content.innerHTML="<p>📊 Histórico da empresa <b>"+emp.toUpperCase()+"</b><br> (exemplo: puxar movimentações daqui)</p>";
+    popup.style.display="block";
   }
 
   function atualizarModalidades(soma){
@@ -274,59 +317,4 @@
     }else popup.style.display="none";
   }
 
-  async function aprovarMassa(){
-    const btn=document.getElementById("btnMassa");
-    btn.classList.add("loading");
-    for(let s of selecionados){
-      await fetch(`${endpointTitulos}?action=atualizar&empresa=${encodeURIComponent(s.empresa)}&index=${s.index}&status=Aprovado`);
-      document.querySelector(`#tabelaTitulos tbody tr:nth-child(${s.index+1}) .status`).innerText="Aprovado";
-    }
-    btn.classList.remove("loading");
-    selecionados=[];
-    document.getElementById("btnMassa").style.display="none";
-    document.getElementById("popupTotal").style.display="none";
-    document.getElementById("popupConfirm").style.display="block";
-    setTimeout(()=>{document.getElementById("popupConfirm").style.display="none";},5000);
-  }
-
-  function toggleAll(chk){
-    document.querySelectorAll("#tabelaTitulos tbody input[type=checkbox]").forEach(c=>{c.checked=chk.checked;c.dispatchEvent(new Event("change"));});
-  }
-
-  function formatarData(d){
-    const dt=new Date(d);
-    return ("0"+dt.getDate()).slice(-2)+("0"+(dt.getMonth()+1)).slice(-2)+dt.getFullYear();
-  }
-
-  function toggleMenu(){
-    const menu=document.getElementById("menuEmpresas");
-    menu.style.display=menu.style.display==="flex"?"none":"flex";
-  }
-
-  // Fechar menu ao clicar fora
-  document.addEventListener("click", function(e){
-    const menu=document.getElementById("menuEmpresas");
-    const btn=document.querySelector(".btn-menu");
-    if(menu.style.display==="flex" && !menu.contains(e.target) && !btn.contains(e.target)){
-      menu.style.display="none";
-    }
-  });
-
-  window.onload=()=>{
-    const hoje=new Date().toISOString().split("T")[0];
-    document.getElementById("filtroData").value=hoje;
-
-    const menu=document.getElementById("menuEmpresas");
-    ["cap delicia","cap villa","cap padaria","cap mercatto","cap m.kids"].forEach(emp=>{
-      const lbl=document.createElement("label");
-      const checked=emp!=="cap villa"?"checked":"";
-      lbl.innerHTML=`<input type="checkbox" value="${emp}" ${checked} onchange="carregarTitulos()"> ${emp.toUpperCase()}`;
-      menu.appendChild(lbl);
-    });
-
-    carregarSaldos();
-    carregarTitulos();
-  };
-</script>
-</body>
-</html>
+  async function aprovarM
