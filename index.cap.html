@@ -1,5 +1,4 @@
-
-    <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
@@ -16,9 +15,8 @@
 
     .container { padding: 20px; }
 
-    select {
-      padding: 6px; border-radius: 6px; border: 1px solid #ccc;
-    }
+    .empresa-selector { display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; }
+    .empresa-selector label { background:#fff; padding:6px 10px; border-radius:6px; box-shadow:0 1px 3px rgba(0,0,0,.1); cursor:pointer; }
 
     .saldos-grid {
       display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
@@ -34,7 +32,9 @@
     .grafico-card {
       background: #fff; border-radius: 8px; padding: 15px;
       box-shadow: 0 2px 6px rgba(0,0,0,.1); margin-bottom: 20px;
+      max-width: 420px; margin-left:auto; margin-right:auto;
     }
+    canvas { max-width: 400px; max-height: 400px; }
 
     table { width: 100%; border-collapse: collapse; background: #fff; margin-top: 10px; }
     th, td { padding: 10px; border: 1px solid #e5e7eb; font-size: 14px; text-align: center; }
@@ -49,14 +49,14 @@
   <header>
     <h1>Painel Financeiro • CAP</h1>
     <div>
-      <label for="empresa">Selecione a empresa: </label>
-      <select id="empresa" onchange="carregarTitulos()">
-        <option value="cap delicia">CAP Delícia</option>
-        <option value="cap villa">CAP Villa</option>
-        <option value="cap padaria">CAP Padaria</option>
-        <option value="cap mercatto">CAP Mercatto</option>
-        <option value="cap m.kids">CAP M.Kids</option>
-      </select>
+      <span>Selecione empresas:</span>
+      <div class="empresa-selector">
+        <label><input type="checkbox" value="cap delicia" checked> CAP Delícia</label>
+        <label><input type="checkbox" value="cap villa" checked> CAP Villa</label>
+        <label><input type="checkbox" value="cap padaria" checked> CAP Padaria</label>
+        <label><input type="checkbox" value="cap mercatto" checked> CAP Mercatto</label>
+        <label><input type="checkbox" value="cap m.kids" checked> CAP M.Kids</label>
+      </div>
     </div>
   </header>
 
@@ -106,33 +106,37 @@
   }
 
   async function carregarTitulos() {
-    const empresa = document.getElementById("empresa").value;
-    const res = await fetch(`${endpointTitulos}?action=listar&empresa=${encodeURIComponent(empresa)}`);
-    const dados = await res.json();
+    const selecionadas = Array.from(document.querySelectorAll(".empresa-selector input:checked"))
+      .map(cb => cb.value);
+
     const tbody = document.querySelector("#tabelaTitulos tbody");
     tbody.innerHTML = "";
-
     let somaModalidades = {};
 
-    dados.titulos.forEach((t, i) => {
-      const valor = Number(t.valor.toString().replace("R$","").replace(/\./g,"").replace(",",".")) || 0;
-      somaModalidades[t.meio_pagamento] = (somaModalidades[t.meio_pagamento]||0)+valor;
+    for (const empresa of selecionadas) {
+      const res = await fetch(`${endpointTitulos}?action=listar&empresa=${encodeURIComponent(empresa)}`);
+      const dados = await res.json();
 
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
-        <td>
-          <button class="btn-aprovar" onclick="atualizarStatus('${empresa}',${i},'Aprovado')">✓</button>
-          <button class="btn-negar" onclick="atualizarStatus('${empresa}',${i},'Negado')">✗</button>
-        </td>
-        <td>${t.empresa}</td>
-        <td>${t.fornecedor}</td>
-        <td>${t.vencimento}</td>
-        <td>R$ ${valor.toLocaleString("pt-BR",{minimumFractionDigits:2})}</td>
-        <td>${t.meio_pagamento}</td>
-        <td>${t.status}</td>
-      `;
-      tbody.appendChild(tr);
-    });
+      dados.titulos.forEach((t, i) => {
+        const valor = Number(t.valor.toString().replace("R$","").replace(/\./g,"").replace(",",".")) || 0;
+        somaModalidades[t.meio_pagamento] = (somaModalidades[t.meio_pagamento]||0)+valor;
+
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>
+            <button class="btn-aprovar" onclick="atualizarStatus('${empresa}',${i},'Aprovado')">✓</button>
+            <button class="btn-negar" onclick="atualizarStatus('${empresa}',${i},'Negado')">✗</button>
+          </td>
+          <td>${t.empresa}</td>
+          <td>${t.fornecedor}</td>
+          <td>${t.vencimento}</td>
+          <td>R$ ${valor.toLocaleString("pt-BR",{minimumFractionDigits:2})}</td>
+          <td>${t.meio_pagamento}</td>
+          <td>${t.status}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
 
     desenharGrafico(somaModalidades);
   }
@@ -150,7 +154,7 @@
         }]
       },
       options: {
-        plugins: { legend: { position: "right" } }
+        plugins: { legend: { position: "bottom" } }
       }
     });
   }
@@ -170,6 +174,8 @@
   window.onload = () => {
     carregarSaldos();
     carregarTitulos();
+    document.querySelectorAll(".empresa-selector input")
+      .forEach(cb => cb.addEventListener("change", carregarTitulos));
   };
 </script>
 </body>
