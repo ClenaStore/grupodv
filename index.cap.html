@@ -5,7 +5,7 @@
   <title>Painel Financeiro • Aprovação & Saldos</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script> <!-- plugin labels -->
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
 
   <style>
     body { font-family: Arial, sans-serif; margin: 0; background: #f6f7fb; color: #111827; }
@@ -39,14 +39,15 @@
       box-shadow: 0 2px 6px rgba(0,0,0,.1);
       text-align: center;
     }
-    .card h3 { margin: 0 0 8px; font-size: 1em; color: #374151; }
+    .card h3 { margin: 0 0 8px; font-size: 1em; color: #111827; font-weight: bold; }
     .card .valor { font-size: 1.4em; font-weight: bold; color: #2563eb; }
 
     .grafico-container {
-      max-width: 500px; margin: 0 auto; padding: 20px;
+      max-width: 380px; margin: 20px auto; padding: 15px;
       background: #fff; border-radius: 10px;
       box-shadow: 0 2px 6px rgba(0,0,0,.1);
     }
+    #graficoModalidades { height: 280px !important; }
 
     table { width: 100%; border-collapse: collapse; margin-top: 20px; background: #fff; display: none; }
     th, td { padding: 10px; border: 1px solid #e5e7eb; font-size: 14px; text-align: center; }
@@ -114,13 +115,11 @@
   </header>
 
   <div class="cards" id="cardsSaldos"></div>
-
   <div class="grafico-container">
     <canvas id="graficoModalidades"></canvas>
   </div>
 
   <div class="lista-titulos" id="listaTitulos"></div>
-
   <div style="padding: 15px;">
     <table id="tabelaTitulos">
       <thead>
@@ -151,18 +150,20 @@
     let grafico;
     let selecionados = {};
 
-    function parseValor(v) {
-      if (!v) return 0;
-      return Number(v.toString().replace("R$","").replace(/\./g,"").replace(",",".").trim()) || 0;
-    }
-    function formatarData(iso) {
-      try { return new Date(iso).toLocaleDateString("pt-BR",{timeZone:"UTC"}); }
-      catch { return iso; }
-    }
+    function parseValor(v){if(!v) return 0;return Number(v.toString().replace("R$","").replace(/\./g,"").replace(",",".").trim())||0;}
+    function formatarData(iso){try{return new Date(iso).toLocaleDateString("pt-BR",{timeZone:"UTC"});}catch{return iso;}}
 
-    function toggleMenu(){document.getElementById("dropdownEmpresas").style.display=document.getElementById("dropdownEmpresas").style.display==="block"?"none":"block";}
+    function toggleMenu(){const d=document.getElementById("dropdownEmpresas");d.style.display=d.style.display==="block"?"none":"block";}
     function selecionarTodas(chk){document.querySelectorAll("#dropdownEmpresas input[type=checkbox]").forEach(cb=>{if(cb.value!=="todas")cb.checked=chk.checked;});}
-    function aplicarEmpresas(){const inputs=document.querySelectorAll("#dropdownEmpresas input[type=checkbox]:checked");empresasSelecionadas=Array.from(inputs).map(cb=>cb.value).filter(v=>v!=="todas");toggleMenu();carregarTudo();}
+    function aplicarEmpresas(){
+      const inputs=document.querySelectorAll("#dropdownEmpresas input[type=checkbox]:checked");
+      if(Array.from(inputs).some(cb=>cb.value==="todas")){ // todas selecionadas
+        empresasSelecionadas=["cap delicia","cap villa","cap padaria","cap mercatto","cap m.kids"];
+      } else {
+        empresasSelecionadas=Array.from(inputs).map(cb=>cb.value).filter(v=>v!=="todas");
+      }
+      toggleMenu();carregarTudo();
+    }
 
     async function carregarSaldos(){
       const res=await fetch(endpointSaldos);const dados=await res.json();
@@ -179,10 +180,12 @@
       const lista=document.getElementById("listaTitulos");lista.innerHTML="";
       let somaModalidades={};selecionados={};
 
-      for(const empresa of empresasSelecionadas){
-        const res=await fetch(endpointTitulos+"?action=listar&empresa="+encodeURIComponent(empresa));
-        const dados=await res.json();
-        dados.titulos.forEach((item,i)=>{
+      // busca todas empresas em paralelo
+      const promises=empresasSelecionadas.map(emp=>fetch(endpointTitulos+"?action=listar&empresa="+encodeURIComponent(emp)).then(r=>r.json().then(d=>({empresa:emp,data:d}))));
+      const results=await Promise.all(promises);
+
+      results.forEach(({empresa,data})=>{
+        data.titulos.forEach((item,i)=>{
           const valorNum=parseValor(item.valor);
           somaModalidades[item.meio_pagamento]=(somaModalidades[item.meio_pagamento]||0)+valorNum;
 
@@ -216,7 +219,7 @@
             <div class="titulo-info"><b>Status:</b> ${item.status||'Pendente'}</div>`;
           lista.appendChild(card);
         });
-      }
+      });
 
       atualizarBalao();
       desenharGrafico(somaModalidades);
