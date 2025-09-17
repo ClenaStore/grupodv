@@ -22,7 +22,7 @@
     .saldo-card {
       background: #fff; padding: 10px; border-radius: 8px;
       box-shadow: 0 2px 6px rgba(0,0,0,.08);
-      font-size: 13px; text-align: center; cursor: pointer;
+      font-size: 13px; text-align: center;
     }
     .saldo-card strong { display:block; margin-top:4px; font-weight:bold; color:#1e3a8a; }
     .saldo-card .final { margin-top:4px; font-weight:bold; }
@@ -31,23 +31,20 @@
     .saldo-card .final.verde { color:#16a34a; }
     .saldo-card .final.vermelho { color:#dc2626; }
 
-    /* MODALIDADES */
-    .modalidades-grid {
-      display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0;
-    }
-    .modalidade-card {
-      background: #fff; padding: 8px 12px; border-radius: 6px;
-      box-shadow: 0 1px 4px rgba(0,0,0,.1); font-size: 13px;
-      flex: 1 1 120px; text-align: center;
-    }
-
-    /* GRÁFICO */
+    /* CARD DO GRÁFICO + MODALIDADES */
     .grafico-card {
       background: #fff; border-radius: 8px; padding: 10px;
-      box-shadow: 0 2px 6px rgba(0,0,0,.08); margin-bottom: 15px;
-      max-width: 500px; margin-left:auto; margin-right:auto;
+      box-shadow: 0 2px 6px rgba(0,0,0,.08); margin: 15px auto;
+      max-width: 420px; text-align:center;
     }
-    canvas { max-height: 250px; }
+    canvas { max-height: 180px; margin: auto; }
+
+    .modalidades-list {
+      margin-top: 10px; display:flex; flex-wrap:wrap; justify-content:center; gap:10px;
+    }
+    .modalidade-item {
+      background:#f3f4f6; padding:4px 8px; border-radius:6px; font-size:12px;
+    }
 
     /* TABELA DESKTOP */
     table { width: 100%; border-collapse: collapse; background: #fff; margin-top: 10px; border-radius: 6px; overflow:hidden; }
@@ -70,10 +67,20 @@
       td:nth-child(8)::before { content:"Ações:"; }
     }
 
+    /* BOTÕES */
     button { padding: 5px 10px; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold; }
     .btn-aprovar { background: #16a34a; color: white; margin-right: 3px; }
     .btn-negar { background: #dc2626; color: white; }
-    .btn-massa { background:#2563eb; color:white; margin:10px 0; padding:8px 14px; display:none; border-radius:6px; }
+    .btn-massa { background:#2563eb; color:white; padding:8px 14px; border-radius:6px; }
+
+    /* FIXOS NO RODAPÉ */
+    .footer-actions {
+      position:fixed; bottom:15px; right:15px; display:flex; flex-direction:column; gap:10px; align-items:flex-end;
+    }
+    .popup-total {
+      background:#1e3a8a; color:#fff; padding:8px 14px; border-radius:8px; font-size:14px;
+      box-shadow:0 2px 6px rgba(0,0,0,.2); min-width:160px; text-align:center;
+    }
 
     /* Loading */
     .loading::after {
@@ -87,19 +94,24 @@
 <body>
   <header>
     <h1>Painel Financeiro • CAP</h1>
+    <div>
+      <label>Status:</label>
+      <select id="filtroStatus" onchange="carregarTitulos()">
+        <option value="Pendente" selected>Pendentes</option>
+        <option value="Liquidado">Liquidados</option>
+        <option value="Todos">Todos</option>
+      </select>
+    </div>
     <div id="filtrosEmpresas"></div>
   </header>
 
   <div class="container">
     <div id="saldosGrid" class="saldos-grid"></div>
 
-    <div id="modalidadesGrid" class="modalidades-grid"></div>
-
     <div class="grafico-card">
       <canvas id="graficoModalidades"></canvas>
+      <div id="modalidadesList" class="modalidades-list"></div>
     </div>
-
-    <button id="btnMassa" class="btn-massa" onclick="liquidarMassa()">Liquidar em Massa</button>
 
     <table id="tabelaTitulos">
       <thead>
@@ -118,6 +130,11 @@
     </table>
   </div>
 
+  <div class="footer-actions">
+    <div id="popupTotal" class="popup-total" style="display:none;"></div>
+    <button id="btnMassa" class="btn-massa" style="display:none;" onclick="liquidarMassa()">Liquidar em Massa</button>
+  </div>
+
 <script>
   const endpointTitulos = "https://script.google.com/macros/s/AKfycbwt9y43T8Ya0AhNusue3PTekaBPDnrqSK33dsbnmOKezcm3wnSrUz3z2jO_9BoJd8MH/exec";
   const endpointSaldos  = "https://script.google.com/macros/s/AKfycbxsQCx_Aw0PXnAIPQsj1Hjq35BSolRmvpY3ye3DwKLLz_oTfKfQAGi3mT3Ygl-Tm3yl/exec";
@@ -132,27 +149,29 @@
   }
 
   async function carregarTitulos() {
-    const hoje = new Date();
-    const dataHoje = hoje.toISOString().split("T")[0];
+    const hoje = new Date().toISOString().split("T")[0];
     const empresas = [...document.querySelectorAll("#filtrosEmpresas input:checked")].map(e=>e.value);
+    const filtro = document.getElementById("filtroStatus").value;
     const tbody = document.querySelector("#tabelaTitulos tbody");
     tbody.innerHTML = "";
     selecionados = [];
     let somaModalidades = {}, somaTitulosPorEmpresa = {};
 
-    for (let empresa of empresas) {
-      const res = await fetch(`${endpointTitulos}?action=listar&empresa=${encodeURIComponent(empresa)}`);
-      const dados = await res.json();
+    // Busca em paralelo
+    const promises = empresas.map(emp => fetch(`${endpointTitulos}?action=listar&empresa=${encodeURIComponent(emp)}`).then(r=>r.json().then(d=>({emp, d}))));
+    const resultados = await Promise.all(promises);
 
-      dados.titulos.forEach((t,i) => {
-        if (t.vencimento && t.vencimento.startsWith(dataHoje)) {
+    resultados.forEach(({emp,d})=>{
+      d.titulos.forEach((t,i)=>{
+        if (t.vencimento && t.vencimento.startsWith(hoje)) {
+          if (filtro!=="Todos" && t.status!==filtro) return;
           const valor = Number(t.valor.toString().replace("R$","").replace(/\./g,"").replace(",","."));
           somaModalidades[t.meio_pagamento] = (somaModalidades[t.meio_pagamento]||0)+valor;
-          somaTitulosPorEmpresa[empresa] = (somaTitulosPorEmpresa[empresa]||0)+valor;
+          somaTitulosPorEmpresa[emp] = (somaTitulosPorEmpresa[emp]||0)+valor;
 
           const tr = document.createElement("tr");
-          tr.innerHTML = `
-            <td><input type="checkbox" onchange="toggleSelecionado('${empresa}',${i},this,${valor})"></td>
+          tr.innerHTML=`
+            <td><input type="checkbox" onchange="toggleSelecionado('${emp}',${i},this,${valor})"></td>
             <td style="color:black">${t.empresa}</td>
             <td>${t.fornecedor}</td>
             <td>${formatarData(t.vencimento)}</td>
@@ -160,13 +179,14 @@
             <td>${t.meio_pagamento}</td>
             <td class="status">${t.status}</td>
             <td>
-              <button class="btn-aprovar" onclick="atualizarStatus(this,'${empresa}',${i},'Aprovado')">✓</button>
-              <button class="btn-negar" onclick="atualizarStatus(this,'${empresa}',${i},'Negado')">✗</button>
+              <button class="btn-aprovar" onclick="atualizarStatus(this,'${emp}',${i},'Aprovado')">✓</button>
+              <button class="btn-negar" onclick="atualizarStatus(this,'${emp}',${i},'Negado')">✗</button>
             </td>`;
           tbody.appendChild(tr);
         }
       });
-    }
+    });
+
     atualizarCards(somaTitulosPorEmpresa);
     atualizarModalidades(somaModalidades);
     desenharGrafico(somaModalidades);
@@ -192,13 +212,13 @@
   }
 
   function atualizarModalidades(soma){
-    const grid=document.getElementById("modalidadesGrid");
-    grid.innerHTML="";
+    const list=document.getElementById("modalidadesList");
+    list.innerHTML="";
     for(let mod in soma){
       const div=document.createElement("div");
-      div.className="modalidade-card";
-      div.innerHTML=`${mod}<br><strong>R$ ${soma[mod].toLocaleString("pt-BR",{minimumFractionDigits:2})}</strong>`;
-      grid.appendChild(div);
+      div.className="modalidade-item";
+      div.innerHTML=`${mod}: <strong>R$ ${soma[mod].toLocaleString("pt-BR",{minimumFractionDigits:2})}</strong>`;
+      list.appendChild(div);
     }
   }
 
@@ -209,7 +229,7 @@
       type: "pie",
       data: { labels:Object.keys(soma), datasets:[{ data:Object.values(soma),
         backgroundColor:["#2563eb","#16a34a","#dc2626","#f59e0b","#9333ea"] }]},
-      options: { plugins:{ legend:{ position:"bottom" } } }
+      options: { plugins:{ legend:{ display:false } } }
     });
   }
 
@@ -224,15 +244,27 @@
   function toggleSelecionado(empresa,index,chk,valor){
     if(chk.checked) selecionados.push({empresa,index,valor});
     else selecionados=selecionados.filter(s=>!(s.empresa===empresa && s.index===index));
+    const total = selecionados.reduce((a,b)=>a+b.valor,0);
     document.getElementById("btnMassa").style.display=selecionados.length>0?"inline-block":"none";
+    const popup=document.getElementById("popupTotal");
+    if(selecionados.length>0){
+      popup.innerText="Total Selecionado: R$ "+total.toLocaleString("pt-BR",{minimumFractionDigits:2});
+      popup.style.display="block";
+    } else popup.style.display="none";
   }
+
   async function liquidarMassa(){
+    const btn=document.getElementById("btnMassa");
+    btn.classList.add("loading");
     for(let s of selecionados){
       await fetch(`${endpointTitulos}?action=atualizar&empresa=${encodeURIComponent(s.empresa)}&index=${s.index}&status=Liquidado`);
       document.querySelector(`#tabelaTitulos tbody tr:nth-child(${s.index+1}) .status`).innerText="Liquidado";
     }
+    btn.classList.remove("loading");
     selecionados=[];document.getElementById("btnMassa").style.display="none";
+    document.getElementById("popupTotal").style.display="none";
   }
+
   function toggleAll(chk){
     document.querySelectorAll("#tabelaTitulos tbody input[type=checkbox]").forEach(c=>{c.checked=chk.checked;c.dispatchEvent(new Event("change"));});
   }
