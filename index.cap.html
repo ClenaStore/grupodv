@@ -42,7 +42,7 @@
       text-align: center; cursor: pointer; transition: 0.2s;
     }
     .card.active { border: 2px solid #2563eb; }
-    .card h3 { margin: 0 0 6px; font-size: 0.95em; color: #111827; font-weight: bold; }
+    .card h3 { margin: 0 0 6px; font-size: 0.95em; color: #000; font-weight: bold; }
     .card .valor { font-size: 1.1em; font-weight: bold; color: #2563eb; }
 
     .grafico-wrapper {
@@ -137,7 +137,7 @@
     const endpointSaldos = "https://script.google.com/macros/s/AKfycbzz1sV5SYJ7zBjY6GYZuUd1HUM7ZmP_Oz798SNAxH36KXdAoTNtqARVsw7EJa9F2__Y/exec";
     const endpointTitulos = "https://script.google.com/macros/s/AKfycbwCpe51vPoH2lG8YR89kVR_uRfg6-T7SNkWwI3LbJAvbNiqEA1pddhG_3llm8tINMCB/exec";
 
-    let empresasSelecionadas = ["cap mercatto"];
+    let empresasSelecionadas = [];
     let grafico;
     const CACHE_TTL = 6*60*60*1000;
 
@@ -182,15 +182,8 @@
     }
 
     async function carregarTitulos(){
-      const agora=Date.now();
-      let dadosEmpresas;
-      const cache=JSON.parse(localStorage.getItem("cacheTitulos")||"null");
-      if(cache && (agora-cache.time)<CACHE_TTL){dadosEmpresas=cache.data;}
-      else{
-        const promises=empresasSelecionadas.map(emp=>fetch(endpointTitulos+"?action=listar&empresa="+encodeURIComponent(emp)).then(r=>r.json().then(d=>({empresa:emp,data:d}))));
-        dadosEmpresas=await Promise.all(promises);
-        localStorage.setItem("cacheTitulos",JSON.stringify({time:agora,data:dadosEmpresas}));
-      }
+      const promises=empresasSelecionadas.map(emp=>fetch(endpointTitulos+"?action=listar&empresa="+encodeURIComponent(emp)).then(r=>r.json().then(d=>({empresa:emp,data:d}))));
+      const dadosEmpresas=await Promise.all(promises);
 
       const tbody=document.querySelector("#tabelaTitulos tbody");tbody.innerHTML="";
       const lista=document.getElementById("listaTitulos");lista.innerHTML="";
@@ -235,8 +228,15 @@
 
     async function atualizarStatus(empresa,index,status){
       mostrarOverlay(true);
-      await fetch(endpointTitulos,{method:"POST",body:JSON.stringify({action:"atualizar",empresa,index,status}),headers:{"Content-Type":"application/json"}});
-      localStorage.removeItem("cacheTitulos");
+      try{
+        const resp = await fetch(endpointTitulos,{
+          method:"POST",
+          headers:{"Content-Type":"application/json"},
+          body:JSON.stringify({action:"atualizar",empresa,index,status})
+        });
+        const data = await resp.json();
+        console.log("Resposta atualização:", data);
+      }catch(err){console.error("Erro ao atualizar:",err);}
       await carregarTitulos();
       mostrarOverlay(false);
     }
