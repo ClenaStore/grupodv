@@ -30,16 +30,12 @@
     }
     .dropdown label {
       display: block; font-size: 14px; margin-bottom: 6px; cursor: pointer;
-      color: #000; /* empresas em preto */
+      color: #000; /* nomes das empresas em preto */
     }
     .dropdown input { margin-right: 6px; }
     .dropdown input[type="date"] {
       width: 100%; margin-bottom: 8px; padding: 6px; font-size: 14px;
       border: 1px solid #ccc; border-radius: 6px;
-    }
-    .dropdown button {
-      margin-top: 5px; width: 48%; padding: 6px; font-size: 13px;
-      border: none; border-radius: 6px; cursor: pointer;
     }
     .btn-aplicar { background: #16a34a; color: white; }
     .btn-cancelar { background: #dc2626; color: white; }
@@ -160,7 +156,7 @@
 
   <script>
     const endpointSaldos = "https://script.google.com/macros/s/AKfycbxsQCx_Aw0PXnAIPQsj1Hjq35BSolRmvpY3ye3DwKLLz_oTfKfQAGi3mT3Ygl-Tm3yl/exec";
-    const endpointTitulos = "https://script.google.com/macros/s/AKfycbwKIc2cMGcDlz0Qx_BF0hgRUqGHAN_XZesmfVR4La0lSmeF_q3NQjnA7T-OIyzekDMu/exec";
+    const endpointTitulos = "https://script.google.com/macros/s/AKfycbz0VZHVRk6Jrrxisqt0-AkpSYR8F3oZiHPHcKqBTM0FlHPWZYTkr87lF2cB2kLBL2Kr/exec";
 
     let empresasSelecionadas = ["cap delicia","cap villa","cap padaria","cap mercatto","cap m.kids"];
     let grafico,saldos=[],selecionados={},dataInicio,dataFim;
@@ -178,21 +174,21 @@
       const inputs=document.querySelectorAll("#dropdownEmpresas input[type=checkbox]:checked");
       empresasSelecionadas=Array.from(inputs).map(cb=>cb.value).filter(v=>v!=="todas");
       carregarTitulos();
-      document.getElementById("dropdownEmpresas").style.display="none"; // fecha menu
+      document.getElementById("dropdownEmpresas").style.display="none";
     }
 
     function aplicarDatas(){
       dataInicio=document.getElementById("dataInicio").value;
       dataFim=document.getElementById("dataFim").value;
       carregarTitulos();
-      document.getElementById("dropdownDatas").style.display="none"; // fecha menu
+      document.getElementById("dropdownDatas").style.display="none";
     }
     function cancelarDatas(){
       document.getElementById("dataInicio").value="";
       document.getElementById("dataFim").value="";
       dataInicio=dataFim=null;
       carregarTitulos();
-      document.getElementById("dropdownDatas").style.display="none"; // fecha menu
+      document.getElementById("dropdownDatas").style.display="none";
     }
 
     async function carregarSaldos(){
@@ -262,22 +258,12 @@
     async function atualizarStatus(empresa,index,status){
       try {
         document.getElementById("overlay").style.display="flex";
-        const resposta = await fetch(endpointTitulos,{
+        await fetch(endpointTitulos,{
           method:"POST",
           headers:{"Content-Type":"application/json"},
-          body:JSON.stringify({
-            action:"atualizar",
-            empresa:empresa,
-            index:index,
-            status:status
-          })
+          body:JSON.stringify({action:"atualizar",empresa,index,status})
         });
-        const resultado = await resposta.json();
-        console.log("Servidor respondeu:",resultado);
         await carregarTitulos();
-      } catch(e){
-        console.error("Erro:",e);
-        alert("❌ Erro ao atualizar título.");
       } finally {
         document.getElementById("overlay").style.display="none";
       }
@@ -302,7 +288,6 @@
       document.getElementById("overlay").style.display="none";
     }
 
-    // inicializa com a data de hoje
     window.onload=()=>{
       const hoje=new Date().toISOString().split("T")[0];
       document.getElementById("dataInicio").value=hoje;
