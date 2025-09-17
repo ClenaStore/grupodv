@@ -35,18 +35,19 @@
       margin: 20px auto; padding: 20px;
       background: #fff; border-radius: 10px;
       box-shadow: 0 2px 6px rgba(0,0,0,.1);
-      max-width: 700px;
+      max-width: 800px;
       text-align: center;
     }
     .grafico-container { width: 100%; max-width: 380px; margin: auto; }
     #graficoModalidades { height: 260px !important; }
 
-    .saldo-atual {
-      margin-top: 15px;
-      font-size: 16px;
-      font-weight: bold;
-      color: #1e3a8a;
+    .saldos-lista {
+      margin-top: 20px;
+      display: flex; flex-direction: column; gap: 6px;
+      text-align: left; padding: 10px 20px;
     }
+    .saldo-item { font-size: 15px; font-weight: bold; color: #111; }
+    .saldo-item span { color: #1e3a8a; margin-left: 6px; }
 
     table { width: 100%; border-collapse: collapse; margin-top: 20px; background: #fff; }
     th, td { padding: 10px; border: 1px solid #e5e7eb; font-size: 14px; text-align: center; }
@@ -87,10 +88,10 @@
 
   <div id="overlay">⏳ Carregando...</div>
 
-  <!-- Card do gráfico com saldo fixo -->
+  <!-- Card do gráfico com saldos de todas as empresas -->
   <div class="grafico-card">
     <div class="grafico-container"><canvas id="graficoModalidades"></canvas></div>
-    <div id="saldoAtual" class="saldo-atual">Saldo: R$ 0,00</div>
+    <div id="saldosLista" class="saldos-lista"></div>
   </div>
 
   <div style="padding: 15px;">
@@ -116,7 +117,7 @@
     const endpointTitulos = "https://script.google.com/macros/s/AKfycbwCpe51vPoH2lG8YR89kVR_uRfg6-T7SNkWwI3LbJAvbNiqEA1pddhG_3llm8tINMCB/exec";
 
     let empresasSelecionadas=["cap delicia"];
-    let grafico,saldos={};
+    let grafico,saldos=[];
 
     function mostrarOverlay(s=true){document.getElementById("overlay").style.display=s?"flex":"none";}
 
@@ -125,22 +126,19 @@
     function aplicarEmpresas(){
       const inputs=document.querySelectorAll("#dropdownEmpresas input[type=checkbox]:checked");
       empresasSelecionadas=Array.from(inputs).map(cb=>cb.value).filter(v=>v!=="todas");
-      toggleMenu();carregarTudo();
+      toggleMenu();carregarTitulos();
     }
 
     async function carregarSaldos(){
       const res=await fetch(endpointSaldos);saldos=await res.json();
-      atualizarSaldo();
-    }
-
-    function atualizarSaldo(){
-      if(empresasSelecionadas.length===1){
-        const emp=empresasSelecionadas[0];
-        const saldoObj=saldos.find(s=>s.Empresa.toLowerCase()===emp);
-        document.getElementById("saldoAtual").innerText= saldoObj ? `Saldo: R$ ${Number(saldoObj.Saldo).toLocaleString("pt-BR",{minimumFractionDigits:2})}` : "Saldo: R$ 0,00";
-      } else {
-        document.getElementById("saldoAtual").innerText="Selecione uma empresa para ver o saldo";
-      }
+      const container=document.getElementById("saldosLista");
+      container.innerHTML="";
+      saldos.forEach(s=>{
+        const div=document.createElement("div");
+        div.className="saldo-item";
+        div.innerHTML=`${s.Empresa.toUpperCase()} <span>R$ ${Number(s.Saldo).toLocaleString("pt-BR",{minimumFractionDigits:2})}</span>`;
+        container.appendChild(div);
+      });
     }
 
     async function carregarTitulos(){
