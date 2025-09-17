@@ -45,7 +45,7 @@
     <h1>Painel Financeiro</h1>
     <div class="menu-empresas">
       <button class="menu-btn" onclick="toggleMenu()">Selecionar Empresas</button>
-      <button class="menu-btn btn-refresh" onclick="forcarAtualizacao()">🔄 Atualizar</button>
+      <button class="menu-btn btn-refresh" onclick="carregarTudo()">🔄 Atualizar</button>
       <div class="dropdown" id="dropdownEmpresas">
         <label><input type="checkbox" value="todas" onchange="selecionarTodas(this)"> Todas</label>
         <label><input type="checkbox" value="cap delicia"> CAP Delícia</label>
@@ -80,21 +80,17 @@
   <script>
     const endpointSaldos="https://script.google.com/macros/s/AKfycbzz1sV5SYJ7zBjY6GYZuUd1HUM7ZmP_Oz798SNAxH36KXdAoTNtqARVsw7EJa9F2__Y/exec";
     const endpointTitulos="https://script.google.com/macros/s/AKfycbwCpe51vPoH2lG8YR89kVR_uRfg6-T7SNkWwI3LbJAvbNiqEA1pddhG_3llm8tINMCB/exec";
-    let empresasSelecionadas=[];let grafico;const CACHE_TTL=6*60*60*1000;
+    let empresasSelecionadas=[];let grafico;
 
-    function mostrarOverlay(s=true){const ov=document.getElementById("overlay");ov.style.display=s?"flex":"none";}
-
+    function mostrarOverlay(s=true){document.getElementById("overlay").style.display=s?"flex":"none";}
     function parseValor(v){if(!v)return 0;return Number(v.toString().replace("R$","").replace(/\./g,"").replace(",",".").trim())||0;}
     function formatarData(iso){try{return new Date(iso).toLocaleDateString("pt-BR",{timeZone:"UTC"});}catch{return iso;}}
     function toggleMenu(){const d=document.getElementById("dropdownEmpresas");d.style.display=d.style.display==="block"?"none":"block";}
     function selecionarTodas(chk){document.querySelectorAll("#dropdownEmpresas input[type=checkbox]").forEach(cb=>{if(cb.value!=="todas")cb.checked=chk.checked;});}
     function aplicarEmpresas(){const inputs=document.querySelectorAll("#dropdownEmpresas input[type=checkbox]:checked");if([...inputs].some(cb=>cb.value==="todas"))empresasSelecionadas=["cap delicia","cap villa","cap padaria","cap mercatto","cap m.kids"];else empresasSelecionadas=[...inputs].map(cb=>cb.value).filter(v=>v!=="todas");toggleMenu();carregarTudo();}
-    function forcarAtualizacao(){localStorage.clear();carregarTudo();}
 
     async function carregarSaldos(){
-      const agora=Date.now();let dados;const cache=JSON.parse(localStorage.getItem("cacheSaldos")||"null");
-      if(cache&&(agora-cache.time)<CACHE_TTL){dados=cache.data;}
-      else{const res=await fetch(endpointSaldos);dados=await res.json();localStorage.setItem("cacheSaldos",JSON.stringify({time:agora,data:dados}));}
+      const res=await fetch(endpointSaldos);const dados=await res.json();
       const cards=document.getElementById("cardsSaldos");cards.innerHTML="";
       dados.forEach(s=>{
         const card=document.createElement("div");card.className="card";card.dataset.empresa=s.Empresa.toLowerCase();
@@ -106,11 +102,13 @@
     }
 
     async function carregarTitulos(){
-      const agora=Date.now();let resultados=[];const cache=JSON.parse(localStorage.getItem("cacheTitulos")||"null");
-      if(cache&&(agora-cache.time)<CACHE_TTL&&cache.empresas.toString()===empresasSelecionadas.toString()){resultados=cache.data;}
-      else{const promises=empresasSelecionadas.map(emp=>fetch(endpointTitulos+"?action=listar&empresa="+encodeURIComponent(emp)).then(r=>r.json().then(d=>({empresa:emp,data:d}))));resultados=await Promise.all(promises);localStorage.setItem("cacheTitulos",JSON.stringify({time:agora,empresas:empresasSelecionadas,data:resultados}));}
+      const promises=empresasSelecionadas.map(emp=>fetch(endpointTitulos+"?action=listar&empresa="+encodeURIComponent(emp)).then(r=>r.json().then(d=>({empresa:emp,data:d}))));
+      const resultados=await Promise.all(promises);
 
-      const tbody=document.querySelector("#tabelaTitulos tbody");tbody.innerHTML="";const lista=document.getElementById("listaTitulos");lista.innerHTML="";let somaModalidades={};
+      const tbody=document.querySelector("#tabelaTitulos tbody");tbody.innerHTML="";
+      const lista=document.getElementById("listaTitulos");lista.innerHTML="";
+      let somaModalidades={};
+
       resultados.forEach(({empresa,data})=>{
         data.titulos.forEach((item,i)=>{
           const valorNum=parseValor(item.valor);somaModalidades[item.meio_pagamento]=(somaModalidades[item.meio_pagamento]||0)+valorNum;
@@ -133,7 +131,10 @@
     }
 
     async function atualizarStatus(empresa,index,status){
-      mostrarOverlay(true);await fetch(endpointTitulos,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"atualizar",empresa,index,status})});localStorage.removeItem("cacheTitulos");await carregarTitulos();mostrarOverlay(false);
+      mostrarOverlay(true);
+      await fetch(endpointTitulos,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"atualizar",empresa,index,status})});
+      await carregarTitulos();
+      mostrarOverlay(false);
     }
 
     function desenharGrafico(soma){
