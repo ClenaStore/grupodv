@@ -53,17 +53,22 @@
 
   <script>
     // ⚠️ Troque pelo link da sua implantação do Apps Script (/exec)
-    const endpoint = "https://script.google.com/macros/s/AKfycbwxXahrJQlXnhes1ZOcrsGXywZRqWhyV5gE-h167GIkYhJZ7AjVFlj5Huh35cflogNw/exec";
+    const endpoint = "https://script.google.com/macros/s/AKfycbw9tJz1W_VXNT7hGgoQ_R_Ba1f6SqQ7RLw4gbqi2N7ZZsx3jrzqipmtVbYBKG_g9_Y4/exec";
 
     async function carregarTitulos() {
       const empresa = document.getElementById("empresaSelect").value;
       try {
         const res = await fetch(`${endpoint}?action=listar&empresa=${encodeURIComponent(empresa)}`);
         const dados = await res.json();
-        console.log("Dados recebidos:", dados);
+        console.log("GET - Dados recebidos:", dados);
 
         const tbody = document.getElementById("tabelaTitulos");
         tbody.innerHTML = "";
+
+        if (!dados.titulos || dados.titulos.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="7">Nenhum título encontrado</td></tr>`;
+          return;
+        }
 
         dados.titulos.forEach((t, i) => {
           const tr = document.createElement("tr");
@@ -83,6 +88,7 @@
         });
       } catch (err) {
         console.error("Erro ao carregar titulos:", err);
+        alert("Erro ao carregar títulos, veja o console.");
       }
     }
 
@@ -93,12 +99,18 @@
           headers:{"Content-Type":"application/json"},
           body:JSON.stringify({action:"atualizar",empresa,index,status})
         });
+
         const dados = await res.json();
-        console.log("Resposta do servidor:", dados);
-        carregarTitulos();
+        console.log("POST - Resposta do servidor:", dados);
+
+        if (dados.erro) {
+          alert("Erro: " + dados.erro);
+        } else {
+          carregarTitulos();
+        }
       } catch (err) {
-        console.error("Erro ao atualizar status:", err);
-        alert("Erro ao atualizar status, veja o console.");
+        console.error("Erro no fetch:", err);
+        alert("Erro ao atualizar status: " + err.message);
       }
     }
 
