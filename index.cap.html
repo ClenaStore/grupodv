@@ -8,9 +8,17 @@
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
 
   <style>
-    body { font-family: Arial, sans-serif; margin: 0; background: #f6f7fb; color: #111827; }
+    :root {
+      --azul:#1e3a8a;
+      --cinza:#f3f4f6;
+      --verde:#16a34a;
+      --vermelho:#dc2626;
+      --laranja:#f59e0b;
+      --texto:#111827;
+    }
+    body { font-family: Arial, sans-serif; margin: 0; background: var(--cinza); color: var(--texto); }
     header {
-      background: #2563eb; color: white;
+      background: var(--azul); color: white;
       padding: 12px; display: flex; justify-content: space-between; align-items: center;
       position: sticky; top: 0; z-index: 100;
     }
@@ -18,10 +26,12 @@
 
     .menu-empresas { position: relative; display: flex; gap: 10px; align-items: center; }
     .menu-btn {
-      background: white; color: #2563eb; border: none;
+      background: white; color: var(--azul); border: none;
       padding: 8px 12px; border-radius: 6px; cursor: pointer;
       font-size: 14px; font-weight: bold;
     }
+    .btn-refresh { background: var(--laranja); color: #fff; }
+
     .dropdown {
       display: none;
       position: absolute; right: 0; top: 40px;
@@ -39,8 +49,8 @@
       box-shadow: 0 2px 6px rgba(0,0,0,.1);
       text-align: center;
     }
-    .card h3 { margin: 0 0 8px; font-size: 1em; color: #111827; font-weight: bold; }
-    .card .valor { font-size: 1.4em; font-weight: bold; color: #2563eb; }
+    .card h3 { margin: 0 0 8px; font-size: 1em; color: #000; font-weight: bold; }
+    .card .valor { font-size: 1.3em; font-weight: bold; color: var(--azul); }
 
     .grafico-wrapper {
       display: flex; align-items: center; justify-content: center;
@@ -49,23 +59,19 @@
       box-shadow: 0 2px 6px rgba(0,0,0,.1);
       max-width: 700px;
     }
-    .grafico-container { flex: 0 0 300px; }
-    #graficoModalidades { height: 260px !important; }
-    .legenda-valores { flex: 1; display: flex; flex-direction: column; gap: 8px; font-size: 14px; color: #111827; }
+    .grafico-container { flex: 0 0 280px; }
+    #graficoModalidades { height: 240px !important; }
+    .legenda-valores { flex: 1; display: flex; flex-direction: column; gap: 8px; font-size: 14px; }
     .legenda-item { display: flex; align-items: center; justify-content: space-between; font-weight: bold; }
-    .legenda-cor { width: 16px; height: 16px; border-radius: 4px; margin-right: 8px; }
+    .legenda-cor { width: 14px; height: 14px; border-radius: 3px; margin-right: 6px; }
 
     table { width: 100%; border-collapse: collapse; margin-top: 20px; background: #fff; display: none; }
-    th, td { padding: 10px; border: 1px solid #e5e7eb; font-size: 14px; text-align: center; }
-    th { background: #f3f4f6; }
-
-    .status-aprovado { color: #16a34a; font-weight: bold; }
-    .status-negado { color: #dc2626; font-weight: bold; }
+    th, td { padding: 8px; border: 1px solid #e5e7eb; font-size: 13px; text-align: center; }
+    th { background: var(--cinza); }
 
     button { padding: 6px 10px; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold; }
-    .btn-aprovar { background: #16a34a; color: white; margin-right: 4px; }
-    .btn-negar { background: #dc2626; color: white; }
-    .btn-refresh { background: #f59e0b; color: white; }
+    .btn-aprovar { background: var(--verde); color: white; margin-right: 4px; }
+    .btn-negar { background: var(--vermelho); color: white; }
 
     .lista-titulos { display: flex; flex-direction: column; gap: 10px; padding: 15px; }
     .titulo-card {
@@ -79,9 +85,17 @@
     }
     .titulo-info { font-size: 13px; color: #374151; }
 
+    #overlay {
+      position: fixed; top:0; left:0; width:100%; height:100%;
+      background: rgba(255,255,255,0.8);
+      display:none; align-items:center; justify-content:center;
+      z-index: 9999; font-size:18px; font-weight:bold; color:var(--azul);
+    }
+    .loading { text-align:center; color:var(--azul); font-size:14px; padding:10px; }
+
     #balaoTotal {
       position: fixed; bottom: 20px; right: 20px;
-      background: #2563eb; color: #fff;
+      background: var(--azul); color: #fff;
       padding: 12px 18px; border-radius: 8px;
       box-shadow: 0 4px 10px rgba(0,0,0,.2);
       font-weight: bold; display: none; z-index: 999;
@@ -92,7 +106,7 @@
       display: none; z-index: 999;
     }
     #acoesMassa button {
-      background: #16a34a; color: white; border: none;
+      background: var(--verde); color: white;
       padding: 10px 15px; border-radius: 8px; cursor: pointer;
       font-size: 14px; font-weight: bold;
       box-shadow: 0 2px 6px rgba(0,0,0,.2);
@@ -109,7 +123,7 @@
     <h1>Painel Financeiro</h1>
     <div class="menu-empresas">
       <button class="menu-btn" onclick="toggleMenu()">Selecionar Empresas</button>
-      <button class="menu-btn btn-refresh" onclick="forcarAtualizacao()">🔄 Atualizar</button>
+      <button class="menu-btn btn-refresh" onclick="carregarTudo(true)">🔄 Atualizar</button>
       <div class="dropdown" id="dropdownEmpresas">
         <label><input type="checkbox" value="todas" onchange="selecionarTodas(this)"> Todas</label>
         <label><input type="checkbox" value="cap delicia"> CAP Delícia</label>
@@ -122,11 +136,14 @@
     </div>
   </header>
 
+  <div id="overlay">⏳ Carregando dados...</div>
+
   <div class="cards" id="cardsSaldos"></div>
 
   <div class="grafico-wrapper">
     <div class="grafico-container">
       <canvas id="graficoModalidades"></canvas>
+      <div id="graficoLoader" class="loading" style="display:none;">⏳ Atualizando gráfico...</div>
     </div>
     <div class="legenda-valores" id="legendaValores"></div>
   </div>
@@ -136,19 +153,12 @@
     <table id="tabelaTitulos">
       <thead>
         <tr>
-          <th><input type="checkbox" id="checkTodos" onchange="toggleTodos(this)"></th>
-          <th>Ações</th>
-          <th>Empresa</th>
-          <th>Fornecedor</th>
-          <th>Vencimento</th>
-          <th>Valor</th>
-          <th>Meio</th>
-          <th>Histórico</th>
-          <th>Status</th>
+          <th></th><th>Ações</th><th>Empresa</th><th>Fornecedor</th><th>Vencimento</th><th>Valor</th><th>Meio</th><th>Histórico</th><th>Status</th>
         </tr>
       </thead>
       <tbody></tbody>
     </table>
+    <div id="tabelaLoader" class="loading" style="display:none;">⏳ Atualizando títulos...</div>
   </div>
 
   <div id="balaoTotal"></div>
@@ -158,11 +168,10 @@
     const endpointSaldos = "https://script.google.com/macros/s/AKfycbzz1sV5SYJ7zBjY6GYZuUd1HUM7ZmP_Oz798SNAxH36KXdAoTNtqARVsw7EJa9F2__Y/exec";
     const endpointTitulos = "https://script.google.com/macros/s/AKfycbwCpe51vPoH2lG8YR89kVR_uRfg6-T7SNkWwI3LbJAvbNiqEA1pddhG_3llm8tINMCB/exec";
 
-    let empresasSelecionadas = ["cap mercatto"];
-    let grafico;
-    let selecionados = {};
-    const CACHE_TTL = 6 * 60 * 60 * 1000; // 6 horas
+    let empresasSelecionadas=["cap mercatto"];
+    let grafico, selecionados={};
 
+    function mostrarOverlay(s=true){document.getElementById("overlay").style.display=s?"flex":"none";}
     function parseValor(v){if(!v) return 0;return Number(v.toString().replace("R$","").replace(/\./g,"").replace(",",".").trim())||0;}
     function formatarData(iso){try{return new Date(iso).toLocaleDateString("pt-BR",{timeZone:"UTC"});}catch{return iso;}}
 
@@ -170,17 +179,9 @@
     function selecionarTodas(chk){document.querySelectorAll("#dropdownEmpresas input[type=checkbox]").forEach(cb=>{if(cb.value!=="todas")cb.checked=chk.checked;});}
     function aplicarEmpresas(){
       const inputs=document.querySelectorAll("#dropdownEmpresas input[type=checkbox]:checked");
-      if(Array.from(inputs).some(cb=>cb.value==="todas")){
-        empresasSelecionadas=["cap delicia","cap villa","cap padaria","cap mercatto","cap m.kids"];
-      } else {
-        empresasSelecionadas=Array.from(inputs).map(cb=>cb.value).filter(v=>v!=="todas");
-      }
-      toggleMenu();carregarTudo();
-    }
-    function forcarAtualizacao(){
-      localStorage.removeItem("cacheSaldos");
-      localStorage.removeItem("cacheTitulos");
-      carregarTudo();
+      if([...inputs].some(cb=>cb.value==="todas"))empresasSelecionadas=["cap delicia","cap villa","cap padaria","cap mercatto","cap m.kids"];
+      else empresasSelecionadas=[...inputs].map(cb=>cb.value).filter(v=>v!=="todas");
+      toggleMenu();carregarTudo(true);
     }
 
     async function carregarSaldos(){
@@ -195,6 +196,9 @@
     }
 
     async function carregarTitulos(){
+      document.getElementById("tabelaLoader").style.display="block";
+      document.getElementById("graficoLoader").style.display="block";
+
       const promises=empresasSelecionadas.map(emp=>fetch(endpointTitulos+"?action=listar&empresa="+encodeURIComponent(emp)).then(r=>r.json().then(d=>({empresa:emp,data:d}))));
       const dadosEmpresas=await Promise.all(promises);
 
@@ -206,20 +210,14 @@
         data.titulos.forEach((item,i)=>{
           const valorNum=parseValor(item.valor);
           somaModalidades[item.meio_pagamento]=(somaModalidades[item.meio_pagamento]||0)+valorNum;
-
-          // Status ajustado (Sim => Pendente)
-          const statusExibido = item.status 
-            ? item.status 
-            : (item.aprovada && item.aprovada.toLowerCase()==="sim" ? "Pendente" : "Não informado");
+          const statusExibido=item.status?item.status:(item.aprovada && item.aprovada.toLowerCase()==="sim"?"Pendente":"Não informado");
 
           const tr=document.createElement("tr");
           tr.innerHTML=`
             <td><input type="checkbox" onchange="toggleSelecionado('${empresa}',${i},${valorNum},this)"></td>
-            <td>
-              <button class="btn-aprovar" onclick="atualizarStatus('${empresa}',${i},'Aprovado')">✓</button>
-              <button class="btn-negar" onclick="atualizarStatus('${empresa}',${i},'Negado')">✗</button>
-            </td>
-            <td>${item.empresa}</td><td>${item.fornecedor}</td>
+            <td><button class="btn-aprovar" onclick="atualizarStatus('${empresa}',${i},'Aprovado')">✓</button>
+                <button class="btn-negar" onclick="atualizarStatus('${empresa}',${i},'Negado')">✗</button></td>
+            <td><b>${item.empresa}</b></td><td>${item.fornecedor}</td>
             <td>${formatarData(item.vencimento)}</td>
             <td>R$ ${valorNum.toLocaleString("pt-BR",{minimumFractionDigits:2})}</td>
             <td>${item.meio_pagamento}</td><td>${item.historico}</td>
@@ -227,25 +225,24 @@
           tbody.appendChild(tr);
 
           const card=document.createElement("div");card.className="titulo-card";
-          card.innerHTML=`
-            <div class="titulo-header">
-              <div><input type="checkbox" onchange="toggleSelecionado('${empresa}',${i},${valorNum},this)"> 
+          card.innerHTML=`<div class="titulo-header"><div>
+              <input type="checkbox" onchange="toggleSelecionado('${empresa}',${i},${valorNum},this)">
               <button class="btn-aprovar" onclick="atualizarStatus('${empresa}',${i},'Aprovado')">✓</button>
               <button class="btn-negar" onclick="atualizarStatus('${empresa}',${i},'Negado')">✗</button></div>
-              <strong>R$ ${valorNum.toLocaleString("pt-BR",{minimumFractionDigits:2})}</strong>
-            </div>
-            <div class="titulo-info"><b>Empresa:</b> ${item.empresa}</div>
-            <div class="titulo-info"><b>Fornecedor:</b> ${item.fornecedor}</div>
-            <div class="titulo-info"><b>Vencimento:</b> ${formatarData(item.vencimento)}</div>
-            <div class="titulo-info"><b>Meio:</b> ${item.meio_pagamento}</div>
-            <div class="titulo-info"><b>Histórico:</b> ${item.historico}</div>
-            <div class="titulo-info"><b>Status:</b> ${statusExibido}</div>`;
+              <strong>R$ ${valorNum.toLocaleString("pt-BR",{minimumFractionDigits:2})}</strong></div>
+              <div class="titulo-info"><b>Empresa:</b> ${item.empresa}</div>
+              <div class="titulo-info"><b>Fornecedor:</b> ${item.fornecedor}</div>
+              <div class="titulo-info"><b>Vencimento:</b> ${formatarData(item.vencimento)}</div>
+              <div class="titulo-info"><b>Meio:</b> ${item.meio_pagamento}</div>
+              <div class="titulo-info"><b>Histórico:</b> ${item.historico}</div>
+              <div class="titulo-info"><b>Status:</b> ${statusExibido}</div>`;
           lista.appendChild(card);
         });
       });
 
-      atualizarBalao();
       desenharGrafico(somaModalidades);
+      document.getElementById("tabelaLoader").style.display="none";
+      document.getElementById("graficoLoader").style.display="none";
     }
 
     function toggleSelecionado(empresa,index,valor,chk){
@@ -270,47 +267,29 @@
     }
 
     async function atualizarStatus(empresa,index,status,silencioso=false){
-      await fetch(endpointTitulos,{method:"POST",body:JSON.stringify({action:"atualizar",empresa,index,status}),headers:{"Content-Type":"application/json"}});
+      await fetch(endpointTitulos,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"atualizar",empresa,index,status,aprovada:(status==="Aprovado"?"Sim":"Não")})});
       if(!silencioso) carregarTitulos();
     }
 
     function desenharGrafico(soma){
       const ctx=document.getElementById("graficoModalidades").getContext("2d");
       if(grafico) grafico.destroy();
-
-      const labels=Object.keys(soma);
-      const valores=Object.values(soma);
+      const labels=Object.keys(soma), valores=Object.values(soma);
       const cores=["#2563eb","#16a34a","#dc2626","#f59e0b","#9333ea"];
-
-      grafico=new Chart(ctx,{
-        type:"pie",
-        data:{labels:labels,datasets:[{data:valores,backgroundColor:cores}]},
-        options:{
-          responsive:true,
-          plugins:{
-            legend:{display:false},
-            datalabels:{
-              color:"#fff",font:{weight:"bold"},
-              formatter:(value)=>`R$ ${value.toLocaleString("pt-BR",{minimumFractionDigits:2})}`
-            }
-          }
-        },
-        plugins:[ChartDataLabels]
-      });
-
-      const legenda=document.getElementById("legendaValores");
-      legenda.innerHTML="";
-      labels.forEach((label,i)=>{
-        const div=document.createElement("div");
-        div.className="legenda-item";
-        div.innerHTML=`<span><span class="legenda-cor" style="background:${cores[i]}"></span>${label}</span>
-                       <span>R$ ${valores[i].toLocaleString("pt-BR",{minimumFractionDigits:2})}</span>`;
-        legenda.appendChild(div);
-      });
+      grafico=new Chart(ctx,{type:"pie",data:{labels,datasets:[{data:valores,backgroundColor:cores}]},
+        options:{responsive:true,plugins:{legend:{display:false},datalabels:{color:"#fff",font:{weight:"bold"},
+          formatter:v=>"R$ "+v.toLocaleString("pt-BR",{minimumFractionDigits:2})}}},plugins:[ChartDataLabels]});
+      const legenda=document.getElementById("legendaValores");legenda.innerHTML="";
+      labels.forEach((l,i)=>{const d=document.createElement("div");d.className="legenda-item";
+        d.innerHTML=`<span><span class="legenda-cor" style="background:${cores[i]}"></span>${l}</span>
+                     <span>R$ ${valores[i].toLocaleString("pt-BR",{minimumFractionDigits:2})}</span>`;legenda.appendChild(d);});
     }
 
-    function carregarTudo(){carregarSaldos();carregarTitulos();}
-    carregarTudo();
+    function carregarTudo(force=false){
+      mostrarOverlay(true);
+      Promise.all([carregarSaldos(),carregarTitulos()]).then(()=>mostrarOverlay(false));
+    }
+    carregarTudo(true);
   </script>
 </body>
 </html>
