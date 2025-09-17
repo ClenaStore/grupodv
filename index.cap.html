@@ -16,13 +16,23 @@
     }
     header h1 { font-size: 1.1em; margin: 0; }
 
-    .menu-empresas { display: flex; gap: 10px; align-items: center; }
+    .menu-empresas { position: relative; display: flex; gap: 10px; align-items: center; }
     .menu-btn {
       background: white; color: #2563eb; border: none;
       padding: 6px 10px; border-radius: 6px; cursor: pointer;
       font-size: 13px; font-weight: bold;
     }
     .btn-refresh { background: #f59e0b; color: white; }
+
+    .dropdown {
+      display: none;
+      position: absolute; right: 0; top: 40px;
+      background: #fff; border: 1px solid #ccc; border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,.15); padding: 10px; z-index: 200;
+      min-width: 180px;
+    }
+    .dropdown label { display: block; font-size: 14px; margin-bottom: 6px; cursor: pointer; }
+    .dropdown input { margin-right: 6px; }
 
     .cards { display: flex; flex-wrap: wrap; gap: 10px; padding: 10px; }
     .card {
@@ -31,7 +41,7 @@
       box-shadow: 0 2px 6px rgba(0,0,0,.1);
       text-align: center; cursor: pointer; transition: 0.2s;
     }
-    .card:hover { background: #f3f4f6; }
+    .card.active { border: 2px solid #2563eb; }
     .card h3 { margin: 0 0 6px; font-size: 0.95em; color: #111827; font-weight: bold; }
     .card .valor { font-size: 1.1em; font-weight: bold; color: #2563eb; }
 
@@ -41,7 +51,7 @@
       gap: 15px; margin: 10px auto; padding: 12px;
       background: #fff; border-radius: 10px;
       box-shadow: 0 2px 6px rgba(0,0,0,.1);
-      max-width: 600px;
+      max-width: 650px;
     }
     .grafico-container { flex: 0 0 200px; }
     #graficoModalidades { height: 200px !important; }
@@ -74,14 +84,6 @@
       font-size: 18px; font-weight: bold; color: #2563eb; z-index: 9999; display: none;
     }
 
-    #balaoTotal {
-      position: fixed; bottom: 20px; right: 20px;
-      background: #2563eb; color: #fff;
-      padding: 10px 15px; border-radius: 8px;
-      box-shadow: 0 4px 10px rgba(0,0,0,.2);
-      font-weight: bold; display: none; z-index: 999;
-    }
-
     @media(min-width: 769px) {
       .lista-titulos { display: none; }
       table { display: table; }
@@ -92,7 +94,17 @@
   <header>
     <h1>Painel Financeiro</h1>
     <div class="menu-empresas">
+      <button class="menu-btn" onclick="toggleMenu()">Selecionar Empresas</button>
       <button class="menu-btn btn-refresh" onclick="forcarAtualizacao()">🔄 Atualizar</button>
+      <div class="dropdown" id="dropdownEmpresas">
+        <label><input type="checkbox" value="todas" onchange="selecionarTodas(this)"> Todas</label>
+        <label><input type="checkbox" value="cap delicia"> CAP Delícia</label>
+        <label><input type="checkbox" value="cap villa"> CAP Villa</label>
+        <label><input type="checkbox" value="cap padaria"> CAP Padaria</label>
+        <label><input type="checkbox" value="cap mercatto"> CAP Mercatto</label>
+        <label><input type="checkbox" value="cap m.kids"> CAP M.Kids</label>
+        <button class="menu-btn" style="margin-top:8px;" onclick="aplicarEmpresas()">Aplicar</button>
+      </div>
     </div>
   </header>
 
@@ -121,8 +133,6 @@
     </table>
   </div>
 
-  <div id="balaoTotal"></div>
-
   <script>
     const endpointSaldos = "https://script.google.com/macros/s/AKfycbzz1sV5SYJ7zBjY6GYZuUd1HUM7ZmP_Oz798SNAxH36KXdAoTNtqARVsw7EJa9F2__Y/exec";
     const endpointTitulos = "https://script.google.com/macros/s/AKfycbwCpe51vPoH2lG8YR89kVR_uRfg6-T7SNkWwI3LbJAvbNiqEA1pddhG_3llm8tINMCB/exec";
@@ -134,6 +144,18 @@
     function mostrarOverlay(s=true){document.getElementById("overlay").style.display=s?"flex":"none";}
     function parseValor(v){if(!v) return 0;return Number(v.toString().replace("R$","").replace(/\./g,"").replace(",",".").trim())||0;}
     function formatarData(iso){try{return new Date(iso).toLocaleDateString("pt-BR",{timeZone:"UTC"});}catch{return iso;}}
+    function toggleMenu(){const d=document.getElementById("dropdownEmpresas");d.style.display=d.style.display==="block"?"none":"block";}
+    function selecionarTodas(chk){document.querySelectorAll("#dropdownEmpresas input[type=checkbox]").forEach(cb=>{if(cb.value!=="todas")cb.checked=chk.checked;});}
+
+    function aplicarEmpresas(){
+      const inputs=document.querySelectorAll("#dropdownEmpresas input[type=checkbox]:checked");
+      if(Array.from(inputs).some(cb=>cb.value==="todas")){
+        empresasSelecionadas=["cap delicia","cap villa","cap padaria","cap mercatto","cap m.kids"];
+      } else {
+        empresasSelecionadas=Array.from(inputs).map(cb=>cb.value).filter(v=>v!=="todas");
+      }
+      toggleMenu();carregarTudo();
+    }
 
     function forcarAtualizacao(){
       localStorage.removeItem("cacheSaldos");
@@ -152,6 +174,7 @@
       dados.forEach(s=>{
         const card=document.createElement("div");
         card.className="card";card.dataset.empresa=s.Empresa.toLowerCase();
+        if(empresasSelecionadas.includes(card.dataset.empresa)) card.classList.add("active");
         card.innerHTML=`<h3>${s.Empresa}</h3><div class="valor">R$ ${Number(s.Saldo).toLocaleString("pt-BR",{minimumFractionDigits:2})}</div>`;
         card.onclick=()=>{empresasSelecionadas=[s.Empresa.toLowerCase()];carregarTudo();};
         cards.appendChild(card);
