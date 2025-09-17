@@ -15,9 +15,7 @@
     }
     header h1 { font-size: 1.2em; margin: 0; font-weight: bold; }
 
-    .menu-empresas, .menu-datas {
-      position: relative; display: flex; gap: 10px; align-items: center;
-    }
+    .menu { display:flex; gap:15px; align-items:center; }
     .menu-btn {
       background: white; color: #1e3a8a; border: none;
       padding: 8px 12px; border-radius: 6px; cursor: pointer;
@@ -26,7 +24,7 @@
     .btn-refresh { background: #f59e0b; color: white; }
 
     .dropdown {
-      display: none; position: absolute; right: 0; top: 40px;
+      display: none; position: absolute; top: 40px;
       background: #fff; border: 1px solid #ccc; border-radius: 8px;
       box-shadow: 0 2px 8px rgba(0,0,0,.15); padding: 10px; z-index: 200; min-width: 220px;
     }
@@ -61,10 +59,10 @@
     .saldo-card {
       background: #f3f4f6; padding: 12px; border-radius: 8px;
       box-shadow: 0 1px 3px rgba(0,0,0,.1);
-      font-size: 14px; text-align: center; font-weight: bold;
-      color: #000; /* nomes das empresas em preto */
+      font-size: 14px; font-weight: bold; text-align: center;
+      color: #000; /* nomes das empresas pretos */
     }
-    .saldo-card span { color: #1e3a8a; display: block; margin-top: 4px; font-size: 15px; font-weight: bold; }
+    .saldo-card span { color: #1e3a8a; display: block; margin-top: 4px; font-size: 15px; }
 
     table { width: 100%; border-collapse: collapse; margin-top: 20px; background: #fff; }
     th, td { padding: 10px; border: 1px solid #e5e7eb; font-size: 14px; text-align: center; }
@@ -103,8 +101,8 @@
 <body>
   <header>
     <h1>Painel Financeiro</h1>
-    <div style="display:flex; gap:15px;">
-      <div class="menu-empresas">
+    <div class="menu">
+      <div>
         <button class="menu-btn" onclick="toggleMenu('dropdownEmpresas')">Selecionar Empresas</button>
         <div class="dropdown" id="dropdownEmpresas">
           <label><input type="checkbox" value="todas" onchange="selecionarTodas(this)" checked> Todas</label>
@@ -117,7 +115,7 @@
         </div>
       </div>
 
-      <div class="menu-datas">
+      <div>
         <button class="menu-btn" onclick="toggleMenu('dropdownDatas')">Selecionar Datas</button>
         <div class="dropdown" id="dropdownDatas">
           <input type="date" id="dataInicio">
@@ -164,10 +162,11 @@
 
   <script>
     const endpointSaldos = "https://script.google.com/macros/s/AKfycbxsQCx_Aw0PXnAIPQsj1Hjq35BSolRmvpY3ye3DwKLLz_oTfKfQAGi3mT3Ygl-Tm3yl/exec";
-    const endpointTitulos = "https://script.google.com/macros/s/AKfycbwCpe51vPoH2lG8YR89kVR_uRfg6-T7SNkWwI3LbJAvbNiqEA1pddhG_3llm8tINMCB/exec";
+    const endpointTitulos = "https://script.google.com/macros/s/AKfycbzTEl_RU1WV0BDLhvG40TQ45HRXS6R2loAnRPjdi8DIUCl8iCK2NqaK9_m1N9_tumx2/exec";
 
     let empresasSelecionadas = ["cap delicia","cap villa","cap padaria","cap mercatto","cap m.kids"];
     let grafico,saldos=[],selecionados={},dataInicio,dataFim;
+    let usuario = "Administrador"; // pode vir de login no futuro
 
     function toggleMenu(id){const d=document.getElementById(id);d.style.display=d.style.display==="block"?"none":"block";}
     function selecionarTodas(chk){document.querySelectorAll("#dropdownEmpresas input[type=checkbox]").forEach(cb=>{if(cb.value!=="todas")cb.checked=chk.checked;});}
@@ -215,7 +214,7 @@
 
       resultados.forEach(({empresa,data})=>{
         data.titulos.forEach((item,i)=>{
-          const valorNum=Number(item.valor.toString().replace("R$","").replace(/\./g,"").replace(",",".")); 
+          const valorNum=Number(item.valor.toString().replace("R$","").replace(/\./g,"").replace(",","."))||0;
           somaModalidades[item.meio_pagamento]=(somaModalidades[item.meio_pagamento]||0)+valorNum;
           const tr=document.createElement("tr");
           tr.innerHTML=`<td><input type="checkbox" onchange="toggleSelecionado('${empresa}',${i},${valorNum},this)"></td>
@@ -245,16 +244,17 @@
       else{balao.style.display="none";massa.style.display="none";}
     }
 
-    async function atualizarStatus(empresa,index,status){
-      await fetch(endpointTitulos,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({empresa,index,status})});
-      carregarTitulos();
-    }
-
     async function aprovarMassa(){
       for(const key in selecionados){
         const [empresa,index]=key.split("_");
-        await atualizarStatus(empresa,index,"Aprovado");
+        await atualizarStatus(empresa,parseInt(index),"Aprovado",true);
       }
+      carregarTitulos();
+    }
+
+    async function atualizarStatus(empresa,index,status,silencioso=false){
+      await fetch(endpointTitulos,{method:"POST",body:JSON.stringify({action:"atualizar",empresa,index,status,usuario}),headers:{"Content-Type":"application/json"}});
+      if(!silencioso) carregarTitulos();
     }
 
     function desenharGrafico(soma){
@@ -269,7 +269,6 @@
       document.getElementById("overlay").style.display="none";
     }
 
-    // inicializa com a data de hoje
     window.onload=()=>{
       const hoje=new Date().toISOString().split("T")[0];
       document.getElementById("dataInicio").value=hoje;
