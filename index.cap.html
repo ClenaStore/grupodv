@@ -1,116 +1,176 @@
-<!DOCTYPE html>
+
+    <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
   <title>Painel Financeiro • CAP</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    body { font-family: Arial, sans-serif; margin:0; background:#f6f7fb; color:#111; }
-    header { background:#1e3a8a; color:#fff; padding:12px; font-weight:bold; }
-    .container { padding:20px; }
+    body { font-family: Arial, sans-serif; margin: 0; background: #f6f7fb; color: #111827; }
+    header {
+      background: #1e3a8a; color: white; padding: 12px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    header h1 { font-size: 1.2em; margin: 0; }
+
+    .container { padding: 20px; }
 
     select {
-      padding:6px 10px; margin:5px;
-      border-radius:6px; border:1px solid #ccc;
-      font-size:14px;
+      padding: 6px; border-radius: 6px; border: 1px solid #ccc;
     }
 
-    table { width:100%; border-collapse:collapse; margin-top:15px; background:#fff; }
-    th, td { border:1px solid #e5e7eb; padding:8px; text-align:center; }
-    th { background:#f3f4f6; }
+    .saldos-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 12px; margin: 20px 0;
+    }
+    .saldo-card {
+      background: #fff; padding: 12px; border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0,0,0,.1);
+      font-size: 14px; text-align: center;
+    }
+    .saldo-card span { display:block; margin-top:4px; font-weight:bold; color:#1e3a8a; }
 
-    .btn-aprovar { background:#16a34a; color:#fff; border:none; padding:5px 10px; cursor:pointer; border-radius:4px; }
-    .btn-negar { background:#dc2626; color:#fff; border:none; padding:5px 10px; cursor:pointer; border-radius:4px; }
+    .grafico-card {
+      background: #fff; border-radius: 8px; padding: 15px;
+      box-shadow: 0 2px 6px rgba(0,0,0,.1); margin-bottom: 20px;
+    }
+
+    table { width: 100%; border-collapse: collapse; background: #fff; margin-top: 10px; }
+    th, td { padding: 10px; border: 1px solid #e5e7eb; font-size: 14px; text-align: center; }
+    th { background: #f3f4f6; }
+
+    button { padding: 6px 10px; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold; }
+    .btn-aprovar { background: #16a34a; color: white; margin-right: 4px; }
+    .btn-negar { background: #dc2626; color: white; }
   </style>
 </head>
 <body>
-  <header>Painel Financeiro • CAP</header>
-  <div class="container">
-    <label for="empresaSelect">Selecione a empresa:</label>
-    <select id="empresaSelect" onchange="carregarTitulos()">
-      <option value="cap delicia">CAP Delícia</option>
-      <option value="cap villa">CAP Villa</option>
-      <option value="cap padaria">CAP Padaria</option>
-      <option value="cap mercatto">CAP Mercatto</option>
-      <option value="cap m.kids">CAP M.Kids</option>
-    </select>
+  <header>
+    <h1>Painel Financeiro • CAP</h1>
+    <div>
+      <label for="empresa">Selecione a empresa: </label>
+      <select id="empresa" onchange="carregarTitulos()">
+        <option value="cap delicia">CAP Delícia</option>
+        <option value="cap villa">CAP Villa</option>
+        <option value="cap padaria">CAP Padaria</option>
+        <option value="cap mercatto">CAP Mercatto</option>
+        <option value="cap m.kids">CAP M.Kids</option>
+      </select>
+    </div>
+  </header>
 
-    <table>
+  <div class="container">
+    <!-- Cards de Saldos -->
+    <div id="saldosGrid" class="saldos-grid"></div>
+
+    <!-- Gráfico de Modalidades -->
+    <div class="grafico-card">
+      <canvas id="graficoModalidades"></canvas>
+    </div>
+
+    <!-- Tabela -->
+    <table id="tabelaTitulos">
       <thead>
         <tr>
           <th>Ações</th>
           <th>Empresa</th>
           <th>Fornecedor</th>
           <th>Vencimento</th>
-          <th>Valor Bruto</th>
+          <th>Valor</th>
           <th>Meio de Pagamento</th>
           <th>Status</th>
         </tr>
       </thead>
-      <tbody id="tabelaTitulos"></tbody>
+      <tbody></tbody>
     </table>
   </div>
 
-  <script>
-    // ⚠️ Substitua pelo link da sua implantação /exec
-    const endpoint = "https://script.google.com/macros/s/AKfycbwt9y43T8Ya0AhNusue3PTekaBPDnrqSK33dsbnmOKezcm3wnSrUz3z2jO_9BoJd8MH/exec";
+<script>
+  const endpointTitulos = "https://script.google.com/macros/s/AKfycbwt9y43T8Ya0AhNusue3PTekaBPDnrqSK33dsbnmOKezcm3wnSrUz3z2jO_9BoJd8MH/exec";
+  const endpointSaldos  = "https://script.google.com/macros/s/AKfycbxsQCx_Aw0PXnAIPQsj1Hjq35BSolRmvpY3ye3DwKLLz_oTfKfQAGi3mT3Ygl-Tm3yl/exec";
 
-    async function carregarTitulos() {
-      const empresa = document.getElementById("empresaSelect").value;
-      try {
-        const res = await fetch(`${endpoint}?action=listar&empresa=${encodeURIComponent(empresa)}`);
-        const dados = await res.json();
-        console.log("GET - Dados recebidos:", dados);
+  let grafico;
 
-        const tbody = document.getElementById("tabelaTitulos");
-        tbody.innerHTML = "";
+  async function carregarSaldos() {
+    const res = await fetch(endpointSaldos);
+    const dados = await res.json();
+    const grid = document.getElementById("saldosGrid");
+    grid.innerHTML = "";
+    dados.forEach(s => {
+      const div = document.createElement("div");
+      div.className = "saldo-card";
+      div.innerHTML = `${s.Empresa.toUpperCase()}<span>R$ ${Number(s.Saldo).toLocaleString("pt-BR",{minimumFractionDigits:2})}</span>`;
+      grid.appendChild(div);
+    });
+  }
 
-        if (!dados.titulos || dados.titulos.length === 0) {
-          tbody.innerHTML = `<tr><td colspan="7">Nenhum título encontrado</td></tr>`;
-          return;
-        }
+  async function carregarTitulos() {
+    const empresa = document.getElementById("empresa").value;
+    const res = await fetch(`${endpointTitulos}?action=listar&empresa=${encodeURIComponent(empresa)}`);
+    const dados = await res.json();
+    const tbody = document.querySelector("#tabelaTitulos tbody");
+    tbody.innerHTML = "";
 
-        dados.titulos.forEach((t, i) => {
-          const tr = document.createElement("tr");
-          tr.innerHTML = `
-            <td>
-              <button class="btn-aprovar" onclick="atualizarStatus('${empresa}',${i},'Aprovado')">✓</button>
-              <button class="btn-negar" onclick="atualizarStatus('${empresa}',${i},'Negado')">✗</button>
-            </td>
-            <td>${t.empresa}</td>
-            <td>${t.fornecedor}</td>
-            <td>${t.vencimento}</td>
-            <td>${t.valor}</td>
-            <td>${t.meio_pagamento}</td>
-            <td>${t.status}</td>
-          `;
-          tbody.appendChild(tr);
-        });
-      } catch (err) {
-        console.error("Erro ao carregar titulos:", err);
-        alert("Erro ao carregar títulos, veja o console.");
+    let somaModalidades = {};
+
+    dados.titulos.forEach((t, i) => {
+      const valor = Number(t.valor.toString().replace("R$","").replace(/\./g,"").replace(",",".")) || 0;
+      somaModalidades[t.meio_pagamento] = (somaModalidades[t.meio_pagamento]||0)+valor;
+
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>
+          <button class="btn-aprovar" onclick="atualizarStatus('${empresa}',${i},'Aprovado')">✓</button>
+          <button class="btn-negar" onclick="atualizarStatus('${empresa}',${i},'Negado')">✗</button>
+        </td>
+        <td>${t.empresa}</td>
+        <td>${t.fornecedor}</td>
+        <td>${t.vencimento}</td>
+        <td>R$ ${valor.toLocaleString("pt-BR",{minimumFractionDigits:2})}</td>
+        <td>${t.meio_pagamento}</td>
+        <td>${t.status}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    desenharGrafico(somaModalidades);
+  }
+
+  function desenharGrafico(soma) {
+    const ctx = document.getElementById("graficoModalidades").getContext("2d");
+    if (grafico) grafico.destroy();
+    grafico = new Chart(ctx, {
+      type: "pie",
+      data: {
+        labels: Object.keys(soma),
+        datasets: [{
+          data: Object.values(soma),
+          backgroundColor: ["#2563eb","#16a34a","#dc2626","#f59e0b","#9333ea"]
+        }]
+      },
+      options: {
+        plugins: { legend: { position: "right" } }
       }
+    });
+  }
+
+  async function atualizarStatus(empresa,index,status) {
+    try {
+      const url = `${endpointTitulos}?action=atualizar&empresa=${encodeURIComponent(empresa)}&index=${index}&status=${encodeURIComponent(status)}`;
+      const res = await fetch(url);
+      const dados = await res.json();
+      console.log("Atualizar:", dados);
+      carregarTitulos();
+    } catch (err) {
+      alert("Erro ao atualizar: " + err.message);
     }
+  }
 
-    async function atualizarStatus(empresa, index, status) {
-      try {
-        const url = `${endpoint}?action=atualizar&empresa=${encodeURIComponent(empresa)}&index=${index}&status=${encodeURIComponent(status)}`;
-        const res = await fetch(url);
-        const dados = await res.json();
-        console.log("Atualizar - resposta:", dados);
-
-        if (dados.erro) {
-          alert("Erro: " + dados.erro);
-        } else {
-          carregarTitulos();
-        }
-      } catch (err) {
-        console.error("Erro ao atualizar:", err);
-        alert("Erro ao atualizar status: " + err.message);
-      }
-    }
-
-    window.onload = carregarTitulos;
-  </script>
+  window.onload = () => {
+    carregarSaldos();
+    carregarTitulos();
+  };
+</script>
 </body>
 </html>
