@@ -16,7 +16,7 @@
     }
     header h1 { font-size: 1.2em; margin: 0; }
 
-    .menu-empresas { position: relative; }
+    .menu-empresas { position: relative; display: flex; gap: 10px; align-items: center; }
     .menu-btn {
       background: white; color: #2563eb; border: none;
       padding: 8px 12px; border-radius: 6px; cursor: pointer;
@@ -42,12 +42,18 @@
     .card h3 { margin: 0 0 8px; font-size: 1em; color: #111827; font-weight: bold; }
     .card .valor { font-size: 1.4em; font-weight: bold; color: #2563eb; }
 
-    .grafico-container {
-      max-width: 380px; margin: 20px auto; padding: 15px;
+    .grafico-wrapper {
+      display: flex; align-items: center; justify-content: center;
+      gap: 30px; margin: 20px auto; padding: 15px;
       background: #fff; border-radius: 10px;
       box-shadow: 0 2px 6px rgba(0,0,0,.1);
+      max-width: 700px;
     }
-    #graficoModalidades { height: 280px !important; }
+    .grafico-container { flex: 0 0 300px; }
+    #graficoModalidades { height: 260px !important; }
+    .legenda-valores { flex: 1; display: flex; flex-direction: column; gap: 8px; font-size: 14px; color: #111827; }
+    .legenda-item { display: flex; align-items: center; justify-content: space-between; font-weight: bold; }
+    .legenda-cor { width: 16px; height: 16px; border-radius: 4px; margin-right: 8px; }
 
     table { width: 100%; border-collapse: collapse; margin-top: 20px; background: #fff; display: none; }
     th, td { padding: 10px; border: 1px solid #e5e7eb; font-size: 14px; text-align: center; }
@@ -59,6 +65,7 @@
     button { padding: 6px 10px; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold; }
     .btn-aprovar { background: #16a34a; color: white; margin-right: 4px; }
     .btn-negar { background: #dc2626; color: white; }
+    .btn-refresh { background: #f59e0b; color: white; }
 
     .lista-titulos { display: flex; flex-direction: column; gap: 10px; padding: 15px; }
     .titulo-card {
@@ -102,6 +109,7 @@
     <h1>Painel Financeiro</h1>
     <div class="menu-empresas">
       <button class="menu-btn" onclick="toggleMenu()">Selecionar Empresas</button>
+      <button class="menu-btn btn-refresh" onclick="forcarAtualizacao()">🔄 Atualizar</button>
       <div class="dropdown" id="dropdownEmpresas">
         <label><input type="checkbox" value="todas" onchange="selecionarTodas(this)"> Todas</label>
         <label><input type="checkbox" value="cap delicia"> CAP Delícia</label>
@@ -115,8 +123,12 @@
   </header>
 
   <div class="cards" id="cardsSaldos"></div>
-  <div class="grafico-container">
-    <canvas id="graficoModalidades"></canvas>
+
+  <div class="grafico-wrapper">
+    <div class="grafico-container">
+      <canvas id="graficoModalidades"></canvas>
+    </div>
+    <div class="legenda-valores" id="legendaValores"></div>
   </div>
 
   <div class="lista-titulos" id="listaTitulos"></div>
@@ -149,6 +161,7 @@
     let empresasSelecionadas = ["cap mercatto"];
     let grafico;
     let selecionados = {};
+    const CACHE_TTL = 6 * 60 * 60 * 1000; // 6 horas
 
     function parseValor(v){if(!v) return 0;return Number(v.toString().replace("R$","").replace(/\./g,"").replace(",",".").trim())||0;}
     function formatarData(iso){try{return new Date(iso).toLocaleDateString("pt-BR",{timeZone:"UTC"});}catch{return iso;}}
@@ -157,16 +170,31 @@
     function selecionarTodas(chk){document.querySelectorAll("#dropdownEmpresas input[type=checkbox]").forEach(cb=>{if(cb.value!=="todas")cb.checked=chk.checked;});}
     function aplicarEmpresas(){
       const inputs=document.querySelectorAll("#dropdownEmpresas input[type=checkbox]:checked");
-      if(Array.from(inputs).some(cb=>cb.value==="todas")){ // todas selecionadas
+      if(Array.from(inputs).some(cb=>cb.value==="todas")){
         empresasSelecionadas=["cap delicia","cap villa","cap padaria","cap mercatto","cap m.kids"];
       } else {
         empresasSelecionadas=Array.from(inputs).map(cb=>cb.value).filter(v=>v!=="todas");
       }
       toggleMenu();carregarTudo();
     }
+    function forcarAtualizacao(){
+      localStorage.removeItem("cacheSaldos");
+      localStorage.removeItem("cacheTitulos");
+      carregarTudo();
+    }
 
     async function carregarSaldos(){
-      const res=await fetch(endpointSaldos);const dados=await res.json();
+      const cache = JSON.parse(localStorage.getItem("cacheSaldos")||"null");
+      const agora = Date.now();
+      let dados;
+      if(cache && (agora-cache.time)<CACHE_TTL){
+        dados = cache.data;
+      } else {
+        const res=await fetch(endpointSaldos);
+        dados=await res.json();
+        localStorage.setItem("cacheSaldos",JSON.stringify({time:agora,data:dados}));
+      }
+
       const cards=document.getElementById("cardsSaldos");cards.innerHTML="";
       dados.filter(s=>empresasSelecionadas.includes(s.Empresa.toLowerCase())).forEach(s=>{
         const card=document.createElement("div");card.className="card";
@@ -176,15 +204,23 @@
     }
 
     async function carregarTitulos(){
+      const cache = JSON.parse(localStorage.getItem("cacheTitulos")||"null");
+      const agora = Date.now();
+      let dadosEmpresas;
+
+      if(cache && (agora-cache.time)<CACHE_TTL){
+        dadosEmpresas = cache.data;
+      } else {
+        const promises=empresasSelecionadas.map(emp=>fetch(endpointTitulos+"?action=listar&empresa="+encodeURIComponent(emp)).then(r=>r.json().then(d=>({empresa:emp,data:d}))));
+        dadosEmpresas=await Promise.all(promises);
+        localStorage.setItem("cacheTitulos",JSON.stringify({time:agora,data:dadosEmpresas}));
+      }
+
       const tbody=document.querySelector("#tabelaTitulos tbody");tbody.innerHTML="";
       const lista=document.getElementById("listaTitulos");lista.innerHTML="";
       let somaModalidades={};selecionados={};
 
-      // busca todas empresas em paralelo
-      const promises=empresasSelecionadas.map(emp=>fetch(endpointTitulos+"?action=listar&empresa="+encodeURIComponent(emp)).then(r=>r.json().then(d=>({empresa:emp,data:d}))));
-      const results=await Promise.all(promises);
-
-      results.forEach(({empresa,data})=>{
+      dadosEmpresas.forEach(({empresa,data})=>{
         data.titulos.forEach((item,i)=>{
           const valorNum=parseValor(item.valor);
           somaModalidades[item.meio_pagamento]=(somaModalidades[item.meio_pagamento]||0)+valorNum;
@@ -254,32 +290,36 @@
     function desenharGrafico(soma){
       const ctx=document.getElementById("graficoModalidades").getContext("2d");
       if(grafico) grafico.destroy();
+
+      const labels=Object.keys(soma);
+      const valores=Object.values(soma);
+      const cores=["#2563eb","#16a34a","#dc2626","#f59e0b","#9333ea"];
+
       grafico=new Chart(ctx,{
         type:"pie",
-        data:{labels:Object.keys(soma),datasets:[{data:Object.values(soma),backgroundColor:["#2563eb","#16a34a","#dc2626","#f59e0b","#9333ea"]}]},
+        data:{labels:labels,datasets:[{data:valores,backgroundColor:cores}]},
         options:{
           responsive:true,
           plugins:{
-            legend:{
-              position:"bottom",
-              labels:{
-                generateLabels:(chart)=>{
-                  const data=chart.data;
-                  return data.labels.map((label,i)=>({
-                    text:`${label}: R$ ${data.datasets[0].data[i].toLocaleString("pt-BR",{minimumFractionDigits:2})}`,
-                    fillStyle:data.datasets[0].backgroundColor[i]
-                  }));
-                }
-              }
-            },
+            legend:{display:false},
             datalabels:{
-              color:"#fff",
-              font:{weight:"bold"},
+              color:"#fff",font:{weight:"bold"},
               formatter:(value)=>`R$ ${value.toLocaleString("pt-BR",{minimumFractionDigits:2})}`
             }
           }
         },
         plugins:[ChartDataLabels]
+      });
+
+      // monta legenda ao lado
+      const legenda=document.getElementById("legendaValores");
+      legenda.innerHTML="";
+      labels.forEach((label,i)=>{
+        const div=document.createElement("div");
+        div.className="legenda-item";
+        div.innerHTML=`<span><span class="legenda-cor" style="background:${cores[i]}"></span>${label}</span>
+                       <span>R$ ${valores[i].toLocaleString("pt-BR",{minimumFractionDigits:2})}</span>`;
+        legenda.appendChild(div);
       });
     }
 
