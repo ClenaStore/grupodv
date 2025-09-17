@@ -35,30 +35,50 @@
       margin: 20px auto; padding: 20px;
       background: #fff; border-radius: 10px;
       box-shadow: 0 2px 6px rgba(0,0,0,.1);
-      max-width: 800px;
+      max-width: 1000px;
       text-align: center;
     }
     .grafico-container { width: 100%; max-width: 380px; margin: auto; }
     #graficoModalidades { height: 260px !important; }
 
-    .saldos-lista {
+    .saldos-grid {
       margin-top: 20px;
-      display: flex; flex-direction: column; gap: 6px;
-      text-align: left; padding: 10px 20px;
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
     }
-    .saldo-item { font-size: 15px; font-weight: bold; color: #111; }
-    .saldo-item span { color: #1e3a8a; margin-left: 6px; }
+    .saldo-card {
+      background: #f3f4f6;
+      padding: 12px; border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,.1);
+      font-size: 14px; font-weight: bold; text-align: center;
+    }
+    .saldo-card span { color: #1e3a8a; display: block; margin-top: 4px; font-size: 15px; }
 
     table { width: 100%; border-collapse: collapse; margin-top: 20px; background: #fff; }
     th, td { padding: 10px; border: 1px solid #e5e7eb; font-size: 14px; text-align: center; }
     th { background: #f3f4f6; }
 
-    .status-aprovado { color: #16a34a; font-weight: bold; }
-    .status-negado { color: #dc2626; font-weight: bold; }
-
     button { padding: 6px 10px; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold; }
     .btn-aprovar { background: #16a34a; color: white; margin-right: 4px; }
     .btn-negar { background: #dc2626; color: white; }
+
+    #balaoTotal {
+      position: fixed; bottom: 20px; right: 20px;
+      background: #2563eb; color: #fff;
+      padding: 12px 18px; border-radius: 8px;
+      box-shadow: 0 4px 10px rgba(0,0,0,.2);
+      font-weight: bold; display: none; z-index: 999;
+    }
+    #acoesMassa {
+      position: fixed; bottom: 70px; right: 20px;
+      display: none; z-index: 999;
+    }
+    #acoesMassa button {
+      background: #16a34a; color: white; border: none;
+      padding: 10px 15px; border-radius: 8px; cursor: pointer;
+      font-size: 14px; font-weight: bold;
+      box-shadow: 0 2px 6px rgba(0,0,0,.2);
+    }
 
     #overlay {
       position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -88,16 +108,17 @@
 
   <div id="overlay">⏳ Carregando...</div>
 
-  <!-- Card do gráfico com saldos de todas as empresas -->
+  <!-- Card do gráfico com saldos -->
   <div class="grafico-card">
     <div class="grafico-container"><canvas id="graficoModalidades"></canvas></div>
-    <div id="saldosLista" class="saldos-lista"></div>
+    <div id="saldosGrid" class="saldos-grid"></div>
   </div>
 
   <div style="padding: 15px;">
     <table id="tabelaTitulos">
       <thead>
         <tr>
+          <th><input type="checkbox" id="checkTodos" onchange="toggleTodos(this)"></th>
           <th>Ações</th>
           <th>Empresa</th>
           <th>Fornecedor</th>
@@ -112,12 +133,15 @@
     </table>
   </div>
 
+  <div id="balaoTotal"></div>
+  <div id="acoesMassa"><button onclick="aprovarMassa()">Aprovar Selecionados</button></div>
+
   <script>
     const endpointSaldos = "https://script.google.com/macros/s/AKfycbxsQCx_Aw0PXnAIPQsj1Hjq35BSolRmvpY3ye3DwKLLz_oTfKfQAGi3mT3Ygl-Tm3yl/exec";
     const endpointTitulos = "https://script.google.com/macros/s/AKfycbwCpe51vPoH2lG8YR89kVR_uRfg6-T7SNkWwI3LbJAvbNiqEA1pddhG_3llm8tINMCB/exec";
 
     let empresasSelecionadas=["cap delicia"];
-    let grafico,saldos=[];
+    let grafico,saldos=[],selecionados={};
 
     function mostrarOverlay(s=true){document.getElementById("overlay").style.display=s?"flex":"none";}
 
@@ -131,13 +155,13 @@
 
     async function carregarSaldos(){
       const res=await fetch(endpointSaldos);saldos=await res.json();
-      const container=document.getElementById("saldosLista");
-      container.innerHTML="";
+      const grid=document.getElementById("saldosGrid");
+      grid.innerHTML="";
       saldos.forEach(s=>{
         const div=document.createElement("div");
-        div.className="saldo-item";
-        div.innerHTML=`${s.Empresa.toUpperCase()} <span>R$ ${Number(s.Saldo).toLocaleString("pt-BR",{minimumFractionDigits:2})}</span>`;
-        container.appendChild(div);
+        div.className="saldo-card";
+        div.innerHTML=`${s.Empresa.toUpperCase()}<span>R$ ${Number(s.Saldo).toLocaleString("pt-BR",{minimumFractionDigits:2})}</span>`;
+        grid.appendChild(div);
       });
     }
 
@@ -146,16 +170,15 @@
       const resultados=await Promise.all(promises);
 
       const tbody=document.querySelector("#tabelaTitulos tbody");tbody.innerHTML="";
-      let somaModalidades={};
+      selecionados={}; let somaModalidades={};
 
       resultados.forEach(({empresa,data})=>{
         data.titulos.forEach((item,i)=>{
           const valorNum=Number(item.valor.toString().replace("R$","").replace(/\./g,"").replace(",","."));
           somaModalidades[item.meio_pagamento]=(somaModalidades[item.meio_pagamento]||0)+valorNum;
           const tr=document.createElement("tr");
-          tr.innerHTML=`<td>
-              <button class="btn-aprovar">✓</button>
-              <button class="btn-negar">✗</button></td>
+          tr.innerHTML=`<td><input type="checkbox" onchange="toggleSelecionado('${empresa}',${i},${valorNum},this)"></td>
+              <td><button class="btn-aprovar">✓</button><button class="btn-negar">✗</button></td>
               <td>${item.empresa}</td><td>${item.fornecedor}</td><td>${item.vencimento}</td>
               <td>R$ ${valorNum.toLocaleString("pt-BR",{minimumFractionDigits:2})}</td>
               <td>${item.meio_pagamento}</td><td>${item.historico}</td><td>${item.status||'Pendente'}</td>`;
@@ -165,19 +188,34 @@
       desenharGrafico(somaModalidades);
     }
 
+    function toggleSelecionado(empresa,index,valor,chk){
+      if(chk.checked) selecionados[empresa+"_"+index]=valor;
+      else delete selecionados[empresa+"_"+index];
+      atualizarBalao();
+    }
+    function atualizarBalao(){
+      const total=Object.values(selecionados).reduce((a,b)=>a+b,0);
+      const balao=document.getElementById("balaoTotal");
+      const massa=document.getElementById("acoesMassa");
+      if(total>0){balao.style.display="block";massa.style.display="block";balao.innerText=`Selecionados: R$ ${total.toLocaleString("pt-BR",{minimumFractionDigits:2})}`;}
+      else{balao.style.display="none";massa.style.display="none";}
+    }
+
+    async function aprovarMassa(){
+      for(const key in selecionados){
+        const [empresa,index]=key.split("_");
+        await fetch(endpointTitulos,{method:"POST",body:JSON.stringify({action:"atualizar",empresa,index,status:"Aprovado"}),headers:{"Content-Type":"application/json"}});
+      }
+      carregarTitulos();
+    }
+
     function desenharGrafico(soma){
       const ctx=document.getElementById("graficoModalidades").getContext("2d");
       if(grafico)grafico.destroy();
-      const labels=Object.keys(soma), valores=Object.values(soma);
-      grafico=new Chart(ctx,{type:"pie",data:{labels:labels,datasets:[{data:valores,backgroundColor:["#2563eb","#16a34a","#dc2626","#f59e0b","#9333ea"]}]},options:{plugins:{legend:{position:"right"},datalabels:{color:"#fff",formatter:v=>"R$ "+v.toLocaleString("pt-BR",{minimumFractionDigits:2})}}},plugins:[ChartDataLabels]});
+      grafico=new Chart(ctx,{type:"pie",data:{labels:Object.keys(soma),datasets:[{data:Object.values(soma),backgroundColor:["#2563eb","#16a34a","#dc2626","#f59e0b","#9333ea"]}]},options:{plugins:{legend:{position:"right"},datalabels:{color:"#fff",formatter:v=>"R$ "+v.toLocaleString("pt-BR",{minimumFractionDigits:2})}}},plugins:[ChartDataLabels]});
     }
 
-    async function carregarTudo(){
-      mostrarOverlay(true);
-      await carregarSaldos();
-      await carregarTitulos();
-      mostrarOverlay(false);
-    }
+    async function carregarTudo(){mostrarOverlay(true);await carregarSaldos();await carregarTitulos();mostrarOverlay(false);}
     carregarTudo();
   </script>
 </body>
