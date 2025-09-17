@@ -199,19 +199,25 @@
     });
   }
 
-  async function atualizarStatus(btn,empresa,index,status) {
-    try {
-      btn.classList.add("loading");
-      const url = `${endpointTitulos}?action=atualizar&empresa=${encodeURIComponent(empresa)}&index=${index}&status=${encodeURIComponent(status)}`;
-      const res = await fetch(url);
-      await res.json();
-      carregarTitulos();
-    } catch (err) {
-      alert("Erro ao atualizar: " + err.message);
-    } finally {
-      btn.classList.remove("loading");
-    }
+async function atualizarStatus(btn, empresa, index, status) {
+  try {
+    btn.classList.add("loading");
+
+    // Chama GAS para salvar
+    const url = `${endpointTitulos}?action=atualizar&empresa=${encodeURIComponent(empresa)}&index=${index}&status=${encodeURIComponent(status)}`;
+    await fetch(url);
+
+    // Atualiza localmente na tabela
+    const linha = btn.closest("tr");
+    linha.querySelector("td:last-child").innerText = status;
+
+  } catch (err) {
+    alert("Erro ao atualizar: " + err.message);
+  } finally {
+    btn.classList.remove("loading");
   }
+}
+
 
   function atualizarTotal() {
     document.getElementById("totalSelecionado").innerText =
