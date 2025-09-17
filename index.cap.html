@@ -15,9 +15,7 @@
     }
     header h1 { font-size: 1.2em; margin: 0; font-weight: bold; }
 
-    .menu-empresas, .menu-datas {
-      position: relative; display: flex; gap: 10px; align-items: center;
-    }
+    .menu-empresas, .menu-datas { position: relative; display: flex; gap: 10px; align-items: center; }
     .menu-btn {
       background: white; color: #1e3a8a; border: none;
       padding: 8px 12px; border-radius: 6px; cursor: pointer;
@@ -32,10 +30,9 @@
     }
     .dropdown label {
       display: block; font-size: 14px; margin-bottom: 6px; cursor: pointer;
-      color: #000; /* nomes das empresas em preto */
+      color: #000; /* empresas em preto */
     }
     .dropdown input { margin-right: 6px; }
-
     .dropdown input[type="date"] {
       width: 100%; margin-bottom: 8px; padding: 6px; font-size: 14px;
       border: 1px solid #ccc; border-radius: 6px;
@@ -65,7 +62,7 @@
       background: #f3f4f6; padding: 12px; border-radius: 8px;
       box-shadow: 0 1px 3px rgba(0,0,0,.1);
       font-size: 14px; text-align: center; font-weight: bold;
-      color: #000; /* nomes das empresas em preto */
+      color: #000; /* empresas em preto */
     }
     .saldo-card span { color: #1e3a8a; display: block; margin-top: 4px; font-size: 15px; font-weight: bold; }
 
@@ -84,15 +81,11 @@
       box-shadow: 0 4px 10px rgba(0,0,0,.2);
       font-weight: bold; display: none; z-index: 999;
     }
-    #acoesMassa {
-      position: fixed; bottom: 70px; right: 20px;
-      display: none; z-index: 999;
-    }
+    #acoesMassa { position: fixed; bottom: 70px; right: 20px; display: none; z-index: 999; }
     #acoesMassa button {
       background: #16a34a; color: white; border: none;
       padding: 10px 15px; border-radius: 8px; cursor: pointer;
-      font-size: 14px; font-weight: bold;
-      box-shadow: 0 2px 6px rgba(0,0,0,.2);
+      font-size: 14px; font-weight: bold; box-shadow: 0 2px 6px rgba(0,0,0,.2);
     }
 
     #overlay {
@@ -116,7 +109,7 @@
           <label><input type="checkbox" value="cap padaria" checked> CAP Padaria</label>
           <label><input type="checkbox" value="cap mercatto" checked> CAP Mercatto</label>
           <label><input type="checkbox" value="cap m.kids" checked> CAP M.Kids</label>
-          <button class="menu-btn" style="margin-top:8px;" onclick="aplicarEmpresas()">Aplicar</button>
+          <button class="btn-aplicar" style="margin-top:8px;" onclick="aplicarEmpresas()">Aplicar</button>
         </div>
       </div>
 
@@ -172,28 +165,39 @@
     let empresasSelecionadas = ["cap delicia","cap villa","cap padaria","cap mercatto","cap m.kids"];
     let grafico,saldos=[],selecionados={},dataInicio,dataFim;
 
-    function toggleMenu(id){const d=document.getElementById(id);d.style.display=d.style.display==="block"?"none":"block";}
-    function selecionarTodas(chk){document.querySelectorAll("#dropdownEmpresas input[type=checkbox]").forEach(cb=>{if(cb.value!=="todas")cb.checked=chk.checked;});}
+    function toggleMenu(id){
+      const d=document.getElementById(id);
+      d.style.display=d.style.display==="block"?"none":"block";
+    }
+    function selecionarTodas(chk){
+      document.querySelectorAll("#dropdownEmpresas input[type=checkbox]").forEach(cb=>{
+        if(cb.value!=="todas") cb.checked=chk.checked;
+      });
+    }
     function aplicarEmpresas(){
       const inputs=document.querySelectorAll("#dropdownEmpresas input[type=checkbox]:checked");
       empresasSelecionadas=Array.from(inputs).map(cb=>cb.value).filter(v=>v!=="todas");
       carregarTitulos();
+      document.getElementById("dropdownEmpresas").style.display="none"; // fecha menu
     }
 
     function aplicarDatas(){
       dataInicio=document.getElementById("dataInicio").value;
       dataFim=document.getElementById("dataFim").value;
       carregarTitulos();
+      document.getElementById("dropdownDatas").style.display="none"; // fecha menu
     }
     function cancelarDatas(){
       document.getElementById("dataInicio").value="";
       document.getElementById("dataFim").value="";
       dataInicio=dataFim=null;
       carregarTitulos();
+      document.getElementById("dropdownDatas").style.display="none"; // fecha menu
     }
 
     async function carregarSaldos(){
-      const res=await fetch(endpointSaldos);saldos=await res.json();
+      const res=await fetch(endpointSaldos);
+      saldos=await res.json();
       const grid=document.getElementById("saldosGrid");
       grid.innerHTML="";
       saldos.forEach(s=>{
@@ -213,10 +217,12 @@
       });
       const resultados=await Promise.all(promises);
 
-      const tbody=document.querySelector("#tabelaTitulos tbody");tbody.innerHTML="";
+      const tbody=document.querySelector("#tabelaTitulos tbody");
+      tbody.innerHTML="";
       selecionados={}; let somaModalidades={};
 
       resultados.forEach(({empresa,data})=>{
+        if(!data.titulos) return;
         data.titulos.forEach((item,i)=>{
           const valorNum=Number(item.valor.toString().replace("R$","").replace(/\./g,"").replace(",","."));
           somaModalidades[item.meio_pagamento]=(somaModalidades[item.meio_pagamento]||0)+valorNum;
@@ -244,8 +250,13 @@
       const total=Object.values(selecionados).reduce((a,b)=>a+b,0);
       const balao=document.getElementById("balaoTotal");
       const massa=document.getElementById("acoesMassa");
-      if(total>0){balao.style.display="block";massa.style.display="block";balao.innerText=`Selecionados: R$ ${total.toLocaleString("pt-BR",{minimumFractionDigits:2})}`;}
-      else{balao.style.display="none";massa.style.display="none";}
+      if(total>0){
+        balao.style.display="block";
+        massa.style.display="block";
+        balao.innerText=`Selecionados: R$ ${total.toLocaleString("pt-BR",{minimumFractionDigits:2})}`;
+      } else {
+        balao.style.display="none";massa.style.display="none";
+      }
     }
 
     async function atualizarStatus(empresa,index,status){
