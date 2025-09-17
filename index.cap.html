@@ -184,17 +184,8 @@
     }
 
     async function carregarSaldos(){
-      const cache = JSON.parse(localStorage.getItem("cacheSaldos")||"null");
-      const agora = Date.now();
-      let dados;
-      if(cache && (agora-cache.time)<CACHE_TTL){
-        dados = cache.data;
-      } else {
-        const res=await fetch(endpointSaldos);
-        dados=await res.json();
-        localStorage.setItem("cacheSaldos",JSON.stringify({time:agora,data:dados}));
-      }
-
+      const res=await fetch(endpointSaldos);
+      const dados=await res.json();
       const cards=document.getElementById("cardsSaldos");cards.innerHTML="";
       dados.filter(s=>empresasSelecionadas.includes(s.Empresa.toLowerCase())).forEach(s=>{
         const card=document.createElement("div");card.className="card";
@@ -204,17 +195,8 @@
     }
 
     async function carregarTitulos(){
-      const cache = JSON.parse(localStorage.getItem("cacheTitulos")||"null");
-      const agora = Date.now();
-      let dadosEmpresas;
-
-      if(cache && (agora-cache.time)<CACHE_TTL){
-        dadosEmpresas = cache.data;
-      } else {
-        const promises=empresasSelecionadas.map(emp=>fetch(endpointTitulos+"?action=listar&empresa="+encodeURIComponent(emp)).then(r=>r.json().then(d=>({empresa:emp,data:d}))));
-        dadosEmpresas=await Promise.all(promises);
-        localStorage.setItem("cacheTitulos",JSON.stringify({time:agora,data:dadosEmpresas}));
-      }
+      const promises=empresasSelecionadas.map(emp=>fetch(endpointTitulos+"?action=listar&empresa="+encodeURIComponent(emp)).then(r=>r.json().then(d=>({empresa:emp,data:d}))));
+      const dadosEmpresas=await Promise.all(promises);
 
       const tbody=document.querySelector("#tabelaTitulos tbody");tbody.innerHTML="";
       const lista=document.getElementById("listaTitulos");lista.innerHTML="";
@@ -224,6 +206,11 @@
         data.titulos.forEach((item,i)=>{
           const valorNum=parseValor(item.valor);
           somaModalidades[item.meio_pagamento]=(somaModalidades[item.meio_pagamento]||0)+valorNum;
+
+          // Status ajustado (Sim => Pendente)
+          const statusExibido = item.status 
+            ? item.status 
+            : (item.aprovada && item.aprovada.toLowerCase()==="sim" ? "Pendente" : "Não informado");
 
           const tr=document.createElement("tr");
           tr.innerHTML=`
@@ -236,7 +223,7 @@
             <td>${formatarData(item.vencimento)}</td>
             <td>R$ ${valorNum.toLocaleString("pt-BR",{minimumFractionDigits:2})}</td>
             <td>${item.meio_pagamento}</td><td>${item.historico}</td>
-            <td>${item.status||'Pendente'}</td>`;
+            <td>${statusExibido}</td>`;
           tbody.appendChild(tr);
 
           const card=document.createElement("div");card.className="titulo-card";
@@ -252,7 +239,7 @@
             <div class="titulo-info"><b>Vencimento:</b> ${formatarData(item.vencimento)}</div>
             <div class="titulo-info"><b>Meio:</b> ${item.meio_pagamento}</div>
             <div class="titulo-info"><b>Histórico:</b> ${item.historico}</div>
-            <div class="titulo-info"><b>Status:</b> ${item.status||'Pendente'}</div>`;
+            <div class="titulo-info"><b>Status:</b> ${statusExibido}</div>`;
           lista.appendChild(card);
         });
       });
@@ -311,7 +298,6 @@
         plugins:[ChartDataLabels]
       });
 
-      // monta legenda ao lado
       const legenda=document.getElementById("legendaValores");
       legenda.innerHTML="";
       labels.forEach((label,i)=>{
