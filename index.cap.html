@@ -356,7 +356,7 @@ const final = caixa - somaSemNegados;
     card.className="saldo-card";
     card.innerHTML =
       `<h3>${emp}</h3>
-       <div>Conta: <b>${BRL(caixa)}</b></div>
+       <div>Saldo da conta: <b>${BRL(caixa)}</b></div>
        <div style="color:var(--muted)">Pendentes: <b>${BRL(totStatus.Pendente)}</b></div>
        <div style="color:var(--green)">Aprovados: <b>${BRL(totStatus.Aprovado)}</b></div>
        <div style="color:var(--amber)">Liquidados: <b>${BRL(totStatus.Liquidado)}</b></div>
@@ -608,7 +608,7 @@ function abrirSaldo(emp, caixa, somaSemNegados, final, arr){
 
   $("saldoTitulo").textContent = emp;
   $("saldoBody").innerHTML = `
-    <div>Conta: <b>${BRL(caixa)}</b></div>
+    <div>Saldo da conta: <b>${BRL(caixa)}</b></div>
     <div style="color:var(--muted)">Pendentes: <b>${BRL(totStatus.Pendente)}</b></div>
     <div style="color:var(--green)">Aprovados: <b>${BRL(totStatus.Aprovado)}</b></div>
     <div style="color:var(--amber)">Liquidados: <b>${BRL(totStatus.Liquidado)}</b></div>
