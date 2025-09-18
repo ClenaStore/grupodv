@@ -262,7 +262,11 @@ async function loadSaldos(){
   const r = await fetch(endpointSaldos);
   const d = await r.json();
   SALDOS = {};
-  d.forEach(x=> SALDOS[x.Empresa] = Number(x.Saldo)||0 );
+  d.forEach(x=>{
+  const nome = x.Empresa.trim().toUpperCase();
+  SALDOS[nome] = Number(x.Saldo) || 0;
+});
+
 }
 
 /* ========= LOAD: TITULOS ========= */
