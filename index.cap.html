@@ -247,7 +247,10 @@ async function loadTitulos(empresas, diaISO, filtro){
     const arr = data.filter(t=>{
       const tDia = iso(t.vencimento);
       const byDay = (tDia===diaISO);
-      const byStatus = (filtro==="Todos" ? true : (t.status===filtro));
+     let stLocal = localStorage.getItem("status_"+ID(emp, idx)) || t.status;
+if(stLocal === "Sim") stLocal = "Pendente";
+const byStatus = (filtro==="Todos" ? true : (stLocal===filtro));
+
       return byDay && byStatus;
     });
     TITULOS[emp] = arr;
@@ -294,7 +297,9 @@ function renderLista(diaISO){
       somaModal[meio] = (somaModal[meio]||0)+valor;
 
       // para saldo final contam Pendente/Aprovado/Liquidado
-      const stLocal = localStorage.getItem("status_"+ID(emp,idx)) || t.status;
+  let stLocal = localStorage.getItem("status_"+ID(emp,idx)) || t.status;
+if(stLocal === "Sim") stLocal = "Pendente";
+
       if(stLocal==="Pendente"||stLocal==="Aprovado"||stLocal==="Liquidado"){
         somaEmp[emp] = (somaEmp[emp]||0)+valor;
       }
