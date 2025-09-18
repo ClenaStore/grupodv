@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -7,87 +8,55 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
   :root{
-    --bg:#0b1220;        /* fundo */
-    --card:#0f172a;      /* cartões escuros */
+    --bg:#0b1220;
+    --card:#0f172a;
     --surface:#0b1220;
-    --ink:#e5f0ff;       /* texto principal */
-    --muted:#a8b3c7;     /* texto secundário */
-    --line:#243043;      /* linhas/bordas */
-    --teal:#06b6d4;      /* primária */
-    --blue:#4f46e5;      /* secundária */
+    --ink:#e5f0ff;
+    --muted:#a8b3c7;
+    --line:#243043;
+    --teal:#06b6d4;
+    --blue:#4f46e5;
     --green:#16a34a;
     --red:#ef4444;
     --amber:#f59e0b;
     --chip:#101a2e;
   }
-
   *{box-sizing:border-box}
   body{margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Arial;color:var(--ink);background:linear-gradient(180deg,#0b1220 0,#0a0f1a 100%)}
 
-  /* Header */
-  header{
-    position:sticky; top:0; z-index:20;
-    background:linear-gradient(180deg,#0f172a,#0b1220);
-    border-bottom:1px solid var(--line);
-    padding:10px 12px; display:flex; gap:10px; align-items:center; justify-content:space-between; flex-wrap:wrap
-  }
-  header h1{font-size:16px;margin:0;font-weight:800;letter-spacing:.2px}
+  header{position:sticky; top:0; z-index:20; background:linear-gradient(180deg,#0f172a,#0b1220); border-bottom:1px solid var(--line);
+    padding:10px 12px; display:flex; gap:10px; align-items:center; justify-content:space-between; flex-wrap:wrap}
+  header h1{font-size:16px;margin:0;font-weight:800}
   .controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-  select,input[type="date"]{
-    background:#0b1528;border:1px solid #22314b;color:var(--ink);
-    padding:8px 10px;border-radius:10px;font-size:13px
-  }
+  select,input[type="date"]{background:#0b1528;border:1px solid #22314b;color:var(--ink);padding:8px 10px;border-radius:10px;font-size:13px}
   .btn{border:1px solid #2a3955;background:#0b1528;color:var(--ink);padding:8px 12px;border-radius:10px;cursor:pointer;font-weight:700}
-  .btn:active{transform:translateY(1px)}
-  .btn.primary{background:linear-gradient(180deg,var(--teal),#0894ad);border-color:#0ea5b5;color:#001018}
   .btn.icon{display:flex;align-items:center;gap:6px}
 
-  /* loader overlay */
   #overlay{position:fixed;inset:0;background:rgba(3,7,18,.55);backdrop-filter:blur(2px);display:none;align-items:center;justify-content:center;z-index:100}
   .spinner{width:48px;height:48px;border:6px solid var(--teal);border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite}
   @keyframes spin{to{transform:rotate(360deg)}}
 
-  /* Container */
   .container{padding:12px;max-width:1100px;margin:0 auto}
 
-  /* Saldo cards - mobile first (carrossel horizontal) */
-  .saldos{
-    display:flex; gap:10px; overflow:auto; padding-bottom:6px;
-    scrollbar-width:thin; scroll-snap-type:x mandatory;
-  }
-  .saldo-card{
-    min-width:220px; scroll-snap-align:start;
-    background:linear-gradient(180deg,#121b31,#0e1528);
-    border:1px solid var(--line); border-radius:14px; padding:10px;
-    box-shadow:0 10px 30px rgba(0,0,0,.25)
-  }
-  .saldo-card h3{margin:0 0 2px;font-size:12px;color:#9eb6ff;letter-spacing:.3px}
+  .saldos{display:flex; gap:10px; overflow:auto; padding-bottom:6px; scrollbar-width:thin; scroll-snap-type:x mandatory;}
+  .saldo-card{min-width:220px; scroll-snap-align:start; background:linear-gradient(180deg,#121b31,#0e1528); border:1px solid var(--line);
+    border-radius:14px; padding:10px; box-shadow:0 10px 30px rgba(0,0,0,.25)}
+  .saldo-card h3{margin:0 0 2px;font-size:12px;color:#9eb6ff}
   .saldo-card .v{font:800 18px/1 Inter}
   .saldo-card .f{margin-top:4px;font-weight:800}
-  .saldo-card .ok{color:var(--green)}
-  .saldo-card .bad{color:var(--red)}
+  .saldo-card .ok{color:var(--green)} .saldo-card .bad{color:var(--red)}
 
-  /* Gráfico + Modalidades */
-  .viz{display:flex;gap:12px;align-items:stretch;flex-wrap:wrap;margin:12px 0}
-  .card{background:#0f172a;border:1px solid var(--line);border-radius:14px;padding:10px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
-  .chart-card{flex:1 1 260px;text-align:center}
-  .mods-card{flex:1 1 260px}
-  .mods{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  /* gráfico + modalidades lado a lado */
+  .viz{display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap;margin:12px 0}
+  .chart-card{flex:0 0 220px;text-align:center;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px}
+  .mods-card{flex:1 1 300px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px}
+  .mods{display:flex;flex-direction:column;gap:8px}
   .mod{background:var(--chip);border:1px solid #22314b;border-radius:12px;padding:8px;font-size:13px;display:flex;justify-content:space-between}
 
-  /* Lista de títulos (cards) */
   .list-head{display:flex;align-items:center;justify-content:space-between;margin-top:6px}
-  .list-head .left{display:flex;gap:8px;align-items:center}
-  .master{width:18px;height:18px}
   .lista{display:grid;gap:10px;margin-top:10px}
-  .titulo{
-    background:linear-gradient(180deg,#101a2f,#0f172a);
-    border:1px solid var(--line); border-radius:14px; padding:10px; display:grid;
-    grid-template-columns:auto 1fr auto; gap:10px; align-items:center
-  }
-  .ck{display:flex;align-items:center;justify-content:center}
+  .titulo{background:linear-gradient(180deg,#101a2f,#0f172a);border:1px solid var(--line);border-radius:14px;padding:10px;display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center}
   .ck input{width:18px;height:18px}
-  .info{display:grid;gap:4px}
   .row{display:flex;gap:8px;flex-wrap:wrap;font-size:12px;color:var(--muted)}
   .row b{color:var(--ink)}
   .pill{padding:4px 8px;border-radius:999px;border:1px solid #2a3955;background:#0b1528;font-size:12px;font-weight:800;color:#9ecbff}
@@ -95,98 +64,69 @@
   .pill.warn{border-color:#7a1e1e;color:#ffb4b4;background:#2a0e0e}
   .actions{display:flex;gap:6px;align-items:center}
   .mini{padding:6px 9px;border-radius:10px;border:1px solid #22314b;background:#0b1528;color:var(--ink);font-weight:800}
-  .mini.aprovar{background:linear-gradient(180deg,#19c37d,#16a34a);border-color:#10a263;color:#04130b}
-  .mini.negar{background:linear-gradient(180deg,#fb6969,#ef4444);border-color:#ef4444;color:#2b0404}
-  .mini.hist{background:linear-gradient(180deg,#ffd166,#f59e0b);border-color:#f59e0b;color:#2a1500}
-  .mini.loading{opacity:.75;pointer-events:none}
+  .mini.aprovar{background:linear-gradient(180deg,#19c37d,#16a34a)}
+  .mini.negar{background:linear-gradient(180deg,#fb6969,#ef4444)}
+  .mini.hist{background:linear-gradient(180deg,#ffd166,#f59e0b)}
   .mini.loading::after{content:"";width:12px;height:12px;margin-left:6px;border:2px solid #fff;border-top-color:transparent;border-radius:50%;animation:spin .8s linear infinite}
 
-  /* Footer (selecionados) */
-  .footer{
-    position:fixed; right:12px; bottom:12px; display:flex; flex-direction:column; gap:10px; align-items:flex-end; z-index:15
-  }
-  .bubble{background:var(--blue);color:#fff;border-radius:12px;padding:8px 12px;font-weight:800;box-shadow:0 12px 30px rgba(79,70,229,.35)}
-  .btn-massa{background:linear-gradient(180deg,var(--teal),#0796ad);color:#002027;border:0;border-radius:12px;padding:10px 14px;font-weight:900;box-shadow:0 12px 30px rgba(6,182,212,.35);cursor:pointer}
-  .btn-massa.loading{opacity:.8;pointer-events:none}
+  .footer{position:fixed;right:12px;bottom:12px;display:flex;flex-direction:column;gap:10px;align-items:flex-end;z-index:15}
+  .bubble{background:var(--blue);color:#fff;border-radius:12px;padding:8px 12px;font-weight:800}
+  .btn-massa{background:linear-gradient(180deg,var(--teal),#0796ad);color:#002027;border:0;border-radius:12px;padding:10px 14px;font-weight:900;cursor:pointer}
   .btn-massa.loading::after{content:"";width:14px;height:14px;margin-left:8px;border:2px solid #002027;border-top-color:transparent;border-radius:50%;animation:spin .9s linear infinite;display:inline-block}
 
-  /* Empresas menu */
-  .menu{position:fixed; top:60px; right:10px; background:#0f172a; border:1px solid var(--line); border-radius:12px; padding:10px; box-shadow:0 10px 30px rgba(0,0,0,.4); display:none; z-index:30}
+  .menu{position:fixed;top:60px;right:10px;background:#0f172a;border:1px solid var(--line);border-radius:12px;padding:10px;box-shadow:0 10px 30px rgba(0,0,0,.4);display:none;z-index:30}
   .menu label{display:block;font-size:13px;margin:6px 0}
-
-  /* Modal simples */
-  .modal{position:fixed;inset:0;background:rgba(2,6,15,.65);display:none;align-items:center;justify-content:center;z-index:50}
-  .modal .box{background:#0f172a;border:1px solid var(--line);border-radius:12px;max-width:90%;width:420px;padding:12px}
-  .modal h3{margin:0 0 8px}
-  .modal .close{float:right;border:1px solid var(--line);background:#0b1528;border-radius:8px;color:var(--ink);padding:4px 8px;cursor:pointer}
 </style>
 </head>
 <body>
-  <header>
-    <h1>Painel Financeiro • CAP</h1>
-    <div class="controls">
-      <label for="filtroStatus" style="font-size:12px">Status:</label>
-      <select id="filtroStatus">
-        <option value="Pendente" selected>Pendentes</option>
-        <option value="Aprovado">Aprovados</option>
-        <option value="Negado">Negados</option>
-        <option value="Liquidado">Liquidados</option>
-        <option value="Todos">Todos</option>
-      </select>
-      <input type="date" id="filtroData" />
-      <button class="btn icon" id="btnEmpresas">Empresas ⚙</button>
+<header>
+  <h1>Painel Financeiro • CAP</h1>
+  <div class="controls">
+    <label for="filtroStatus" style="font-size:12px">Status:</label>
+    <select id="filtroStatus">
+      <option value="Pendente" selected>Pendentes</option>
+      <option value="Aprovado">Aprovados</option>
+      <option value="Negado">Negados</option>
+      <option value="Liquidado">Liquidados</option>
+      <option value="Todos">Todos</option>
+    </select>
+    <input type="date" id="filtroData" />
+    <button class="btn icon" id="btnEmpresas">Empresas ⚙</button>
+  </div>
+</header>
+
+<div id="overlay"><div class="spinner"></div></div>
+<div id="menuEmpresas" class="menu"></div>
+
+<div class="container">
+  <div id="saldos" class="saldos"></div>
+
+  <!-- gráfico menor + modalidades lado a lado -->
+  <div class="viz">
+    <div class="chart-card">
+      <canvas id="grafico"></canvas>
+      <div id="totaisGraf" style="margin-top:8px;font-size:12px;color:#9ab8ff"></div>
     </div>
-  </header>
-
-  <!-- overlay global -->
-  <div id="overlay"><div class="spinner"></div></div>
-
-  <!-- menu empresas -->
-  <div id="menuEmpresas" class="menu"></div>
-
-  <div class="container">
-
-    <!-- saldos -->
-    <div id="saldos" class="saldos"></div>
-
-    <!-- gráfico + modalidades -->
-    <div class="viz">
-      <div class="card chart-card">
-        <canvas id="grafico"></canvas>
-        <div id="totaisGraf" style="margin-top:8px;font-size:12px;color:#9ab8ff"></div>
-      </div>
-      <div class="card mods-card">
-        <div style="font-weight:800;margin-bottom:6px">Modalidades</div>
-        <div id="mods" class="mods"></div>
-      </div>
+    <div class="mods-card">
+      <div style="font-weight:800;margin-bottom:6px">Modalidades</div>
+      <div id="mods" class="mods"></div>
     </div>
-
-    <!-- lista -->
-    <div class="list-head">
-      <div class="left">
-        <input id="master" class="master" type="checkbox" />
-        <div style="font-weight:900">Títulos do dia</div>
-      </div>
-      <div id="contagem" style="color:var(--muted);font-size:12px">0 itens</div>
-    </div>
-
-    <div id="lista" class="lista"></div>
   </div>
 
-  <!-- footer selecionados -->
-  <div class="footer">
-    <div id="bubble" class="bubble" style="display:none">Total selecionado: R$ 0,00</div>
-    <button id="btnMassa" class="btn-massa" style="display:none">Aprovar selecionados</button>
-  </div>
-
-  <!-- modal histórico -->
-  <div id="modalHist" class="modal">
-    <div class="box">
-      <button class="close" onclick="fecharHist()">Fechar</button>
-      <h3>Histórico</h3>
-      <div id="histBody" style="white-space:pre-wrap;font-size:13px;color:#cbd5e1"></div>
+  <div class="list-head">
+    <div class="left">
+      <input id="master" type="checkbox" />
+      <div style="font-weight:900">Títulos do dia</div>
     </div>
+    <div id="contagem" style="color:var(--muted);font-size:12px">0 itens</div>
   </div>
+  <div id="lista" class="lista"></div>
+</div>
+
+<div class="footer">
+  <div id="bubble" class="bubble" style="display:none">Total selecionado: R$ 0,00</div>
+  <button id="btnMassa" class="btn-massa" style="display:none">Aprovar selecionados</button>
+</div>
 
 <script>
 /* ========= CONFIG ========= */
