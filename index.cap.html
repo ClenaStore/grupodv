@@ -138,7 +138,7 @@
 <script>
 const endpointTitulos="https://script.google.com/macros/s/AKfycbwt9y43T8Ya0AhNusue3PTekaBPDnrqSK33dsbnmOKezcm3wnSrUz3z2jO_9BoJd8MH/exec";
 const EMP_DEFAULT=["CAP DELICIA","CAP VILLA","CAP PADARIA","CAP MERCATTO","CAP M.KIDS"];
-let TITULOS={},SELEC=[],EMPRESA_ATUAL="CAP MERCATTO";
+let SELEC=[],EMPRESA_ATUAL="CAP MERCATTO";
 
 const $=id=>document.getElementById(id);
 const BRL=n=>(isNaN(n)?0:n).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
@@ -157,10 +157,9 @@ async function loadTitulos(empresa,diaISO,filtro){
 
 function renderLista(arr,emp){
   const lista=$("lista");lista.innerHTML="";SELEC=[];$("master").checked=false;
-  let total=0,somaModal={};
+  let total=0;
   arr.forEach((t,idx)=>{total++;
     const valor=Number(String(t.valor).replace("R$","").replace(/\./g,"").replace(",","."))||0;
-    somaModal[t.meio_pagamento]=(somaModal[t.meio_pagamento]||0)+valor;
     const id=ID(emp,idx),st=(t.status==="Sim"?"Pendente":t.status);
     const card=document.createElement("div");
     card.className="titulo";card.dataset.id=id;card.dataset.emp=emp;card.dataset.idx=idx;card.dataset.valor=valor;
@@ -179,7 +178,6 @@ function renderLista(arr,emp){
     lista.appendChild(card);
   });
   $("contagem").textContent=`${total} ${total===1?'item':'itens'}`;
-  renderModalidades(somaModal);
 }
 
 function renderModalidades(sum){
@@ -224,8 +222,40 @@ function fecharHist(){$("modalHist").style.display="none";}
 function showOverlay(){$("overlay").style.display="flex";}
 function hideOverlay(){$("overlay").style.display="none";}
 
-async function refresh(){showOverlay();const diaISO=$("filtroData").value;const filtro=$("filtroStatus").value;const arr=await loadTitulos(EMPRESA_ATUAL,diaISO,filtro);renderLista(arr,EMPRESA_ATUAL);hideOverlay();}
-(function boot(){const hoje=new Date().toISOString().slice(0,10);$("filtroData").value=hoje;const M=$("menuEmpresas");EMP_DEFAULT.forEach(emp=>{const d=document.createElement("div");d.textContent=emp;d.onclick=()=>{EMPRESA_ATUAL=emp;$("btnEmpresas").textContent=emp;refresh();M.style.display="none";};M.appendChild(d);});$("btnEmpresas").textContent=EMPRESA_ATUAL;$("filtroStatus").onchange=refresh;$("filtroData").onchange=refresh;refresh();})();
+async function refresh(){
+  showOverlay();
+  const diaISO=$("filtroData").value;
+  const filtro=$("filtroStatus").value;
+  const arr=await loadTitulos(EMPRESA_ATUAL,diaISO,filtro);
+
+  // ---- SOMA AQUI ----
+  let somaModal={};
+  arr.forEach(t=>{
+    const valor=Number(String(t.valor).replace("R$","").replace(/\./g,"").replace(",","."))||0;
+    somaModal[t.meio_pagamento]=(somaModal[t.meio_pagamento]||0)+valor;
+  });
+  renderModalidades(somaModal);
+  // -------------------
+
+  renderLista(arr,EMPRESA_ATUAL);
+  hideOverlay();
+}
+
+(function boot(){
+  const hoje=new Date().toISOString().slice(0,10);
+  $("filtroData").value=hoje;
+  const M=$("menuEmpresas");
+  EMP_DEFAULT.forEach(emp=>{
+    const d=document.createElement("div");
+    d.textContent=emp;
+    d.onclick=()=>{EMPRESA_ATUAL=emp;$("btnEmpresas").textContent=emp;refresh();M.style.display="none";};
+    M.appendChild(d);
+  });
+  $("btnEmpresas").textContent=EMPRESA_ATUAL;
+  $("filtroStatus").onchange=refresh;
+  $("filtroData").onchange=refresh;
+  refresh();
+})();
 </script>
 </body>
 </html>
