@@ -58,8 +58,8 @@
 
   .footer{position:fixed;right:12px;bottom:12px;display:flex;flex-direction:column;gap:10px;align-items:flex-end;z-index:15}
   .bubble{background:var(--blue);color:#fff;border-radius:12px;padding:8px 12px;font-weight:800}
-  .btn-massa{background:linear-gradient(180deg,var(--teal),#0796ad);color:#002027;border:0;border-radius:12px;padding:10px 14px;font-weight:900;cursor:pointer}
-  .btn-massa.loading{opacity:.8;pointer-events:none;position:relative}
+  .btn-massa{background:linear-gradient(180deg,var(--teal),#0796ad);color:#002027;border:0;border-radius:12px;padding:10px 14px;font-weight:900;cursor:pointer;position:relative}
+  .btn-massa.loading{opacity:.8;pointer-events:none}
   .btn-massa.loading::after{content:"";position:absolute;right:12px;top:50%;transform:translateY(-50%);
     width:14px;height:14px;border:2px solid #002027;border-top-color:transparent;border-radius:50%;animation:spin .8s linear infinite}
 
@@ -85,6 +85,13 @@
       <option value="Negado">Negados</option>
       <option value="Liquidado">Liquidados</option>
       <option value="Todos">Todos</option>
+    </select>
+    <label for="filtroMeio" style="font-size:12px">Forma:</label>
+    <select id="filtroMeio">
+      <option value="Todos" selected>Todos</option>
+      <option value="Cartão">Cartão</option>
+      <option value="Boleto">Boleto</option>
+      <option value="Pix">Pix</option>
     </select>
     <input type="date" id="filtroPeriodo" />
     <button class="btn icon" id="btnEmpresas">Empresa: <span id="empresaSelecionada">CAP DELICIA</span> ▼</button>
@@ -122,7 +129,7 @@
 </div>
 
 <script>
-const endpointTitulos="https://script.google.com/macros/s/AKfycbwBLzIXWEp9VSIEp-EukPEVGeaoGVtIJWZOvg2vHP8srpoxJspAY61aIwM0Sm7KCviI/exec";
+const endpointTitulos="SEU_ENDPOINT_AQUI";
 const EMP_DEFAULT=["CAP DELICIA","CAP VILLA","CAP PADARIA","CAP MERCATTO","CAP M.KIDS"];
 let TITULOS={},SELEC=[],obsContext={};
 
@@ -134,7 +141,7 @@ const ID=(emp,idx)=>`${emp.replace(/\s+/g,'_')}__${idx}`;
 $("btnEmpresas").onclick=()=>{const m=$("menuEmpresas");m.style.display=(m.style.display==="block"?"none":"block")};
 document.addEventListener("click",e=>{const m=$("menuEmpresas");if(!m.contains(e.target)&&e.target!==$("btnEmpresas"))m.style.display="none"});
 
-async function loadTitulos(empresas,inicio,fim,filtro){
+async function loadTitulos(empresas,inicio,fim,filtro,meioFiltro){
   TITULOS={};
   const resps=await Promise.all(empresas.map(emp=>
     fetch(`${endpointTitulos}?action=listar&empresa=${encodeURIComponent(emp)}`)
@@ -147,7 +154,15 @@ async function loadTitulos(empresas,inicio,fim,filtro){
     });
     const arr=all.filter(t=>{
       let st=(t.status==="Sim"?"Pendente":t.status);
-      return filtro==="Todos"?true:(st===filtro);
+      let passa=filtro==="Todos"||st===filtro;
+      let meio=t.meio_pagamento||"Outros";
+      if(meioFiltro!=="Todos"){
+        const txt=meio.toLowerCase();
+        if(meioFiltro==="Cartão" && !(txt.includes("cred")||txt.includes("deb")||txt.includes("cart"))) passa=false;
+        if(meioFiltro==="Boleto" && !txt.includes("bol")) passa=false;
+        if(meioFiltro==="Pix" && !txt.includes("pix")) passa=false;
+      }
+      return passa;
     });
     TITULOS[emp]=arr;
   });
@@ -168,7 +183,6 @@ function renderLista(){
       const card=document.createElement("div");
       card.className="titulo";
       card.dataset.id=id;card.dataset.emp=emp;card.dataset.idx=idx;card.dataset.valor=valor;
-
       card.innerHTML=`
         <div style="display:flex;align-items:center;gap:8px">
           <input type="checkbox" onchange="toggleSel(this)" />
@@ -244,7 +258,8 @@ async function acaoStatus(btn,novo){
   try{await fetch(`${endpointTitulos}?action=atualizar&empresa=${encodeURIComponent(emp)}&index=${idx}&status=${encodeURIComponent(novo)}`)}catch(e){console.error(e)}
   btn.classList.remove("loading");
 }
-$("btnMassa").onclick=async()=>{
+$("btnMassa").onclick
+=async()=>{
   const bt=$("btnMassa");bt.classList.add("loading");
   for(const s of SELEC){
     const card=document.querySelector(`.titulo[data-id="${s.id}"]`);
@@ -285,10 +300,11 @@ async function salvarObs(){
 /* Boot */
 async function refresh(){
   const filtro=$("filtroStatus").value;
+  const meioFiltro=$("filtroMeio").value;
   const empresa=document.querySelector("#menuEmpresas input:checked").value;
   const periodo=$("filtroPeriodo").value.split(",");
   const inicio=periodo[0]||"",fim=periodo[1]||periodo[0]||"";
-  await loadTitulos([empresa],inicio,fim,filtro);
+  await loadTitulos([empresa],inicio,fim,filtro,meioFiltro);
   $("empresaSelecionada").textContent=empresa;
   renderLista();
 }
@@ -302,6 +318,7 @@ async function refresh(){
     M.appendChild(lbl);
   });
   $("filtroStatus").onchange=refresh;
+  $("filtroMeio").onchange=refresh;
   $("filtroPeriodo").onchange=refresh;
   refresh();
 })();
