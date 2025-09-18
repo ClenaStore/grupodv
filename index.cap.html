@@ -438,23 +438,28 @@ async function acaoStatus(btn, novo){
 }
 
 $("btnMassa").onclick = async ()=>{
-  const bt = $("btnMassa"); bt.classList.add("loading");
+  const bt = $("btnMassa"); 
+  bt.classList.add("loading");
+
   // processa em sequência para não saturar o Apps Script
-  for(const s of SELEC){
+  for (const s of SELEC) {
     const card = document.querySelector(`.titulo[data-id="${s.id}"]`);
-    if(!card) continue;
+    if (!card) continue;
     const apBtn = card.querySelector(".mini.aprovar");
     await acaoStatus(apBtn, "Aprovado");
-    // desmarca o checkbox
+    // desmarca o checkbox do card
     const chk = card.querySelector(".ck input");
-    if(chk) chk.checked = false;
+    if (chk) chk.checked = false;
   }
-  // limpa seleção e master
+
+  // limpa a seleção, zera o master e esconde os botões
   SELEC = [];
   $("master").checked = false;
   renderSelecionados();
+
   bt.classList.remove("loading");
-}
+};
+
 
 /* ========= HISTÓRICO ========= */
 function addHist(id, acao, valor){
