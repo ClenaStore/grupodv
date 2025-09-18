@@ -476,9 +476,12 @@ async function refresh(){
 }
 
 (function boot(){
-  // data = hoje
   const hoje = new Date().toISOString().slice(0,10);
   $("filtroData").value = hoje;
+
+  // ADICIONAR ESTA LINHA ↓
+  $("filtroStatus").value = "Pendente";
+
 
   // empresas menu
   const M = $("menuEmpresas"); M.innerHTML="";
