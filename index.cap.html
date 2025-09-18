@@ -247,9 +247,9 @@ async function loadTitulos(empresas, diaISO, filtro){
     const arr = data.filter(t=>{
       const tDia = iso(t.vencimento);
       const byDay = (tDia===diaISO);
-     let stLocal = localStorage.getItem("status_"+ID(emp, idx)) || t.status;
-if(stLocal === "Sim") stLocal = "Pendente";
-const byStatus = (filtro==="Todos" ? true : (stLocal===filtro));
+let statusNorm = (t.status === "Sim" ? "Pendente" : t.status);
+const byStatus = (filtro==="Todos" ? true : (statusNorm===filtro));
+
 
       return byDay && byStatus;
     });
@@ -297,8 +297,8 @@ function renderLista(diaISO){
       somaModal[meio] = (somaModal[meio]||0)+valor;
 
       // para saldo final contam Pendente/Aprovado/Liquidado
-  let stLocal = localStorage.getItem("status_"+ID(emp,idx)) || t.status;
-if(stLocal === "Sim") stLocal = "Pendente";
+let stLocal = (t.status === "Sim" ? "Pendente" : t.status);
+
 
       if(stLocal==="Pendente"||stLocal==="Aprovado"||stLocal==="Liquidado"){
         somaEmp[emp] = (somaEmp[emp]||0)+valor;
@@ -427,7 +427,6 @@ async function acaoStatus(btn, novo){
   // aplica na UI e salva local
   const pill = card.querySelector("[data-status]");
   setPill(pill, novo);
-  localStorage.setItem("status_"+id, novo);
   addHist(id, novo, valor);
 
   // dispara atualização na planilha (não trava a UI)
