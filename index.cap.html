@@ -21,10 +21,6 @@
   .btn{border:1px solid #2a3955;background:#0b1528;color:var(--ink);padding:8px 12px;border-radius:10px;cursor:pointer;font-weight:700}
   .btn.icon{display:flex;align-items:center;gap:6px}
 
-  #overlay{position:fixed;inset:0;background:rgba(3,7,18,.55);display:none;align-items:center;justify-content:center;z-index:100}
-  .spinner{width:48px;height:48px;border:6px solid var(--teal);border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite}
-  @keyframes spin{to{transform:rotate(360deg)}}
-
   .container{padding:12px;max-width:1100px;margin:0 auto}
 
   .mods-card{margin:12px 0;background:#0f172a;border:1px solid var(--line);border-radius:14px;padding:12px}
@@ -50,17 +46,22 @@
   .historico,.obsText{font-size:12px;color:#cbd5e1;background:#0b1528;padding:6px;border-radius:8px;white-space:pre-wrap}
 
   .actions{display:flex;flex-wrap:wrap;gap:8px;justify-content:space-between}
-  .mini{flex:1;text-align:center;padding:10px;border-radius:10px;border:1px solid #22314b;color:#fff;font-weight:800;cursor:pointer}
+  .mini{flex:1;text-align:center;padding:10px;border-radius:10px;border:1px solid #22314b;color:#fff;font-weight:800;cursor:pointer;position:relative}
   .mini.obs{background:linear-gradient(180deg,#60a5fa,#1d4ed8)}
   .mini.aprovar{background:linear-gradient(180deg,#19c37d,#16a34a)}
   .mini.negar{background:linear-gradient(180deg,#fb6969,#ef4444)}
   .mini.hist{background:linear-gradient(180deg,#ffd166,#f59e0b);color:#2a1500}
   .mini.loading{opacity:.75;pointer-events:none}
+  .mini.loading::after{content:"";position:absolute;right:10px;top:50%;transform:translateY(-50%);
+    width:14px;height:14px;border:2px solid #fff;border-top-color:transparent;border-radius:50%;animation:spin .8s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
 
   .footer{position:fixed;right:12px;bottom:12px;display:flex;flex-direction:column;gap:10px;align-items:flex-end;z-index:15}
   .bubble{background:var(--blue);color:#fff;border-radius:12px;padding:8px 12px;font-weight:800}
   .btn-massa{background:linear-gradient(180deg,var(--teal),#0796ad);color:#002027;border:0;border-radius:12px;padding:10px 14px;font-weight:900;cursor:pointer}
-  .btn-massa.loading{opacity:.8;pointer-events:none}
+  .btn-massa.loading{opacity:.8;pointer-events:none;position:relative}
+  .btn-massa.loading::after{content:"";position:absolute;right:12px;top:50%;transform:translateY(-50%);
+    width:14px;height:14px;border:2px solid #002027;border-top-color:transparent;border-radius:50%;animation:spin .8s linear infinite}
 
   .menu{position:fixed;top:60px;right:10px;background:#0f172a;border:1px solid var(--line);
     border-radius:12px;padding:10px;box-shadow:0 10px 30px rgba(0,0,0,.4);display:none;z-index:30}
@@ -85,12 +86,11 @@
       <option value="Liquidado">Liquidados</option>
       <option value="Todos">Todos</option>
     </select>
-    <input type="date" id="filtroPeriodo" multiple />
+    <input type="date" id="filtroPeriodo" />
     <button class="btn icon" id="btnEmpresas">Empresa: <span id="empresaSelecionada">CAP DELICIA</span> ▼</button>
   </div>
 </header>
 
-<div id="overlay"><div class="spinner"></div></div>
 <div id="menuEmpresas" class="menu"></div>
 
 <div class="container">
@@ -122,7 +122,7 @@
 </div>
 
 <script>
-const endpointTitulos="SEU_ENDPOINT_AQUI";
+const endpointTitulos="https://script.google.com/macros/s/AKfycbwBLzIXWEp9VSIEp-EukPEVGeaoGVtIJWZOvg2vHP8srpoxJspAY61aIwM0Sm7KCviI/exec";
 const EMP_DEFAULT=["CAP DELICIA","CAP VILLA","CAP PADARIA","CAP MERCATTO","CAP M.KIDS"];
 let TITULOS={},SELEC=[],obsContext={};
 
@@ -130,9 +130,6 @@ const $=id=>document.getElementById(id);
 const BRL=n=>(isNaN(n)?0:n).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
 const iso=d=>new Date(d).toISOString().slice(0,10);
 const ID=(emp,idx)=>`${emp.replace(/\s+/g,'_')}__${idx}`;
-
-function showOverlay(){$("overlay").style.display="flex"}
-function hideOverlay(){$("overlay").style.display="none"}
 
 $("btnEmpresas").onclick=()=>{const m=$("menuEmpresas");m.style.display=(m.style.display==="block"?"none":"block")};
 document.addEventListener("click",e=>{const m=$("menuEmpresas");if(!m.contains(e.target)&&e.target!==$("btnEmpresas"))m.style.display="none"});
@@ -287,14 +284,13 @@ async function salvarObs(){
 
 /* Boot */
 async function refresh(){
-  showOverlay();
   const filtro=$("filtroStatus").value;
   const empresa=document.querySelector("#menuEmpresas input:checked").value;
   const periodo=$("filtroPeriodo").value.split(",");
   const inicio=periodo[0]||"",fim=periodo[1]||periodo[0]||"";
   await loadTitulos([empresa],inicio,fim,filtro);
   $("empresaSelecionada").textContent=empresa;
-  renderLista();hideOverlay();
+  renderLista();
 }
 (function boot(){
   const hoje=new Date().toISOString().slice(0,10);
