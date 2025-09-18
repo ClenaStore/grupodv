@@ -518,10 +518,17 @@ async function refresh(){
   await loadTitulos(empresas, diaISO, filtro);
    renderLista(diaISO);
 
-  // garante que saldos sejam renderizados mesmo sem títulos
-  const somaEmp = {};
-  empresas.forEach(emp => { somaEmp[emp] = 0; });
-  renderSaldos(somaEmp);
+// soma real dos títulos por empresa
+const somaEmp = {};
+empresas.forEach(emp => {
+  const totalTit = (TITULOS[emp]||[]).reduce((s,t)=>{
+    const valor = Number(String(t.valor).replace("R$","").replace(/\./g,"").replace(",","."))||0;
+    return s + valor;
+  },0);
+  somaEmp[emp] = totalTit;
+});
+renderSaldos(somaEmp);
+
 
   hideOverlay();
 
