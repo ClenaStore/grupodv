@@ -183,25 +183,25 @@ function renderLista(arr,emp){
 function renderModalidades(sum){
   const mods=$("modsCards");mods.innerHTML="";
   let total=0;
-  const ordem=["Pix","Débito","Crédito","Dinheiro"];
-  ordem.forEach(nome=>{
-    if(sum[nome]){
-      const c=document.createElement("div");
-      const cls=nome.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");
-      c.className="mod-card "+cls;
-      c.innerHTML=`<span>${nome}</span><b>${BRL(sum[nome])}</b>`;
-      mods.appendChild(c);
-      total+=sum[nome];
-    }
-  });
+  for(const [nome,valor] of Object.entries(sum)){
+    const c=document.createElement("div");
+    const cls=nome.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");
+    c.className="mod-card "+cls;
+    c.innerHTML=`<span>${nome}</span><b>${BRL(valor)}</b>`;
+    mods.appendChild(c);
+    total+=valor;
+  }
   if(total>0){
     const c=document.createElement("div");
     c.className="mod-card total";
     c.innerHTML=`<span>Total Geral</span><b>${BRL(total)}</b>`;
     mods.prepend(c);
   }
-  if(!Object.keys(sum).length){mods.innerHTML="<div style='color:var(--muted)'>Sem dados</div>";}
+  if(!Object.keys(sum).length){
+    mods.innerHTML="<div style='color:var(--muted)'>Sem dados</div>";
+  }
 }
+
 
 function setPill(el,status){el.className="pill";if(status==="Aprovado"){el.classList.add("ok");el.textContent="Aprovado";}
 else if(status==="Negado"){el.classList.add("warn");el.textContent="Negado";}
