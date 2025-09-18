@@ -45,14 +45,14 @@
 
   /* Modalidades */
   .mods-card{margin:12px 0;background:#0f172a;border:1px solid var(--line);border-radius:14px;padding:12px}
-  .mods{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .mods{display:grid;grid-template-columns:1fr;gap:8px}
+  @media(min-width:768px){.mods{grid-template-columns:1fr 1fr}}
+  @media(min-width:1024px){.mods{grid-template-columns:1fr 1fr 1fr}}
   .mod{border-radius:12px;padding:10px;font-weight:700;display:flex;justify-content:space-between;align-items:center;color:#fff}
   .mod.total{background:#0f172a;border:1px solid var(--line)}
   .mod.boleto{background:linear-gradient(180deg,#a855f7,#6b21a8)}
   .mod.pix{background:linear-gradient(180deg,#06b6d4,#0e7490)}
-  .mod.debito{background:linear-gradient(180deg,#16a34a,#065f46)}
-  .mod.credito{background:linear-gradient(180deg,#4f46e5,#312e81)}
-  .mod.dinheiro{background:linear-gradient(180deg,#f59e0b,#92400e)}
+  .mod.cartao{background:linear-gradient(180deg,#4f46e5,#312e81)}
 
   /* Lista */
   .list-head{display:flex;align-items:center;justify-content:space-between;margin-top:6px}
@@ -73,11 +73,15 @@
   .pill.ok{border-color:#155e32;color:#b6f3c5;background:#0e2a1b}
   .pill.warn{border-color:#7a1e1e;color:#ffb4b4;background:#2a0e0e}
   .actions{display:flex;gap:6px}
-  .mini{padding:6px 9px;border-radius:10px;border:1px solid #22314b;background:#0b1528;color:#fff;font-weight:800;cursor:pointer}
+  .mini{padding:6px 9px;border-radius:10px;border:1px solid #22314b;background:#0b1528;color:#fff;font-weight:800;cursor:pointer;position:relative}
   .mini.aprovar{background:linear-gradient(180deg,#19c37d,#16a34a)}
   .mini.negar{background:linear-gradient(180deg,#fb6969,#ef4444)}
   .mini.hist{background:linear-gradient(180deg,#ffd166,#f59e0b);color:#2a1500}
   .mini.loading{opacity:.75;pointer-events:none}
+  .mini.loading::after{
+    content:"";width:12px;height:12px;border:2px solid #fff;border-top-color:transparent;
+    border-radius:50%;animation:spin .8s linear infinite;position:absolute;right:6px;top:50%;transform:translateY(-50%);
+  }
 
   /* Footer */
   .footer{position:fixed;right:12px;bottom:12px;display:flex;flex-direction:column;gap:10px;align-items:flex-end;z-index:15}
@@ -228,20 +232,22 @@ function setPill(el,status){
 
 function renderModalidades(sum){
   const mods=$("mods");mods.innerHTML="";
-  const entries=Object.entries(sum);
+  let grupos={Cartão:0,Boleto:0,Pix:0};
+  for(const [k,v] of Object.entries(sum)){
+    const txt=k.toLowerCase();
+    if(txt.includes("cred")||txt.includes("déb")||txt.includes("deb")||txt.includes("cart"))grupos["Cartão"]+=v;
+    else if(txt.includes("bol"))grupos["Boleto"]+=v;
+    else if(txt.includes("pix"))grupos["Pix"]+=v;
+  }
   let total=0;
-  entries.forEach(([k,v])=>{
-    total+=v;
+  const cores={Cartão:"cartao",Boleto:"boleto",Pix:"pix"};
+  for(const g of Object.keys(grupos)){
+    total+=grupos[g];
     const d=document.createElement("div");
-    let cls="";if(k.toLowerCase().includes("boleto"))cls="boleto";
-    else if(k.toLowerCase().includes("pix"))cls="pix";
-    else if(k.toLowerCase().includes("déb")||k.toLowerCase().includes("deb"))cls="debito";
-    else if(k.toLowerCase().includes("cred"))cls="credito";
-    else if(k.toLowerCase().includes("din"))cls="dinheiro";
-    d.className="mod "+cls;
-    d.innerHTML=`<span>${k}</span><b>${BRL(v)}</b>`;
+    d.className="mod "+cores[g];
+    d.innerHTML=`<span>${g}</span><b>${BRL(grupos[g])}</b>`;
     mods.appendChild(d);
-  });
+  }
   const totalDiv=document.createElement("div");
   totalDiv.className="mod total";
   totalDiv.innerHTML=`<span>Total</span><b>${BRL(total)}</b>`;
