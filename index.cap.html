@@ -7,7 +7,7 @@
 <style>
   :root{
     --bg:#0b1220;--card:#0f172a;--ink:#e5f0ff;--muted:#a8b3c7;--line:#243043;
-    --teal:#06b6d4;--blue:#4f46e5;--green:#16a34a;--red:#ef4444;--amber:#f59e0b;--chip:#101a2e;
+    --teal:#06b6d4;--blue:#4f46e5;--green:#16a34a;--red:#ef4444;--amber:#f59e0b;
   }
   *{box-sizing:border-box}
   body{margin:0;font-family:Inter,system-ui;background:var(--bg);color:var(--ink)}
@@ -16,20 +16,17 @@
     border-bottom:1px solid var(--line);padding:10px 12px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap}
   header h1{font-size:16px;margin:0;font-weight:800}
   .controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-  select,input[type="date"]{background:#0b1528;border:1px solid #22314b;color:var(--ink);
+  select,input{background:#0b1528;border:1px solid #22314b;color:var(--ink);
     padding:8px 10px;border-radius:10px;font-size:13px}
   .btn{border:1px solid #2a3955;background:#0b1528;color:var(--ink);padding:8px 12px;border-radius:10px;cursor:pointer;font-weight:700}
   .btn.icon{display:flex;align-items:center;gap:6px}
 
-  /* loader */
-  #overlay{position:fixed;inset:0;background:rgba(3,7,18,.55);backdrop-filter:blur(2px);
-    display:none;align-items:center;justify-content:center;z-index:100}
+  #overlay{position:fixed;inset:0;background:rgba(3,7,18,.55);display:none;align-items:center;justify-content:center;z-index:100}
   .spinner{width:48px;height:48px;border:6px solid var(--teal);border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite}
   @keyframes spin{to{transform:rotate(360deg)}}
 
   .container{padding:12px;max-width:1100px;margin:0 auto}
 
-  /* Modalidades */
   .mods-card{margin:12px 0;background:#0f172a;border:1px solid var(--line);border-radius:14px;padding:12px}
   .mods{display:grid;grid-template-columns:1fr;gap:8px}
   @media(min-width:768px){.mods{grid-template-columns:1fr 1fr}}
@@ -40,16 +37,11 @@
   .mod.pix{background:linear-gradient(180deg,#06b6d4,#0e7490)}
   .mod.cartao{background:linear-gradient(180deg,#4f46e5,#312e81)}
 
-  /* Lista */
   .list-head{display:flex;align-items:center;justify-content:space-between;margin-top:6px}
-  .list-head .left{display:flex;gap:8px;align-items:center}
-  .master{width:18px;height:18px}
   .lista{display:grid;gap:10px;margin-top:10px}
   .titulo{background:linear-gradient(180deg,#101a2f,#0f172a);border:1px solid var(--line);
     border-radius:14px;padding:10px;display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center}
-  .ck{display:flex;align-items:center;justify-content:center}
   .ck input{width:18px;height:18px}
-  .info{display:grid;gap:4px}
   .row{display:flex;gap:8px;flex-wrap:wrap;font-size:12px;color:var(--muted)}
   .row b{color:var(--ink)}
   .pill{padding:4px 8px;border-radius:999px;border:1px solid #2a3955;background:#0b1528;font-size:12px;font-weight:800}
@@ -61,70 +53,60 @@
   .mini.negar{background:linear-gradient(180deg,#fb6969,#ef4444)}
   .mini.hist{background:linear-gradient(180deg,#ffd166,#f59e0b);color:#2a1500}
   .mini.loading{opacity:.75;pointer-events:none}
-  .mini.loading::after{content:"";width:12px;height:12px;border:2px solid #fff;border-top-color:transparent;
-    border-radius:50%;animation:spin .8s linear infinite;position:absolute;right:6px;top:50%;transform:translateY(-50%)}
 
-  /* Footer */
   .footer{position:fixed;right:12px;bottom:12px;display:flex;flex-direction:column;gap:10px;align-items:flex-end;z-index:15}
-  .bubble{background:var(--blue);color:#fff;border-radius:12px;padding:8px 12px;font-weight:800;box-shadow:0 12px 30px rgba(79,70,229,.35)}
+  .bubble{background:var(--blue);color:#fff;border-radius:12px;padding:8px 12px;font-weight:800}
   .btn-massa{background:linear-gradient(180deg,var(--teal),#0796ad);color:#002027;border:0;border-radius:12px;padding:10px 14px;font-weight:900;cursor:pointer}
+  .btn-massa.loading{opacity:.8;pointer-events:none}
 
-  /* Menu empresas */
   .menu{position:fixed;top:60px;right:10px;background:#0f172a;border:1px solid var(--line);
     border-radius:12px;padding:10px;box-shadow:0 10px 30px rgba(0,0,0,.4);display:none;z-index:30}
   .menu label{display:block;font-size:13px;margin:6px 0}
 </style>
 </head>
 <body>
-  <header>
-    <h1>Painel Financeiro • CAP</h1>
-    <div class="controls">
-      <label for="filtroStatus" style="font-size:12px">Status:</label>
-      <select id="filtroStatus">
-        <option value="Pendente" selected>Pendentes</option>
-        <option value="Aprovado">Aprovados</option>
-        <option value="Negado">Negados</option>
-        <option value="Liquidado">Liquidados</option>
-        <option value="Todos">Todos</option>
-      </select>
-      <input type="date" id="filtroInicio" />
-      <input type="date" id="filtroFim" />
-      <button class="btn icon" id="btnEmpresas">Empresa: <span id="empresaSelecionada">CAP DELICIA</span> ▼</button>
-    </div>
-  </header>
+<header>
+  <h1>Painel Financeiro • CAP</h1>
+  <div class="controls">
+    <label for="filtroStatus" style="font-size:12px">Status:</label>
+    <select id="filtroStatus">
+      <option value="Pendente" selected>Pendentes</option>
+      <option value="Aprovado">Aprovados</option>
+      <option value="Negado">Negados</option>
+      <option value="Liquidado">Liquidados</option>
+      <option value="Todos">Todos</option>
+    </select>
+    <input type="date" id="filtroPeriodo" multiple />
+    <button class="btn icon" id="btnEmpresas">Empresa: <span id="empresaSelecionada">CAP DELICIA</span> ▼</button>
+  </div>
+</header>
 
-  <div id="overlay"><div class="spinner"></div></div>
-  <div id="menuEmpresas" class="menu"></div>
+<div id="overlay"><div class="spinner"></div></div>
+<div id="menuEmpresas" class="menu"></div>
 
-  <div class="container">
-    <!-- Modalidades -->
-    <div class="mods-card">
-      <div style="font-weight:800;margin-bottom:6px">Modalidades</div>
-      <div id="mods" class="mods"></div>
-    </div>
-
-    <!-- lista -->
-    <div class="list-head">
-      <div class="left">
-        <input id="master" class="master" type="checkbox" />
-        <div style="font-weight:900">Títulos</div>
-      </div>
-      <div id="contagem" style="color:var(--muted);font-size:12px">0 itens</div>
-    </div>
-    <div id="lista" class="lista"></div>
+<div class="container">
+  <div class="mods-card">
+    <div style="font-weight:800;margin-bottom:6px">Modalidades</div>
+    <div id="mods" class="mods"></div>
   </div>
 
-  <!-- footer -->
-  <div class="footer">
-    <div id="bubble" class="bubble" style="display:none">Total selecionado: R$ 0,00</div>
-    <button id="btnMassa" class="btn-massa" style="display:none">Aprovar selecionados</button>
+  <div class="list-head">
+    <div><input id="master" type="checkbox" /> <b>Títulos</b></div>
+    <div id="contagem" style="color:var(--muted);font-size:12px">0 itens</div>
   </div>
+  <div id="lista" class="lista"></div>
+</div>
+
+<div class="footer">
+  <div id="bubble" class="bubble" style="display:none">Total selecionado: R$ 0,00</div>
+  <button id="btnMassa" class="btn-massa" style="display:none">Aprovar selecionados</button>
+</div>
 
 <script>
 const endpointTitulos="https://script.google.com/macros/s/AKfycbwt9y43T8Ya0AhNusue3PTekaBPDnrqSK33dsbnmOKezcm3wnSrUz3z2jO_9BoJd8MH/exec";
 const EMP_DEFAULT=["CAP DELICIA","CAP VILLA","CAP PADARIA","CAP MERCATTO","CAP M.KIDS"];
-
 let TITULOS={},SELEC=[];
+
 const $=id=>document.getElementById(id);
 const BRL=n=>(isNaN(n)?0:n).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
 const iso=d=>new Date(d).toISOString().slice(0,10);
@@ -140,7 +122,7 @@ async function loadTitulos(empresas,inicio,fim,filtro){
   TITULOS={};
   const resps=await Promise.all(empresas.map(emp=>
     fetch(`${endpointTitulos}?action=listar&empresa=${encodeURIComponent(emp)}`)
-    .then(r=>r.json().then(d=>({emp,data:d.titulos||d})))
+      .then(r=>r.json().then(d=>({emp,data:d.titulos||d})))
   ));
   resps.forEach(({emp,data})=>{
     const all=data.filter(t=>{
@@ -168,21 +150,19 @@ function renderLista(){
       const id=ID(emp,idx);
       const st=(t.status==="Sim"?"Pendente":t.status);
       const card=document.createElement("div");
-      card.className="titulo";card.dataset.id=id;card.dataset.emp=emp;card.dataset.idx=idx;
+      card.className="titulo";card.dataset.id=id;card.dataset.emp=emp;card.dataset.idx=idx;card.dataset.valor=valor;
       card.innerHTML=`
         <div class="ck"><input type="checkbox" onchange="toggleSel(this)" /></div>
         <div class="info">
           <div class="row"><b>${t.fornecedor}</b> • ${emp}</div>
           <div class="row">Venc: <b>${iso(t.vencimento).split("-").reverse().join("/")}</b> • Meio: <b>${meio}</b></div>
-          <div class="row">Valor: <b>${BRL(valor)}</b> <span class="pill" data-status></span></div>
+          <div class="row">Valor: <b>${BRL(valor)}</b> <span class="pill" data-status>${st}</span></div>
         </div>
         <div class="actions">
           <button class="mini aprovar" onclick="acaoStatus(this,'Aprovado')">✓</button>
           <button class="mini negar" onclick="acaoStatus(this,'Negado')">✗</button>
-          <button class="mini hist" onclick="abrirHist('${id}')">H</button>
         </div>`;
       setPill(card.querySelector("[data-status]"),st);
-      card.dataset.valor=valor;
       lista.appendChild(card);
     });
   }
@@ -199,16 +179,15 @@ function setPill(el,status){
 
 function renderModalidades(sum){
   const mods=$("mods");mods.innerHTML="";
-  let grupos={Cartão:0,Boleto:0,Pix:0};
+  let grupos={Cartão:0,Boleto:0,Pix:0},total=0;
   for(const [k,v] of Object.entries(sum)){
     const txt=k.toLowerCase();
     if(txt.includes("cred")||txt.includes("déb")||txt.includes("deb")||txt.includes("cart"))grupos["Cartão"]+=v;
     else if(txt.includes("bol"))grupos["Boleto"]+=v;
     else if(txt.includes("pix"))grupos["Pix"]+=v;
   }
-  let total=0;
   const cores={Cartão:"cartao",Boleto:"boleto",Pix:"pix"};
-  for(const g of Object.keys(grupos)){
+  for(const g in grupos){
     total+=grupos[g];
     const d=document.createElement("div");
     d.className="mod "+cores[g];
@@ -216,8 +195,7 @@ function renderModalidades(sum){
     mods.appendChild(d);
   }
   const totalDiv=document.createElement("div");
-  totalDiv.className="mod total";
-  totalDiv.innerHTML=`<span>Total</span><b>${BRL(total)}</b>`;
+  totalDiv.className="mod total";totalDiv.innerHTML=`<span>Total</span><b>${BRL(total)}</b>`;
   mods.appendChild(totalDiv);
 }
 
@@ -225,10 +203,8 @@ function renderModalidades(sum){
 $("master").onchange=()=>{document.querySelectorAll("#lista .ck input").forEach(cb=>{cb.checked=$("master").checked;cb.dispatchEvent(new Event("change"))})};
 function toggleSel(chk){
   const card=chk.closest(".titulo");
-  const id=card.dataset.id,emp=card.dataset.emp,idx=Number(card.dataset.idx);
-  const valor=Number(card.dataset.valor)||0;
-  if(chk.checked)SELEC.push({id,emp,idx,valor});
-  else SELEC=SELEC.filter(x=>x.id!==id);
+  const id=card.dataset.id,emp=card.dataset.emp,idx=Number(card.dataset.idx),valor=Number(card.dataset.valor)||0;
+  if(chk.checked)SELEC.push({id,emp,idx,valor}); else SELEC=SELEC.filter(x=>x.id!==id);
   renderSelecionados();
 }
 function renderSelecionados(){
@@ -240,33 +216,45 @@ function renderSelecionados(){
 /* Aprovar/Negar */
 async function acaoStatus(btn,novo){
   const card=btn.closest(".titulo");
-  const id=card.dataset.id,emp=card.dataset.emp,idx=Number(card.dataset.idx),valor=Number(card.dataset.valor)||0;
+  const emp=card.dataset.emp,idx=card.dataset.idx;
   btn.classList.add("loading");
   setPill(card.querySelector("[data-status]"),novo);
   try{await fetch(`${endpointTitulos}?action=atualizar&empresa=${encodeURIComponent(emp)}&index=${idx}&status=${encodeURIComponent(novo)}`)}catch(e){console.error(e)}
   btn.classList.remove("loading");
 }
+$("btnMassa").onclick=async()=>{
+  const bt=$("btnMassa");bt.classList.add("loading");
+  for(const s of SELEC){
+    const card=document.querySelector(`.titulo[data-id="${s.id}"]`);
+    if(!card)continue;
+    await acaoStatus(card.querySelector(".mini.aprovar"),"Aprovado");
+    card.querySelector(".ck input").checked=false;
+  }
+  SELEC=[];$("master").checked=false;renderSelecionados();bt.classList.remove("loading");
+}
 
 /* Boot */
 async function refresh(){
   showOverlay();
-  const inicio=$("filtroInicio").value,fim=$("filtroFim").value,filtro=$("filtroStatus").value;
+  const filtro=$("filtroStatus").value;
   const empresa=document.querySelector("#menuEmpresas input:checked").value;
+  const periodo=$("filtroPeriodo").value.split(",");
+  const inicio=periodo[0]||"",fim=periodo[1]||periodo[0]||"";
   await loadTitulos([empresa],inicio,fim,filtro);
   $("empresaSelecionada").textContent=empresa;
   renderLista();hideOverlay();
 }
 (function boot(){
   const hoje=new Date().toISOString().slice(0,10);
-  $("filtroInicio").value=hoje;$("filtroFim").value=hoje;
-  const M=$("menuEmpresas");M.innerHTML="";
-  EMP_DEFAULT.forEach((emp,i)=>{
+  $("filtroPeriodo").value=hoje;
+  const M=$("menuEmpresas");EMP_DEFAULT.forEach((emp,i)=>{
     const lbl=document.createElement("label");
     lbl.innerHTML=`<input type="radio" name="empresaSel" value="${emp}" ${i===0?"checked":""}/> ${emp}`;
-    lbl.querySelector("input").onchange=refresh;M.appendChild(lbl);
+    lbl.querySelector("input").onchange=()=>{refresh();$("menuEmpresas").style.display="none"};
+    M.appendChild(lbl);
   });
   $("filtroStatus").onchange=refresh;
-  $("filtroInicio").onchange=refresh;$("filtroFim").onchange=refresh;
+  $("filtroPeriodo").onchange=refresh;
   refresh();
 })();
 </script>
