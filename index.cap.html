@@ -355,8 +355,8 @@ const final = caixa - somaSemNegados;
        <div class="f ${final>=0?'ok':'bad'}">Saldo Final: ${BRL(final)}</div>`;
 
     // ainda permite abrir o popup se quiser detalhes de modalidades
-   card.onclick = ()=> {
-  abrirSaldo(emp, caixa, tit, final, TITULOS[emp+"_ALL"]||[]);
+ card.onclick = ()=> {
+  abrirSaldo(emp, caixa, somaSemNegados, final, TITULOS[emp+"_ALL"]||[]);
 };
 
     wrap.appendChild(card);
@@ -571,7 +571,7 @@ document.getElementById("modalSaldo").addEventListener("click",(e)=>{
 });
 function fecharSaldo(){ $("modalSaldo").style.display="none"; }
 
-function abrirSaldo(emp, caixa, tit, final, arr){
+function abrirSaldo(emp, caixa, somaSemNegados, final, arr){
   const somaPorModal = {};  
   let modalidades = [];
 
