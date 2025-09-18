@@ -568,7 +568,7 @@ arr.forEach(t=>{
 $("saldoBody").innerHTML = `
   <div>Conta: <b>${BRL(caixa)}</b></div>
   <div>Títulos (exceto Negados): <b>${BRL(tit)}</b></div>
-  <div>Negados: <b>${BRL(negados)}</b></div>
+<div style="color:var(--red)">Negados: <b>${BRL(negados)}</b></div>
   <div style="margin:6px 0;font-weight:800">Modalidades</div>
   ${modalidades.join("")}
   <div style="margin-top:8px" class="${final>=0?'ok':'bad'}">
