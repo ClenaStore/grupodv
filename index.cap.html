@@ -247,7 +247,10 @@ async function loadTitulos(empresas, diaISO, filtro){
     const arr = data.filter(t=>{
       const tDia = iso(t.vencimento);
       const byDay = (tDia===diaISO);
-      const byStatus = (filtro==="Todos" ? true : (t.status===filtro));
+      // usa o valor salvo no localStorage se existir
+const stLocal = localStorage.getItem("status_"+ID(emp, data.indexOf(t))) || t.status;
+const byStatus = (filtro==="Todos" ? true : (stLocal===filtro));
+
       return byDay && byStatus;
     });
     TITULOS[emp] = arr;
