@@ -37,9 +37,15 @@
 
   /* Cards modalidades */
   .mods-cards{display:flex;gap:10px;overflow:auto;margin-bottom:12px}
-  .mod-card{min-width:140px;background:#0f172a;border:1px solid var(--line);border-radius:12px;padding:10px;display:flex;flex-direction:column}
-  .mod-card span{font-size:12px;color:var(--muted)}
+  .mod-card{min-width:140px;border-radius:12px;padding:10px;display:flex;flex-direction:column;font-weight:700;color:#fff}
+  .mod-card span{font-size:12px;opacity:.8}
   .mod-card b{font-size:14px;margin-top:4px}
+
+  .mod-card.pix{background:linear-gradient(180deg,#22d3ee,#0891b2)}
+  .mod-card.debito{background:linear-gradient(180deg,#4ade80,#15803d)}
+  .mod-card.credito{background:linear-gradient(180deg,#60a5fa,#1d4ed8)}
+  .mod-card.dinheiro{background:linear-gradient(180deg,#facc15,#ca8a04);color:#2a1500}
+  .mod-card.total{background:linear-gradient(180deg,#a855f7,#6b21a8)}
 
   /* Lista */
   .list-head{display:flex;align-items:center;justify-content:space-between;margin-top:6px}
@@ -179,11 +185,23 @@ function renderLista(arr,emp){
 function renderModalidades(sum){
   const mods=$("modsCards");mods.innerHTML="";
   let total=0;
-  for(const[k,v] of Object.entries(sum)){
-    const c=document.createElement("div");c.className="mod-card";c.innerHTML=`<span>${k}</span><b>${BRL(v)}</b>`;mods.appendChild(c);
-    total+=v;
+  const ordem=["Pix","Débito","Crédito","Dinheiro"];
+  ordem.forEach(nome=>{
+    if(sum[nome]){
+      const c=document.createElement("div");
+      const cls=nome.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");
+      c.className="mod-card "+cls;
+      c.innerHTML=`<span>${nome}</span><b>${BRL(sum[nome])}</b>`;
+      mods.appendChild(c);
+      total+=sum[nome];
+    }
+  });
+  if(total>0){
+    const c=document.createElement("div");
+    c.className="mod-card total";
+    c.innerHTML=`<span>Total Geral</span><b>${BRL(total)}</b>`;
+    mods.prepend(c);
   }
-  if(total>0){const c=document.createElement("div");c.className="mod-card";c.innerHTML=`<span>Total Geral</span><b>${BRL(total)}</b>`;mods.prepend(c);}
   if(!Object.keys(sum).length){mods.innerHTML="<div style='color:var(--muted)'>Sem dados</div>";}
 }
 
@@ -202,6 +220,9 @@ $("btnMassa").onclick=async()=>{const bt=$("btnMassa");bt.classList.add("loading
 function addHist(id,acao,valor){const arr=JSON.parse(localStorage.getItem("hist_"+id)||"[]");arr.push({data:new Date().toLocaleString("pt-BR"),acao,valor});localStorage.setItem("hist_"+id,JSON.stringify(arr));}
 function abrirHist(id){const arr=JSON.parse(localStorage.getItem("hist_"+id)||"[]");const texto=arr.length?arr.map(x=>`${x.data} — ${x.acao} — ${BRL(x.valor)}`).join("\n"):"Sem histórico.";$("histBody").textContent=texto;$("modalHist").style.display="flex";}
 function fecharHist(){$("modalHist").style.display="none";}
+
+function showOverlay(){$("overlay").style.display="flex";}
+function hideOverlay(){$("overlay").style.display="none";}
 
 async function refresh(){showOverlay();const diaISO=$("filtroData").value;const filtro=$("filtroStatus").value;const arr=await loadTitulos(EMPRESA_ATUAL,diaISO,filtro);renderLista(arr,EMPRESA_ATUAL);hideOverlay();}
 (function boot(){const hoje=new Date().toISOString().slice(0,10);$("filtroData").value=hoje;const M=$("menuEmpresas");EMP_DEFAULT.forEach(emp=>{const d=document.createElement("div");d.textContent=emp;d.onclick=()=>{EMPRESA_ATUAL=emp;$("btnEmpresas").textContent=emp;refresh();M.style.display="none";};M.appendChild(d);});$("btnEmpresas").textContent=EMPRESA_ATUAL;$("filtroStatus").onchange=refresh;$("filtroData").onchange=refresh;refresh();})();
