@@ -68,6 +68,7 @@
     .btn-aprovar { background: #16a34a; color: white; margin-right: 3px; }
     .btn-negar { background: #dc2626; color: white; }
     .btn-historico { background:#f59e0b; color:white; }
+    .btn-massa { background:#2563eb; color:white; padding:8px 14px; border-radius:6px; }
 
     /* MENU EMPRESAS */
     .btn-menu { background:#f3f4f6; padding:6px 10px; border-radius:6px; cursor:pointer; }
@@ -76,17 +77,11 @@
       flex-direction:column; gap:6px; z-index:1000; }
     .menu-empresas label { font-size:13px; }
 
-    /* Loading overlay */
-    #overlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%;
-      background:rgba(255,255,255,0.7); z-index:3000; justify-content:center; align-items:center; }
-    .spinner { width:40px; height:40px; border:5px solid #2563eb; border-top-color:transparent;
-      border-radius:50%; animation:spin 1s linear infinite; }
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    /* Loading inline */
-    .loading::after { content: ""; display: inline-block; width: 12px; height: 12px;
-      border: 2px solid #fff; border-top-color: transparent; border-radius: 50%;
-      margin-left: 4px; animation: spin 0.8s linear infinite; }
+    /* Footer actions */
+    .footer-actions { position:fixed; bottom:15px; right:15px; display:flex; flex-direction:column;
+      gap:10px; align-items:flex-end; }
+    .popup-total { background:#1e3a8a; color:#fff; padding:8px 14px; border-radius:8px;
+      font-size:14px; box-shadow:0 2px 6px rgba(0,0,0,.2); min-width:160px; text-align:center; }
   </style>
 </head>
 <body>
@@ -119,7 +114,8 @@
     <table id="tabelaTitulos">
       <thead>
         <tr>
-          <th></th><th>Empresa</th><th>Fornecedor</th><th>Vencimento</th>
+          <th><input type="checkbox" onclick="toggleAll(this)"></th>
+          <th>Empresa</th><th>Fornecedor</th><th>Vencimento</th>
           <th>Valor</th><th>Meio</th><th>Status</th><th>Ações</th>
         </tr>
       </thead>
@@ -127,8 +123,10 @@
     </table>
   </div>
 
-  <!-- Overlay -->
-  <div id="overlay"><div class="spinner"></div></div>
+  <div class="footer-actions">
+    <div id="popupTotal" class="popup-total" style="display:none;"></div>
+    <button id="btnMassa" class="btn-massa" style="display:none;" onclick="aprovarMassa()">Aprovar Selecionados</button>
+  </div>
 
   <!-- Popup saldo -->
   <div id="modalDetalhes" class="modal">
@@ -152,27 +150,15 @@
 const endpointTitulos = "https://script.google.com/macros/s/AKfycbwt9y43T8Ya0AhNusue3PTekaBPDnrqSK33dsbnmOKezcm3wnSrUz3z2jO_9BoJd8MH/exec";
 const endpointSaldos  = "https://script.google.com/macros/s/AKfycbxsQCx_Aw0PXnAIPQsj1Hjq35BSolRmvpY3ye3DwKLLz_oTfKfQAGi3mT3Ygl-Tm3yl/exec";
 
-let grafico, saldosPlanilha={}, titulosFiltrados={};
-
-// ---------------- OVERLAY ----------------
-function mostrarOverlay(){ document.getElementById("overlay").style.display="flex"; }
-function esconderOverlay(){ document.getElementById("overlay").style.display="none"; }
-
-// ---------------- SALDOS ----------------
-async function carregarSaldos() {
-  const res = await fetch(endpointSaldos);
-  const dados = await res.json();
-  dados.forEach(s => saldosPlanilha[s.Empresa] = s.Saldo);
-}
+let grafico, saldosPlanilha={}, titulosFiltrados={}, selecionados=[];
 
 // ---------------- TITULOS ----------------
 async function carregarTitulos() {
-  mostrarOverlay();
   const dataFiltro=document.getElementById("filtroData").value;
   const filtro=document.getElementById("filtroStatus").value;
   const empresas=[...document.querySelectorAll("#menuEmpresas input:checked")].map(e=>e.value);
   const tbody=document.querySelector("#tabelaTitulos tbody");
-  tbody.innerHTML=""; titulosFiltrados={};
+  tbody.innerHTML=""; titulosFiltrados={}; selecionados=[];
 
   let somaModalidades={}, somaTitulosPorEmpresa={};
 
@@ -182,39 +168,85 @@ async function carregarTitulos() {
   ));
 
   resultados.forEach(({emp,d})=>{
-    d.titulos.forEach((t,i)=>{
-      if(t.vencimento && t.vencimento.startsWith(dataFiltro)){
-        if(filtro!=="Todos" && t.status!==filtro) return;
-        const valor=Number(t.valor.toString().replace("R$","").replace(/\./g,"").replace(",","."))||0;
-        somaModalidades[t.meio_pagamento]=(somaModalidades[t.meio_pagamento]||0)+valor;
-        somaTitulosPorEmpresa[emp]=(somaTitulosPorEmpresa[emp]||0)+valor;
-        if(!titulosFiltrados[emp]) titulosFiltrados[emp]=[];
-        titulosFiltrados[emp].push({meio:t.meio_pagamento,valor});
+    (d.titulos||d).forEach((t,i)=>{
+      const dtFiltro=new Date(dataFiltro);
+      const dtTitulo=new Date(t.vencimento);
+      if(isNaN(dtTitulo) || dtTitulo < dtFiltro) return;
 
-        const id=`${emp}-${i}`;
-        const tr=document.createElement("tr");
-        tr.innerHTML=`
-          <td></td>
-          <td>${t.empresa}</td>
-          <td>${t.fornecedor}</td>
-          <td>${formatarData(t.vencimento)}</td>
-          <td>R$ ${valor.toLocaleString("pt-BR",{minimumFractionDigits:2})}</td>
-          <td>${t.meio_pagamento}</td>
-          <td class="status">${t.status}</td>
-          <td>
-            <button class="btn-aprovar" onclick="atualizarStatus(this,'${emp}',${i},'Aprovado','${id}',${valor})">✓</button>
-            <button class="btn-negar" onclick="atualizarStatus(this,'${emp}',${i},'Negado','${id}',${valor})">✗</button>
-            <button class="btn-historico" onclick="mostrarHistorico('${id}')">📖</button>
-          </td>`;
-        tbody.appendChild(tr);
+      if(filtro!=="Todos" && t.status!==filtro) return;
+      const valor=Number(t.valor.toString().replace("R$","").replace(/\./g,"").replace(",","."))||0;
+
+      // apenas pendente + aprovado + liquidado contam para o saldo final
+      if(t.status==="Pendente" || t.status==="Aprovado" || t.status==="Liquidado"){
+        somaTitulosPorEmpresa[emp]=(somaTitulosPorEmpresa[emp]||0)+valor;
       }
+
+      somaModalidades[t.meio_pagamento]=(somaModalidades[t.meio_pagamento]||0)+valor;
+      if(!titulosFiltrados[emp]) titulosFiltrados[emp]=[];
+      titulosFiltrados[emp].push({meio:t.meio_pagamento,valor});
+
+      const id=`${emp}-${i}`;
+      const tr=document.createElement("tr");
+      tr.innerHTML=`
+        <td><input type="checkbox" onchange="toggleSelecionado('${emp}',${i},this,${valor})"></td>
+        <td>${t.empresa}</td>
+        <td>${t.fornecedor}</td>
+        <td>${formatarData(t.vencimento)}</td>
+        <td>R$ ${valor.toLocaleString("pt-BR",{minimumFractionDigits:2})}</td>
+        <td>${t.meio_pagamento}</td>
+        <td class="status">${t.status}</td>
+        <td>
+          <button class="btn-aprovar" onclick="atualizarStatus(this,'${emp}',${i},'Aprovado','${id}',${valor})">✓</button>
+          <button class="btn-negar" onclick="atualizarStatus(this,'${emp}',${i},'Negado','${id}',${valor})">✗</button>
+          <button class="btn-historico" onclick="mostrarHistorico('${id}')">📖</button>
+        </td>`;
+      tbody.appendChild(tr);
     });
   });
 
   atualizarCards(somaTitulosPorEmpresa);
   atualizarModalidades(somaModalidades);
   desenharGrafico(somaModalidades);
-  esconderOverlay();
+}
+
+// ---------------- FLAGS ----------------
+function toggleSelecionado(emp,index,chk,valor){
+  if(chk.checked){
+    selecionados.push({emp,index,valor});
+  }else{
+    selecionados=selecionados.filter(s=>!(s.emp===emp && s.index===index));
+  }
+  atualizarPopupSelecionados();
+}
+
+function toggleAll(master){
+  document.querySelectorAll("#tabelaTitulos tbody input[type=checkbox]").forEach(chk=>{
+    chk.checked=master.checked;
+    chk.dispatchEvent(new Event("change"));
+  });
+}
+
+function atualizarPopupSelecionados(){
+  const total=selecionados.reduce((s,x)=>s+x.valor,0);
+  const popup=document.getElementById("popupTotal");
+  const btn=document.getElementById("btnMassa");
+  if(selecionados.length){
+    popup.style.display="block";
+    btn.style.display="inline-block";
+    popup.textContent="Total Selecionados: R$ "+total.toLocaleString("pt-BR",{minimumFractionDigits:2});
+  }else{
+    popup.style.display="none";
+    btn.style.display="none";
+  }
+}
+
+async function aprovarMassa(){
+  for(const sel of selecionados){
+    await atualizarStatus(document.querySelector(`#tabelaTitulos tbody tr:nth-child(${sel.index+1}) .btn-aprovar`),
+                          sel.emp,sel.index,"Aprovado",`${sel.emp}-${sel.index}`,sel.valor);
+  }
+  selecionados=[];
+  atualizarPopupSelecionados();
 }
 
 // ---------------- CARDS ----------------
@@ -232,13 +264,13 @@ function atualizarCards(somaTitulos){
       <span style="color:black">${emp.toUpperCase()}</span>
       <strong>R$ ${saldoConta.toLocaleString("pt-BR",{minimumFractionDigits:2})}</strong>
       <div class="final ${saldoFinal>=0?"verde":"vermelho"}">
-        Saldo Final: R$ ${saldoFinal.toLocaleString("pt-BR",{minimumFractionDigits:2})}
+        Saldo Final (Dia): R$ ${saldoFinal.toLocaleString("pt-BR",{minimumFractionDigits:2})}
       </div>`;
     grid.appendChild(div);
   }
 }
 
-// ---------------- POPUP SALDO ----------------
+// ---------------- POPUPS ----------------
 function mostrarDetalhes(emp){
   const modal=document.getElementById("modalDetalhes");
   const corpo=document.getElementById("modalCorpo");
@@ -252,7 +284,6 @@ function mostrarDetalhes(emp){
   modal.style.display="flex";
 }
 
-// ---------------- POPUP HISTÓRICO ----------------
 function mostrarHistorico(id){
   const modal=document.getElementById("modalHistorico");
   const corpo=document.getElementById("historicoCorpo");
@@ -263,15 +294,13 @@ function mostrarHistorico(id){
 
 // ---------------- STATUS ----------------
 async function atualizarStatus(btn,empresa,index,status,id,valor){
-  btn.classList.add("loading");
   try{
     await fetch(`${endpointTitulos}?action=atualizar&empresa=${encodeURIComponent(empresa)}&index=${index}&status=${encodeURIComponent(status)}`);
     btn.closest("tr").querySelector(".status").innerText=status;
     salvarHistorico(id,status,valor);
-  }finally{btn.classList.remove("loading");}
+  }catch(e){console.error(e);}
 }
 
-// ---------------- HISTORICO LOCAL ----------------
 function salvarHistorico(id,acao,valor){
   let hist=JSON.parse(localStorage.getItem("historico_"+id)||"[]");
   hist.push({data:new Date().toLocaleString("pt-BR"),acao,valor});
@@ -295,7 +324,7 @@ function desenharGrafico(soma){
   grafico=new Chart(ctx,{ type:"pie",
     data:{labels:Object.keys(soma),datasets:[{data:Object.values(soma),
       backgroundColor:["#2563eb","#16a34a","#dc2626","#f59e0b","#9333ea"]}]},
-    options:{plugins:{legend:{display:false}}}
+    options:{plugins:{legend:{position:"bottom"}}}
   });
 }
 
@@ -319,19 +348,26 @@ document.addEventListener("click",function(e){
 });
 
 // ---------------- INIT ----------------
+async function carregarSaldos() {
+  const res = await fetch(endpointSaldos);
+  const dados = await res.json();
+  dados.forEach(s => saldosPlanilha[s.Empresa] = s.Saldo);
+}
+
 window.onload=()=>{
   const hoje=new Date().toISOString().split("T")[0];
   document.getElementById("filtroData").value=hoje;
 
   const menu=document.getElementById("menuEmpresas");
-  ["CAP DELICIA","CAP VILLA","CAP PADARIA","CAP MERCATTO","CAP M.KIDS"].forEach(emp=>{
-    const checked = emp !== "CAP VILLA" ? "checked" : "";
+  ["CAP DELICIA","CAP VILLA","CAP PADARIA","CAP MERCATTO","CAP M.KIDS"].forEach((emp,idx)=>{
+    const checked=emp!=="CAP VILLA"?"checked":"";
     const lbl=document.createElement("label");
     lbl.innerHTML=`<input type="checkbox" value="${emp}" ${checked} onchange="carregarTitulos()"> ${emp}`;
     menu.appendChild(lbl);
   });
 
-  carregarSaldos().then(carregarTitulos);
+  carregarSaldos();
+  carregarTitulos();
 };
 </script>
 </body>
