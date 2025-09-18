@@ -68,7 +68,14 @@
     .btn-aprovar { background: #16a34a; color: white; margin-right: 3px; }
     .btn-negar { background: #dc2626; color: white; }
     .btn-historico { background:#f59e0b; color:white; }
-    .btn-massa { background:#2563eb; color:white; padding:8px 14px; border-radius:6px; }
+    .btn-massa { background:#2563eb; color:white; padding:8px 14px; border-radius:6px; position:relative; }
+
+    .btn-massa.loading::after {
+      content: ""; display:inline-block; width:16px; height:16px;
+      border:2px solid #fff; border-top-color:transparent; border-radius:50%;
+      margin-left:8px; animation:spin 1s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
 
     /* MENU EMPRESAS */
     .btn-menu { background:#f3f4f6; padding:6px 10px; border-radius:6px; cursor:pointer; }
@@ -176,8 +183,8 @@ async function carregarTitulos() {
       if(filtro!=="Todos" && t.status!==filtro) return;
       const valor=Number(t.valor.toString().replace("R$","").replace(/\./g,"").replace(",","."))||0;
 
-      // apenas pendente + aprovado + liquidado contam para o saldo final
-      if(t.status==="Pendente" || t.status==="Aprovado" || t.status==="Liquidado"){
+      // Pendente + Aprovado + Liquidado
+      if(["Pendente","Aprovado","Liquidado"].includes(t.status)){
         somaTitulosPorEmpresa[emp]=(somaTitulosPorEmpresa[emp]||0)+valor;
       }
 
@@ -241,12 +248,16 @@ function atualizarPopupSelecionados(){
 }
 
 async function aprovarMassa(){
+  const btn=document.getElementById("btnMassa");
+  btn.classList.add("loading");
   for(const sel of selecionados){
     await atualizarStatus(document.querySelector(`#tabelaTitulos tbody tr:nth-child(${sel.index+1}) .btn-aprovar`),
                           sel.emp,sel.index,"Aprovado",`${sel.emp}-${sel.index}`,sel.valor);
   }
   selecionados=[];
   atualizarPopupSelecionados();
+  btn.classList.remove("loading");
+  carregarTitulos();
 }
 
 // ---------------- CARDS ----------------
@@ -256,14 +267,14 @@ function atualizarCards(somaTitulos){
   for(let emp in saldosPlanilha){
     const saldoConta=saldosPlanilha[emp]||0;
     const titulos=somaTitulos[emp]||0;
-    const saldoFinal=saldoConta-titulos;
+    const saldoFinal=titulos - saldoConta;
     const div=document.createElement("div");
-    div.className="saldo-card "+(saldoFinal>=0?"positivo":"negativo");
+    div.className="saldo-card "+(saldoFinal<=0?"positivo":"negativo");
     div.onclick=()=>mostrarDetalhes(emp);
     div.innerHTML=`
       <span style="color:black">${emp.toUpperCase()}</span>
-      <strong>R$ ${saldoConta.toLocaleString("pt-BR",{minimumFractionDigits:2})}</strong>
-      <div class="final ${saldoFinal>=0?"verde":"vermelho"}">
+      <strong>Caixa: R$ ${saldoConta.toLocaleString("pt-BR",{minimumFractionDigits:2})}</strong>
+      <div class="final ${saldoFinal<=0?"verde":"vermelho"}">
         Saldo Final (Dia): R$ ${saldoFinal.toLocaleString("pt-BR",{minimumFractionDigits:2})}
       </div>`;
     grid.appendChild(div);
@@ -360,7 +371,7 @@ window.onload=()=>{
 
   const menu=document.getElementById("menuEmpresas");
   ["CAP DELICIA","CAP VILLA","CAP PADARIA","CAP MERCATTO","CAP M.KIDS"].forEach((emp,idx)=>{
-    const checked=emp!=="CAP VILLA"?"checked":"";
+    const checked=emp!=="CAP VILLA"?"checked":""; // todas exceto VILLA marcadas
     const lbl=document.createElement("label");
     lbl.innerHTML=`<input type="checkbox" value="${emp}" ${checked} onchange="carregarTitulos()"> ${emp}`;
     menu.appendChild(lbl);
