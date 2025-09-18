@@ -38,6 +38,23 @@
     th, td { padding: 8px; border: 1px solid #e5e7eb; font-size: 13px; text-align: center; }
     th { background: #f3f4f6; }
 
+    /* MOBILE (versão celular estilo cards) */
+    @media(max-width:768px){
+      table, thead, tbody, th, td, tr { display:block; }
+      thead { display:none; }
+      tr { background:#fff; margin:10px 0; padding:10px; border-radius:8px;
+        box-shadow:0 2px 6px rgba(0,0,0,.08); }
+      td { border:none; padding:6px 0; text-align:left; font-size:14px; }
+      td::before { font-weight:bold; margin-right:6px; display:inline-block; min-width:90px; }
+      td:nth-child(2)::before { content:"Empresa:"; }
+      td:nth-child(3)::before { content:"Fornecedor:"; }
+      td:nth-child(4)::before { content:"Vencimento:"; }
+      td:nth-child(5)::before { content:"Valor:"; }
+      td:nth-child(6)::before { content:"Meio:"; }
+      td:nth-child(7)::before { content:"Status:"; }
+      td:nth-child(8)::before { content:"Ações:"; }
+    }
+
     /* BOTÕES */
     button { padding: 5px 10px; border: none; border-radius: 6px; cursor: pointer;
       font-size: 12px; font-weight: bold; display:inline-flex; align-items:center; justify-content:center; }
@@ -178,33 +195,25 @@ async function carregarTitulos() {
 
 // ---------------- STATUS ----------------
 async function atualizarStatus(btn,empresa,index,status,id,valor){
-  btn.classList.add("loading");
-
-  // Atualiza imediatamente na UI e storage
-  btn.closest("tr").querySelector(".status").innerText=status;
+  if(btn){ btn.classList.add("loading"); }
+  document.querySelector(`#tabelaTitulos .status`).innerText=status;
   localStorage.setItem("status_"+id,status);
   salvarHistorico(id,status,valor);
-
   try{
     await fetch(`${endpointTitulos}?action=atualizar&empresa=${encodeURIComponent(empresa)}&index=${index}&status=${encodeURIComponent(status)}`);
   }catch(e){ console.error(e); }
-
-  btn.classList.remove("loading");
+  if(btn){ btn.classList.remove("loading"); }
 }
 
 // ---------------- FLAGS ----------------
 function toggleSelecionado(emp,index,chk,valor){
-  if(chk.checked){
-    selecionados.push({emp,index,valor});
-  }else{
-    selecionados=selecionados.filter(s=>!(s.emp===emp && s.index===index));
-  }
+  if(chk.checked){ selecionados.push({emp,index,valor}); }
+  else{ selecionados=selecionados.filter(s=>!(s.emp===emp && s.index===index)); }
   atualizarPopupSelecionados();
 }
 function toggleAll(master){
   document.querySelectorAll("#tabelaTitulos tbody input[type=checkbox]").forEach(chk=>{
-    chk.checked=master.checked;
-    chk.dispatchEvent(new Event("change"));
+    chk.checked=master.checked; chk.dispatchEvent(new Event("change"));
   });
 }
 function atualizarPopupSelecionados(){
@@ -212,12 +221,10 @@ function atualizarPopupSelecionados(){
   const popup=document.getElementById("popupTotal");
   const btn=document.getElementById("btnMassa");
   if(selecionados.length){
-    popup.style.display="block";
-    btn.style.display="inline-block";
+    popup.style.display="block"; btn.style.display="inline-block";
     popup.textContent="Total Selecionados: R$ "+total.toLocaleString("pt-BR",{minimumFractionDigits:2});
   }else{
-    popup.style.display="none";
-    btn.style.display="none";
+    popup.style.display="none"; btn.style.display="none";
   }
 }
 async function aprovarMassa(){
@@ -232,8 +239,7 @@ async function aprovarMassa(){
 
 // ---------------- CARDS ----------------
 function atualizarCards(somaTitulos){
-  const grid=document.getElementById("saldosGrid");
-  grid.innerHTML="";
+  const grid=document.getElementById("saldosGrid"); grid.innerHTML="";
   for(let emp in saldosPlanilha){
     const saldoConta=saldosPlanilha[emp]||0;
     const titulos=somaTitulos[emp]||0;
@@ -263,8 +269,7 @@ function mostrarHistorico(id){
 
 // ---------------- GRAFICO ----------------
 function atualizarModalidades(soma){
-  const list=document.getElementById("modalidadesList");
-  list.innerHTML="";
+  const list=document.getElementById("modalidadesList"); list.innerHTML="";
   for(let mod in soma){
     list.innerHTML+=`<div class="modalidade-item">${mod}: <strong>R$ ${soma[mod].toLocaleString("pt-BR",{minimumFractionDigits:2})}</strong></div>`;
   }
