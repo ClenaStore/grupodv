@@ -45,6 +45,7 @@
   .saldo-card .f{margin-top:4px;font-weight:800}
   .saldo-card .ok{color:var(--green)} .saldo-card .bad{color:var(--red)}
 
+  /* gráfico + modalidades lado a lado */
   .viz{display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap;margin:12px 0}
   .chart-card{flex:0 0 220px;text-align:center;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px}
   .mods-card{flex:1 1 300px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px}
@@ -64,6 +65,8 @@
   .mini{padding:6px 9px;border-radius:10px;border:1px solid #22314b;background:#0b1528;color:var(--ink);font-weight:800}
   .mini.aprovar{background:linear-gradient(180deg,#19c37d,#16a34a)}
   .mini.negar{background:linear-gradient(180deg,#fb6969,#ef4444)}
+  .mini.hist{background:linear-gradient(180deg,#ffd166,#f59e0b)}
+  .mini.loading::after{content:"";width:12px;height:12px;margin-left:6px;border:2px solid #fff;border-top-color:transparent;border-radius:50%;animation:spin .8s linear infinite}
 
   .footer{position:fixed;right:12px;bottom:12px;display:flex;flex-direction:column;gap:10px;align-items:flex-end;z-index:15}
   .bubble{background:var(--blue);color:#fff;border-radius:12px;padding:8px 12px;font-weight:800}
@@ -87,7 +90,6 @@
       <option value="Todos">Todos</option>
     </select>
     <input type="date" id="filtroData" />
-    <select id="filtroMeio"><option value="Todos">Todos meios</option></select>
     <button class="btn icon" id="btnEmpresas">Empresas ⚙</button>
   </div>
 </header>
@@ -98,6 +100,7 @@
 <div class="container">
   <div id="saldos" class="saldos"></div>
 
+  <!-- gráfico menor + modalidades lado a lado -->
   <div class="viz">
     <div class="chart-card">
       <canvas id="grafico"></canvas>
@@ -125,181 +128,124 @@
 </div>
 
 <script>
+/* ========= CONFIG ========= */
 const endpointTitulos = "https://script.google.com/macros/s/AKfycbwt9y43T8Ya0AhNusue3PTekaBPDnrqSK33dsbnmOKezcm3wnSrUz3z2jO_9BoJd8MH/exec";
 const endpointSaldos  = "https://script.google.com/macros/s/AKfycbxsQCx_Aw0PXnAIPQsj1Hjq35BSolRmvpY3ye3DwKLLz_oTfKfQAGi3mT3Ygl-Tm3yl/exec";
 const EMP_DEFAULT = ["CAP DELICIA","CAP VILLA","CAP PADARIA","CAP MERCATTO","CAP M.KIDS"];
 
-let SALDOS = {};
-let ALL_TITULOS = {};   // todos carregados só 1x
-let CHART;
-let SELEC = [];
+/* ========= STATE ========= */
+let SALDOS = {}; let TITULOS = {}; let SELEC = []; let CHART;
 
+/* ========= HELPERS ========= */
 const $ = (id)=>document.getElementById(id);
 const BRL = (n)=> (isNaN(n)?0:n).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
-const iso = (d)=> new Date(d).toISOString().slice(0,10);
+const iso = (d)=>{const dt=new Date(d);if(!isNaN(dt))return dt.toISOString().slice(0,10);return String(d||"").slice(0,10);}
 const ID = (emp,idx)=> `${emp.replace(/\s+/g,'_')}__${idx}`;
 
+/* ========= UI: OVERLAY ========= */
 function showOverlay(){ $("overlay").style.display="flex"; }
 function hideOverlay(){ $("overlay").style.display="none"; }
 
-/* ========== LOAD ========= */
-async function initData(){
-  showOverlay();
-  // saldos
-  const rs = await fetch(endpointSaldos); 
-  const ds = await rs.json();
-  ds.forEach(x=> SALDOS[x.Empresa] = Number(x.Saldo)||0 );
+/* ========= EMPRESAS MENU ========= */
+$("btnEmpresas").onclick = ()=>{const m=$("menuEmpresas");m.style.display=(m.style.display==="block"?"none":"block");};
+document.addEventListener("click",(e)=>{const m=$("menuEmpresas");if(!m.contains(e.target)&&e.target!==$("btnEmpresas"))m.style.display="none";});
 
-  // titulos
-  const resps = await Promise.all(EMP_DEFAULT.map(emp =>
+/* ========= LOAD: SALDOS ========= */
+async function loadSaldos(){const r=await fetch(endpointSaldos);const d=await r.json();SALDOS={};d.forEach(x=> SALDOS[x.Empresa]=Number(x.Saldo)||0 );}
+
+/* ========= LOAD: TITULOS ========= */
+async function loadTitulos(empresas,diaISO,filtro){
+  TITULOS={};
+  const resps=await Promise.all(empresas.map(emp=>
     fetch(`${endpointTitulos}?action=listar&empresa=${encodeURIComponent(emp)}`)
-      .then(r=>r.json().then(d=>({emp, data:d.titulos||d})))
+      .then(r=>r.json().then(d=>({emp,data:d.titulos||d})))
   ));
   resps.forEach(({emp,data})=>{
-    ALL_TITULOS[emp] = data;
+    TITULOS[emp]=data.filter(t=>{
+      const tDia=iso(t.vencimento);
+      const byDay=(tDia===diaISO);
+      const byStatus=(filtro==="Todos"?true:(t.status===filtro));
+      return byDay&&byStatus;
+    });
   });
-  hideOverlay();
 }
 
-/* ========== RENDER ========= */
-function render(){
-  const diaISO = $("filtroData").value;
-  const filtro = $("filtroStatus").value;
-  const fMeio = $("filtroMeio").value;
-  const empresas = [...document.querySelectorAll("#menuEmpresas input:checked")].map(i=>i.value);
+/* ========= RENDER: SALDOS ========= */
+function renderSaldos(sumPorEmpresa){
+  const wrap=$("saldos");wrap.innerHTML="";
+  EMP_DEFAULT.forEach(emp=>{
+    if(!(emp in SALDOS))return;
+    const caixa=SALDOS[emp]||0;
+    const tit=sumPorEmpresa[emp]||0;
+    const final=caixa-tit;
+    const card=document.createElement("div");
+    card.className="saldo-card";
+    card.innerHTML=`<h3>${emp}</h3>
+     <div class="v">Conta: ${BRL(caixa)}</div>
+     <div class="v">Títulos do Dia: ${BRL(tit)}</div>
+     <div class="f ${final>=0?'ok':'bad'}">Saldo Final (Dia): ${BRL(final)}</div>`;
+    wrap.appendChild(card);
+  });
+}
 
-  const somaModal = {}, somaEmp = {};
-  const lista = $("lista"); lista.innerHTML=""; SELEC=[]; $("master").checked=false;
-  let totalItens=0;
-
-  empresas.forEach(emp=>{
-    (ALL_TITULOS[emp]||[]).forEach((t,idx)=>{
-      const dataOK = iso(t.vencimento)===diaISO;
-      if(!dataOK) return;
-
-      let status = localStorage.getItem("status_"+ID(emp,idx)) || t.status;
-      if(filtro!=="Todos" && status!==filtro) return;
-      if(fMeio!=="Todos" && t.meio_pagamento!==fMeio) return;
-
-      const valor = Number(String(t.valor).replace("R$","").replace(/\./g,"").replace(",","."))||0;
-      somaModal[t.meio_pagamento]=(somaModal[t.meio_pagamento]||0)+valor;
-      if(status!=="Negado") somaEmp[emp]=(somaEmp[emp]||0)+valor;
-
+/* ========= RENDER: LISTA ========= */
+function renderLista(diaISO){
+  const lista=$("lista");lista.innerHTML="";SELEC=[];$("master").checked=false;let totalItens=0;
+  const somaModal={},somaEmp={};
+  for(const emp of Object.keys(TITULOS)){
+    const arr=TITULOS[emp]||[];
+    arr.forEach((t,idx)=>{
       totalItens++;
-      const card=document.createElement("div");
-      card.className="titulo";
-      card.dataset.id=ID(emp,idx);
-      card.dataset.emp=emp;
-      card.dataset.idx=idx;
-      card.dataset.valor=valor;
-      card.innerHTML=`
-        <div class="ck"><input type="checkbox" onchange="toggleSel(this)" /></div>
+      const valor=Number(String(t.valor).replace("R$","").replace(/\./g,"").replace(",","."))||0;
+      const meio=t.meio_pagamento;
+      somaModal[meio]=(somaModal[meio]||0)+valor;
+      const stLocal=localStorage.getItem("status_"+ID(emp,idx))||t.status;
+      if(stLocal!=="Negado"){somaEmp[emp]=(somaEmp[emp]||0)+valor;}
+      const id=ID(emp,idx),status=stLocal;
+      const card=document.createElement("div");card.className="titulo";card.dataset.id=id;card.dataset.emp=emp;card.dataset.idx=idx;
+      card.innerHTML=`<div class="ck"><input type="checkbox" onchange="toggleSel(this)" /></div>
         <div class="info">
           <div class="row"><b>${t.fornecedor}</b> • ${emp}</div>
-          <div class="row">Venc: <b>${iso(t.vencimento).split("-").reverse().join("/")}</b> • Meio: <b>${t.meio_pagamento}</b></div>
-          <div class="row">Valor: <b>${BRL(valor)}</b> <span class="pill" data-status></span></div>
+          <div class="row">Venc: <b>${iso(t.vencimento).split("-").reverse().join("/")}</b> • Meio: <b>${meio}</b></div>
+          <div class="row">Valor: <b>${BRL(valor)}</b> <span class="pill" data-status>${status}</span></div>
         </div>
         <div class="actions">
           <button class="mini aprovar" onclick="acaoStatus(this,'Aprovado')">✓</button>
           <button class="mini negar" onclick="acaoStatus(this,'Negado')">✗</button>
         </div>`;
-      setPill(card.querySelector("[data-status]"), status);
-      lista.appendChild(card);
+      const pill=card.querySelector("[data-status]");setPill(pill,status);
+      card.dataset.valor=valor;lista.appendChild(card);
     });
-  });
-
-  $("contagem").textContent=`${totalItens} itens`;
-  renderModalidades(somaModal);
-  renderChart(somaModal);
-  renderSaldos(somaEmp);
-  fillFiltroMeio(somaModal);
-}
-
-function setPill(el,status){
-  el.className="pill";
-  if(status==="Aprovado"){el.classList.add("ok");el.textContent="Aprovado";}
-  else if(status==="Negado"){el.classList.add("warn");el.textContent="Negado";}
-  else if(status==="Liquidado"){el.textContent="Liquidado";}
-  else el.textContent="Pendente";
-}
-
-function renderModalidades(sum){
-  $("mods").innerHTML="";
-  Object.entries(sum).forEach(([k,v])=>{
-    $("mods").innerHTML+=`<div class="mod"><span>${k}</span><b>${BRL(v)}</b></div>`;
-  });
-  $("totaisGraf").textContent="Total: "+BRL(Object.values(sum).reduce((a,b)=>a+b,0));
-}
-function renderChart(sum){
-  const ctx=$("grafico").getContext("2d");
-  if(CHART)CHART.destroy();
-  CHART=new Chart(ctx,{type:"pie",data:{labels:Object.keys(sum),datasets:[{data:Object.values(sum),backgroundColor:["#06b6d4","#16a34a","#f59e0b","#ef4444"]}]},options:{plugins:{legend:{labels:{color:"#cbd5e1"}}}}});
-}
-function renderSaldos(s){
-  $("saldos").innerHTML="";
-  EMP_DEFAULT.forEach(emp=>{
-    if(!(emp in SALDOS))return;
-    const caixa=SALDOS[emp]||0, tit=s[emp]||0, final=caixa-tit;
-    $("saldos").innerHTML+=`
-    <div class="saldo-card">
-      <h3>${emp}</h3>
-      <div class="v">Conta: ${BRL(caixa)}</div>
-      <div class="v">Títulos: ${BRL(tit)}</div>
-      <div class="f ${final>=0?"ok":"bad"}">Saldo Final: ${BRL(final)}</div>
-    </div>`;
-  });
-}
-function fillFiltroMeio(sum){
-  const sel=$("filtroMeio"); sel.innerHTML='<option value="Todos">Todos meios</option>';
-  Object.keys(sum).forEach(m=> sel.innerHTML+=`<option value="${m}">${m}</option>`);
-}
-
-/* ======= SELEÇÃO ======= */
-$("master").onchange=()=>{document.querySelectorAll("#lista .ck input").forEach(cb=>{cb.checked=$("master").checked;cb.dispatchEvent(new Event("change"));});};
-function toggleSel(chk){
-  const card=chk.closest(".titulo");
-  const id=card.dataset.id, valor=Number(card.dataset.valor)||0;
-  if(chk.checked)SELEC.push({id,valor}); else SELEC=SELEC.filter(x=>x.id!==id);
-  const tot=SELEC.reduce((a,b)=>a+b.valor,0);
-  $("bubble").style.display=SELEC.length?"block":"none";
-  $("btnMassa").style.display=SELEC.length?"block":"none";
-  $("bubble").textContent="Total selecionado: "+BRL(tot);
-}
-
-/* ======= AÇÕES ======= */
-async function acaoStatus(btn,novo){
-  const card=btn.closest(".titulo");
-  const id=card.dataset.id, emp=card.dataset.emp, idx=card.dataset.idx;
-  const valor=card.dataset.valor;
-  setPill(card.querySelector("[data-status]"),novo);
-  localStorage.setItem("status_"+id,novo);
-  try{await fetch(`${endpointTitulos}?action=atualizar&empresa=${emp}&index=${idx}&status=${novo}`);}catch(e){}
-  render(); // atualiza sem reload
-}
-$("btnMassa").onclick=async()=>{
-  for(const s of SELEC){
-    const card=document.querySelector(`.titulo[data-id="${s.id}"]`);
-    if(card){await acaoStatus(card.querySelector(".mini.aprovar"),"Aprovado");card.querySelector(".ck input").checked=false;}
   }
-  SELEC=[];render();
-};
+  $("contagem").textContent=`${totalItens} ${totalItens===1?'item':'itens'}`;
+  renderModalidades(somaModal);renderChart(somaModal);renderSaldos(somaEmp);
+}
 
-/* ======= BOOT ======= */
-(async function(){
-  $("filtroData").value=new Date().toISOString().slice(0,10);
-  const M=$("menuEmpresas"); M.innerHTML="";
-  EMP_DEFAULT.forEach(emp=>{
-    const chk=document.createElement("label");
-    chk.innerHTML=`<input type="checkbox" value="${emp}" checked/> ${emp}`;
-    chk.querySelector("input").onchange=render;
-    M.appendChild(chk);
-  });
-  $("filtroStatus").onchange=render;
-  $("filtroData").onchange=render;
-  $("filtroMeio").onchange=render;
-  await initData();
-  render();
-})();
+/* ========= PILL ========= */
+function setPill(el,status){el.className="pill";if(status==="Aprovado"){el.classList.add("ok");el.textContent="Aprovado";}
+else if(status==="Negado"){el.classList.add("warn");el.textContent="Negado";}
+else if(status==="Liquidado"){el.textContent="Liquidado";}
+else{el.textContent="Pendente";}}
+
+/* ========= MODALIDADES ========= */
+function renderModalidades(sum){const mods=$("mods");mods.innerHTML="";Object.entries(sum).forEach(([k,v])=>{const d=document.createElement("div");d.className="mod";d.innerHTML=`<span>${k}</span><b>${BRL(v)}</b>`;mods.appendChild(d)});$("totaisGraf").textContent="Total: "+BRL(Object.values(sum).reduce((s,v)=>s+v,0));}
+
+/* ========= CHART ========= */
+function renderChart(sum){const ctx=$("grafico").getContext("2d");if(CHART)CHART.destroy();CHART=new Chart(ctx,{type:"pie",data:{labels:Object.keys(sum),datasets:[{data:Object.values(sum)}]}});}
+
+/* ========= SELEÇÃO ========= */
+$("master").onchange=()=>{document.querySelectorAll("#lista .titulo .ck input").forEach(cb=>{cb.checked=$("master").checked;cb.dispatchEvent(new Event("change"));});};
+function toggleSel(chk){const card=chk.closest(".titulo");const id=card.dataset.id,emp=card.dataset.emp,idx=Number(card.dataset.idx);const valor=Number(card.dataset.valor)||0;if(chk.checked){SELEC.push({id,emp,idx,valor});}else{SELEC=SELEC.filter(x=>x.id!==id);}renderSelecionados();}
+function renderSelecionados(){const total=SELEC.reduce((s,x)=>s+x.valor,0);const b=$("bubble"),bt=$("btnMassa");if(SELEC.length){b.style.display="block";bt.style.display="block";b.textContent="Total selecionado: "+BRL(total);}else{b.style.display="none";bt.style.display="none";}}
+
+/* ========= AÇÕES ========= */
+async function acaoStatus(btn,novo){const card=btn.closest(".titulo");const id=card.dataset.id;const emp=card.dataset.emp;const idx=Number(card.dataset.idx);const valor=Number(card.dataset.valor)||0;btn.classList.add("loading");const pill=card.querySelector("[data-status]");setPill(pill,novo);localStorage.setItem("status_"+id,novo);try{await fetch(`${endpointTitulos}?action=atualizar&empresa=${encodeURIComponent(emp)}&index=${idx}&status=${encodeURIComponent(novo)}`);}catch(e){console.error(e);}btn.classList.remove("loading");}
+
+$("btnMassa").onclick=async()=>{const bt=$("btnMassa");bt.classList.add("loading");for(const s of SELEC){const card=document.querySelector(`.titulo[data-id="${s.id}"]`);if(!card)continue;const apBtn=card.querySelector(".mini.aprovar");await acaoStatus(apBtn,"Aprovado");card.querySelector(".ck input").checked=false;}SELEC=[];renderSelecionados();bt.classList.remove("loading");}
+
+/* ========= BOOT ========= */
+async function refresh(){showOverlay();const diaISO=$("filtroData").value;const filtro=$("filtroStatus").value;const empresas=[...document.querySelectorAll("#menuEmpresas input:checked")].map(i=>i.value);await loadSaldos();await loadTitulos(empresas,diaISO,filtro);renderLista(diaISO);hideOverlay();}
+(function boot(){const hoje=new Date().toISOString().slice(0,10);$("filtroData").value=hoje;const M=$("menuEmpresas");M.innerHTML="";EMP_DEFAULT.forEach(emp=>{const checked=(emp!=="CAP VILLA")?"checked":"";const lbl=document.createElement("label");lbl.innerHTML=`<input type="checkbox" value="${emp}" ${checked}/> ${emp}`;lbl.querySelector("input").onchange=refresh;M.appendChild(lbl);});$("filtroStatus").onchange=refresh;$("filtroData").onchange=refresh;refresh();})();
 </script>
 </body>
 </html>
