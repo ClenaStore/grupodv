@@ -4,7 +4,6 @@
 <meta charset="UTF-8" />
 <title>Painel Financeiro • CAP</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
   :root{
     --bg:#0b1220;        /* fundo */
@@ -48,33 +47,19 @@
   @keyframes spin{to{transform:rotate(360deg)}}
 
   /* Container */
- .container {
-  padding:12px;
-  max-width:1100px;
-  margin:0 auto;
-}
-
-@media (min-width:1024px) {
   .container {
-    width:100%;
-    max-width:none;
-    margin:0;
+    padding:12px;
+    max-width:1100px;
+    margin:0 auto;
   }
-}
 
-
-
-  /* Gráfico + Modalidades */
-  .viz{display:flex;gap:12px;align-items:stretch;flex-wrap:wrap;margin:12px 0}
-  .card{background:#0f172a;border:1px solid var(--line);border-radius:14px;padding:10px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
- .chart-card{
-  flex:0 0 220px;   /* largura fixa menor */
-  max-width:220px;  /* garante que não estique */
-  text-align:center;
-}
-  .mods-card{flex:1 1 260px}
-  .mods{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-  .mod{background:var(--chip);border:1px solid #22314b;border-radius:12px;padding:8px;font-size:13px;display:flex;justify-content:space-between}
+  @media (min-width:1024px) {
+    .container {
+      width:100%;
+      max-width:none;
+      margin:0;
+    }
+  }
 
   /* Lista de títulos (cards) */
   .list-head{display:flex;align-items:center;justify-content:space-between;margin-top:6px}
@@ -120,11 +105,6 @@
   .modal .box{background:#0f172a;border:1px solid var(--line);border-radius:12px;max-width:90%;width:420px;padding:12px}
   .modal h3{margin:0 0 8px}
   .modal .close{float:right;border:1px solid var(--line);background:#0b1528;border-radius:8px;color:var(--ink);padding:4px 8px;cursor:pointer}
-  #grafico{
-  max-height:160px;   /* define altura máxima */
-  width:100% !important;
-}
-
 </style>
 </head>
 <body>
@@ -151,8 +131,6 @@
   <div id="menuEmpresas" class="menu"></div>
 
   <div class="container">
-
-
     <!-- lista -->
     <div class="list-head">
       <div class="left">
@@ -161,7 +139,6 @@
       </div>
       <div id="contagem" style="color:var(--muted);font-size:12px">0 itens</div>
     </div>
-
     <div id="lista" class="lista"></div>
   </div>
 
@@ -170,27 +147,24 @@
     <div id="bubble" class="bubble" style="display:none">Total selecionado: R$ 0,00</div>
     <button id="btnMassa" class="btn-massa" style="display:none">Aprovar selecionados</button>
   </div>
-<!-- modal histórico -->
-<div id="modalHist" class="modal">
-  <div class="box">
-    <button class="close" onclick="fecharHist()">Fechar</button>
-    <h3>Histórico</h3>
-    <div id="histBody" style="white-space:pre-wrap;font-size:13px;color:#cbd5e1"></div>
-  </div>
-</div>
 
+  <!-- modal histórico -->
+  <div id="modalHist" class="modal">
+    <div class="box">
+      <button class="close" onclick="fecharHist()">Fechar</button>
+      <h3>Histórico</h3>
+      <div id="histBody" style="white-space:pre-wrap;font-size:13px;color:#cbd5e1"></div>
+    </div>
+  </div>
 
 <script>
 /* ========= CONFIG ========= */
 const endpointTitulos = "https://script.google.com/macros/s/AKfycbwt9y43T8Ya0AhNusue3PTekaBPDnrqSK33dsbnmOKezcm3wnSrUz3z2jO_9BoJd8MH/exec";
-const endpointSaldos  = "https://script.google.com/macros/s/AKfycbxsQCx_Aw0PXnAIPQsj1Hjq35BSolRmvpY3ye3DwKLLz_oTfKfQAGi3mT3Ygl-Tm3yl/exec";
 const EMP_DEFAULT = ["CAP DELICIA","CAP VILLA","CAP PADARIA","CAP MERCATTO","CAP M.KIDS"];
 
 /* ========= STATE ========= */
-let SALDOS = {};                     // empresa -> caixa
 let TITULOS = {};                    // empresa -> array
 let SELEC = [];                      // [{id, emp, idx, valor}]
-let CHART;
 
 /* ========= HELPERS ========= */
 const $ = (id)=>document.getElementById(id);
@@ -198,7 +172,6 @@ const BRL = (n)=> (isNaN(n)?0:n).toLocaleString("pt-BR",{style:"currency",curren
 const iso = (d)=> {
   const dt = new Date(d);
   if(!isNaN(dt)) return dt.toISOString().slice(0,10);
-  // tenta dd/mm/aaaa
   const m = String(d||"").match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
   if(m){ return `${m[3]}-${m[2]}-${m[1]}`; }
   return String(d||"").slice(0,10);
@@ -219,18 +192,6 @@ document.addEventListener("click",(e)=>{
   if(!m.contains(e.target) && e.target!==$("btnEmpresas")) m.style.display="none";
 });
 
-/* ========= LOAD: SALDOS ========= */
-async function loadSaldos(){
-  const r = await fetch(endpointSaldos);
-  const d = await r.json();
-  SALDOS = {};
-  d.forEach(x=>{
-  const nome = x.Empresa.trim().toUpperCase();
-  SALDOS[nome] = Number(x.Saldo) || 0;
-});
-
-}
-
 /* ========= LOAD: TITULOS ========= */
 async function loadTitulos(empresas, diaISO, filtro){
   TITULOS = {};
@@ -239,23 +200,15 @@ async function loadTitulos(empresas, diaISO, filtro){
       .then(r=>r.json().then(d=>({emp, data: d.titulos||d})))
   ));
 
- resps.forEach(({emp,data})=>{
-  // todos do dia (bruto)
-  const all = data.filter(t => iso(t.vencimento) === diaISO);
-
-  // filtrados conforme o status escolhido
-  const arr = all.filter(t=>{
-    let statusNorm = (t.status === "Sim" ? "Pendente" : t.status);
-    return (filtro==="Todos" ? true : (statusNorm===filtro));
+  resps.forEach(({emp,data})=>{
+    const all = data.filter(t => iso(t.vencimento) === diaISO);
+    const arr = all.filter(t=>{
+      let statusNorm = (t.status === "Sim" ? "Pendente" : t.status);
+      return (filtro==="Todos" ? true : (statusNorm===filtro));
+    });
+    TITULOS[emp] = arr;
   });
-
-  TITULOS[emp] = arr;          // usado na lista
-  TITULOS[emp+"_ALL"] = all;   // usado no saldo
-});
-
 }
-
-
 
 /* ========= RENDER: LISTA ========= */
 function renderLista(diaISO){
@@ -264,29 +217,13 @@ function renderLista(diaISO){
   $("master").checked=false;
   let totalItens = 0;
 
-  // agrega modalidades + soma por empresa
-  const somaModal = {};
-  const somaEmp = {};
-
   for(const emp of Object.keys(TITULOS)){
-    if(emp.endsWith("_ALL")) continue;
     const arr = TITULOS[emp]||[];
     arr.forEach((t,idx)=>{
       totalItens++;
       const valor = Number(String(t.valor).replace("R$","").replace(/\./g,"").replace(",","."))||0;
-      const meio = t.meio_pagamento;
-      somaModal[meio] = (somaModal[meio]||0)+valor;
-
-      // para saldo final contam Pendente/Aprovado/Liquidado
-let stLocal = (t.status === "Sim" ? "Pendente" : t.status);
-
-
-      if(stLocal==="Pendente"||stLocal==="Aprovado"||stLocal==="Liquidado"){
-        somaEmp[emp] = (somaEmp[emp]||0)+valor;
-      }
-
       const id = ID(emp,idx);
-      const status = stLocal;
+      let status = (t.status === "Sim" ? "Pendente" : t.status);
 
       const card = document.createElement("div");
       card.className="titulo";
@@ -299,11 +236,11 @@ let stLocal = (t.status === "Sim" ? "Pendente" : t.status);
           <div class="row"><b>${t.fornecedor}</b> • ${emp}</div>
           <div class="row">
             <span>Venc: <b>${iso(t.vencimento).split("-").reverse().join("/")}</b></span>
-            <span>• Meio: <b>${meio}</b></span>
+            <span>• Meio: <b>${t.meio_pagamento}</b></span>
           </div>
           <div class="row">
             <span>Valor: <b>${BRL(valor)}</b></span>
-            <span class="pill" data-status>Padrão</span>
+            <span class="pill" data-status></span>
           </div>
         </div>
         <div class="actions">
@@ -312,42 +249,22 @@ let stLocal = (t.status === "Sim" ? "Pendente" : t.status);
           <button class="mini hist"    onclick="abrirHist('${id}')">H</button>
         </div>`;
 
-      // status pill
-      const pill = card.querySelector("[data-status]");
-      setPill(pill, status);
-
-      // valor salvo no node
+      setPill(card.querySelector("[data-status]"), status);
       card.dataset.valor = valor;
       lista.appendChild(card);
     });
   }
-
   $("contagem").textContent = `${totalItens} ${totalItens===1?'item':'itens'}`;
+}
 
 /* ========= PILL ========= */
 function setPill(el, status){
   el.className="pill";
   if(status==="Aprovado"){ el.classList.add("ok"); el.textContent="Aprovado"; }
   else if(status==="Negado"){ el.classList.add("warn"); el.textContent="Negado"; }
-  else if(status==="Liquidado"){ el.classList.remove("ok","warn"); el.textContent="Liquidado"; }
-  else { el.classList.remove("ok","warn"); el.textContent="Pendente"; }
+  else if(status==="Liquidado"){ el.textContent="Liquidado"; }
+  else { el.textContent="Pendente"; }
 }
-
-/* ========= MODALIDADES ========= */
-function renderModalidades(sum){
-  const mods = $("mods"); mods.innerHTML="";
-  const entries = Object.entries(sum);
-  if(!entries.length){ mods.innerHTML='<div class="mod" style="grid-column:1/-1;justify-content:center;color:#93a3bd">Sem dados</div>'; return; }
-  entries.forEach(([k,v])=>{
-    const d = document.createElement("div");
-    d.className="mod";
-    d.innerHTML = `<span>${k}</span><b>${BRL(v)}</b>`;
-    mods.appendChild(d);
-  });
-  $("totaisGraf").textContent = "Total: " + BRL(entries.reduce((s,[_k,v])=>s+v,0));
-}
-
-
 
 /* ========= SELEÇÃO ========= */
 $("master").onchange = ()=>{
@@ -359,22 +276,15 @@ function toggleSel(chk){
   const card = chk.closest(".titulo");
   const id = card.dataset.id, emp = card.dataset.emp, idx = Number(card.dataset.idx);
   const valor = Number(card.dataset.valor)||0;
-  if(chk.checked){
-    SELEC.push({id,emp,idx,valor});
-  }else{
-    SELEC = SELEC.filter(x=>x.id!==id);
-  }
+  if(chk.checked){ SELEC.push({id,emp,idx,valor}); }
+  else{ SELEC = SELEC.filter(x=>x.id!==id); }
   renderSelecionados();
 }
 function renderSelecionados(){
   const total = SELEC.reduce((s,x)=>s+x.valor,0);
   const b = $("bubble"), bt = $("btnMassa");
-  if(SELEC.length){
-    b.style.display="block"; bt.style.display="block";
-    b.textContent = "Total selecionado: " + BRL(total);
-  }else{
-    b.style.display="none"; bt.style.display="none";
-  }
+  if(SELEC.length){ b.style.display="block"; bt.style.display="block"; b.textContent = "Total selecionado: " + BRL(total); }
+  else{ b.style.display="none"; bt.style.display="none"; }
 }
 
 /* ========= AÇÕES: APROVAR/NEGAR ========= */
@@ -384,48 +294,32 @@ async function acaoStatus(btn, novo){
   const emp  = card.dataset.emp;
   const idx  = Number(card.dataset.idx);
   const valor= Number(card.dataset.valor)||0;
-
-  // spinner no botão
   btn.classList.add("loading");
-
-  // aplica na UI e salva local
-  const pill = card.querySelector("[data-status]");
-  setPill(pill, novo);
+  setPill(card.querySelector("[data-status]"), novo);
   addHist(id, novo, valor);
-
-  // dispara atualização na planilha (não trava a UI)
   try{
     await fetch(`${endpointTitulos}?action=atualizar&empresa=${encodeURIComponent(emp)}&index=${idx}&status=${encodeURIComponent(novo)}`);
   }catch(e){ console.error(e); }
-
   btn.classList.remove("loading");
 }
 
 $("btnMassa").onclick = async ()=>{
   const bt = $("btnMassa"); 
   bt.classList.add("loading");
-
-  // processa em sequência para não saturar o Apps Script
   for (const s of SELEC) {
     const card = document.querySelector(`.titulo[data-id="${s.id}"]`);
     if (!card) continue;
     const apBtn = card.querySelector(".mini.aprovar");
     await acaoStatus(apBtn, "Aprovado");
-    // desmarca o checkbox do card
     const chk = card.querySelector(".ck input");
     if (chk) chk.checked = false;
   }
-
-  // limpa a seleção, zera o master e esconde os botões
   SELEC = [];
   $("master").checked = false;
   renderSelecionados();
-
   bt.classList.remove("loading");
 };
 
-
-/* ========= HISTÓRICO ========= */
 /* ========= HISTÓRICO ========= */
 function addHist(id, acao, valor){
   const arr = JSON.parse(localStorage.getItem("hist_"+id)||"[]");
@@ -440,28 +334,19 @@ function abrirHist(id){
 }
 function fecharHist(){ $("modalHist").style.display="none"; }
 
-
+/* ========= BOOT ========= */
 async function refresh(){
   showOverlay();
   const diaISO = $("filtroData").value;
   const filtro = $("filtroStatus").value;
-
-  // empresas escolhidas
   const empresas = [...document.querySelectorAll("#menuEmpresas input:checked")].map(i=>i.value);
-
   await loadTitulos(empresas, diaISO, filtro);
   renderLista(diaISO);
-
   hideOverlay();
 }
-
-
 (function boot(){
-  // data = hoje
   const hoje = new Date().toISOString().slice(0,10);
   $("filtroData").value = hoje;
-
-  // empresas menu
   const M = $("menuEmpresas"); M.innerHTML="";
   EMP_DEFAULT.forEach(emp=>{
     const checked = (emp!=="CAP VILLA") ? "checked" : "";
@@ -470,11 +355,9 @@ async function refresh(){
     lbl.querySelector("input").onchange = refresh;
     M.appendChild(lbl);
   });
-
   $("filtroStatus").onchange = refresh;
   $("filtroData").onchange   = refresh;
-
-  refresh(); // start
+  refresh();
 })();
 </script>
 </body>
