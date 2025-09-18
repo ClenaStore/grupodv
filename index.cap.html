@@ -445,8 +445,14 @@ $("btnMassa").onclick = async ()=>{
     if(!card) continue;
     const apBtn = card.querySelector(".mini.aprovar");
     await acaoStatus(apBtn, "Aprovado");
+    // desmarca o checkbox
+    const chk = card.querySelector(".ck input");
+    if(chk) chk.checked = false;
   }
-  SELEC = []; renderSelecionados();
+  // limpa seleção e master
+  SELEC = [];
+  $("master").checked = false;
+  renderSelecionados();
   bt.classList.remove("loading");
 }
 
