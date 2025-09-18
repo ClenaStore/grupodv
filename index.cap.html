@@ -6,77 +6,53 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
 <style>
   :root{
-    --bg:#0b1220;        /* fundo */
-    --card:#0f172a;      /* cartões escuros */
-    --surface:#0b1220;
-    --ink:#e5f0ff;       /* texto principal */
-    --muted:#a8b3c7;     /* texto secundário */
-    --line:#243043;      /* linhas/bordas */
-    --teal:#06b6d4;      /* primária */
-    --blue:#4f46e5;      /* secundária */
+    --bg:#0b1220;
+    --card:#0f172a;
+    --ink:#e5f0ff;
+    --muted:#a8b3c7;
+    --line:#243043;
+    --teal:#06b6d4;
+    --blue:#4f46e5;
     --green:#16a34a;
     --red:#ef4444;
     --amber:#f59e0b;
     --chip:#101a2e;
   }
-
   *{box-sizing:border-box}
-  body{margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Arial;color:var(--ink);background:linear-gradient(180deg,#0b1220 0,#0a0f1a 100%)}
+  body{margin:0;font-family:Inter,system-ui;background:linear-gradient(180deg,#0b1220 0,#0a0f1a 100%);color:var(--ink)}
 
-  /* Header */
-  header{
-    position:sticky; top:0; z-index:20;
-    background:linear-gradient(180deg,#0f172a,#0b1220);
-    border-bottom:1px solid var(--line);
-    padding:10px 12px; display:flex; gap:10px; align-items:center; justify-content:space-between; flex-wrap:wrap
-  }
-  header h1{font-size:16px;margin:0;font-weight:800;letter-spacing:.2px}
+  header{position:sticky;top:0;z-index:20;background:linear-gradient(180deg,#0f172a,#0b1220);border-bottom:1px solid var(--line);padding:10px 12px;display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+  header h1{font-size:16px;margin:0;font-weight:800}
   .controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-  select,input[type="date"]{
-    background:#0b1528;border:1px solid #22314b;color:var(--ink);
-    padding:8px 10px;border-radius:10px;font-size:13px
-  }
+  select,input[type="date"]{background:#0b1528;border:1px solid #22314b;color:var(--ink);padding:8px 10px;border-radius:10px;font-size:13px}
   .btn{border:1px solid #2a3955;background:#0b1528;color:var(--ink);padding:8px 12px;border-radius:10px;cursor:pointer;font-weight:700}
   .btn:active{transform:translateY(1px)}
-  .btn.primary{background:linear-gradient(180deg,var(--teal),#0894ad);border-color:#0ea5b5;color:#001018}
-  .btn.icon{display:flex;align-items:center;gap:6px}
 
-  /* loader overlay */
-  #overlay{position:fixed;inset:0;background:rgba(3,7,18,.55);backdrop-filter:blur(2px);display:none;align-items:center;justify-content:center;z-index:100}
+  /* loader */
+  #overlay{position:fixed;inset:0;background:rgba(3,7,18,.55);display:none;align-items:center;justify-content:center;z-index:100}
   .spinner{width:48px;height:48px;border:6px solid var(--teal);border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite}
   @keyframes spin{to{transform:rotate(360deg)}}
 
-  /* Container */
-  .container {
-    padding:12px;
-    max-width:1100px;
-    margin:0 auto;
-  }
+  .container{padding:12px;max-width:1100px;margin:0 auto}
 
-  @media (min-width:1024px) {
-    .container {
-      width:100%;
-      max-width:none;
-      margin:0;
-    }
-  }
+  /* Cards modalidades */
+  .mods-cards{display:flex;gap:10px;overflow:auto;margin-bottom:12px}
+  .mod-card{min-width:140px;background:#0f172a;border:1px solid var(--line);border-radius:12px;padding:10px;display:flex;flex-direction:column}
+  .mod-card span{font-size:12px;color:var(--muted)}
+  .mod-card b{font-size:14px;margin-top:4px}
 
-  /* Lista de títulos (cards) */
+  /* Lista */
   .list-head{display:flex;align-items:center;justify-content:space-between;margin-top:6px}
   .list-head .left{display:flex;gap:8px;align-items:center}
   .master{width:18px;height:18px}
   .lista{display:grid;gap:10px;margin-top:10px}
-  .titulo{
-    background:linear-gradient(180deg,#101a2f,#0f172a);
-    border:1px solid var(--line); border-radius:14px; padding:10px; display:grid;
-    grid-template-columns:auto 1fr auto; gap:10px; align-items:center
-  }
+  .titulo{background:linear-gradient(180deg,#101a2f,#0f172a);border:1px solid var(--line);border-radius:14px;padding:10px;display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center}
   .ck{display:flex;align-items:center;justify-content:center}
   .ck input{width:18px;height:18px}
   .info{display:grid;gap:4px}
   .row{display:flex;gap:8px;flex-wrap:wrap;font-size:12px;color:var(--muted)}
   .row b{color:var(--ink)}
-  .pill{padding:4px 8px;border-radius:999px;border:1px solid #2a3955;background:#0b1528;font-size:12px;font-weight:800;color:#9ecbff}
+  .pill{padding:4px 8px;border-radius:999px;border:1px solid #2a3955;background:#0b1528;font-size:12px;font-weight:800}
   .pill.ok{border-color:#155e32;color:#b6f3c5;background:#0e2a1b}
   .pill.warn{border-color:#7a1e1e;color:#ffb4b4;background:#2a0e0e}
   .actions{display:flex;gap:6px;align-items:center}
@@ -87,20 +63,17 @@
   .mini.loading{opacity:.75;pointer-events:none}
   .mini.loading::after{content:"";width:12px;height:12px;margin-left:6px;border:2px solid #fff;border-top-color:transparent;border-radius:50%;animation:spin .8s linear infinite}
 
-  /* Footer (selecionados) */
-  .footer{
-    position:fixed; right:12px; bottom:12px; display:flex; flex-direction:column; gap:10px; align-items:flex-end; z-index:15
-  }
-  .bubble{background:var(--blue);color:#fff;border-radius:12px;padding:8px 12px;font-weight:800;box-shadow:0 12px 30px rgba(79,70,229,.35)}
-  .btn-massa{background:linear-gradient(180deg,var(--teal),#0796ad);color:#002027;border:0;border-radius:12px;padding:10px 14px;font-weight:900;box-shadow:0 12px 30px rgba(6,182,212,.35);cursor:pointer}
-  .btn-massa.loading{opacity:.8;pointer-events:none}
-  .btn-massa.loading::after{content:"";width:14px;height:14px;margin-left:8px;border:2px solid #002027;border-top-color:transparent;border-radius:50%;animation:spin .9s linear infinite;display:inline-block}
+  /* Footer */
+  .footer{position:fixed;right:12px;bottom:12px;display:flex;flex-direction:column;gap:10px;align-items:flex-end;z-index:15}
+  .bubble{background:var(--blue);color:#fff;border-radius:12px;padding:8px 12px;font-weight:800}
+  .btn-massa{background:linear-gradient(180deg,var(--teal),#0796ad);color:#002027;border:0;border-radius:12px;padding:10px 14px;font-weight:900}
 
   /* Empresas menu */
-  .menu{position:fixed; top:60px; right:10px; background:#0f172a; border:1px solid var(--line); border-radius:12px; padding:10px; box-shadow:0 10px 30px rgba(0,0,0,.4); display:none; z-index:30}
-  .menu label{display:block;font-size:13px;margin:6px 0}
+  .menu{position:fixed;top:60px;right:10px;background:#0f172a;border:1px solid var(--line);border-radius:12px;padding:10px;box-shadow:0 10px 30px rgba(0,0,0,.4);display:none;z-index:30}
+  .menu div{padding:6px;cursor:pointer;border-radius:6px}
+  .menu div:hover{background:#1e293b}
 
-  /* Modal simples */
+  /* Modal histórico */
   .modal{position:fixed;inset:0;background:rgba(2,6,15,.65);display:none;align-items:center;justify-content:center;z-index:50}
   .modal .box{background:#0f172a;border:1px solid var(--line);border-radius:12px;max-width:90%;width:420px;padding:12px}
   .modal h3{margin:0 0 8px}
@@ -108,257 +81,133 @@
 </style>
 </head>
 <body>
-  <header>
-    <h1>Painel Financeiro • CAP</h1>
-    <div class="controls">
-      <label for="filtroStatus" style="font-size:12px">Status:</label>
-      <select id="filtroStatus">
-        <option value="Pendente" selected>Pendentes</option>
-        <option value="Aprovado">Aprovados</option>
-        <option value="Negado">Negados</option>
-        <option value="Liquidado">Liquidados</option>
-        <option value="Todos">Todos</option>
-      </select>
-      <input type="date" id="filtroData" />
-      <button class="btn icon" id="btnEmpresas">Empresas ⚙</button>
-    </div>
-  </header>
-
-  <!-- overlay global -->
-  <div id="overlay"><div class="spinner"></div></div>
-
-  <!-- menu empresas -->
-  <div id="menuEmpresas" class="menu"></div>
-
-  <div class="container">
-    <!-- lista -->
-    <div class="list-head">
-      <div class="left">
-        <input id="master" class="master" type="checkbox" />
-        <div style="font-weight:900">Títulos do dia</div>
-      </div>
-      <div id="contagem" style="color:var(--muted);font-size:12px">0 itens</div>
-    </div>
-    <div id="lista" class="lista"></div>
+<header>
+  <h1>Painel Financeiro • CAP</h1>
+  <div class="controls">
+    <label for="filtroStatus" style="font-size:12px">Status:</label>
+    <select id="filtroStatus">
+      <option value="Pendente" selected>Pendentes</option>
+      <option value="Aprovado">Aprovados</option>
+      <option value="Negado">Negados</option>
+      <option value="Liquidado">Liquidados</option>
+      <option value="Todos">Todos</option>
+    </select>
+    <input type="date" id="filtroData" />
+    <button class="btn" id="btnEmpresas">Empresa ▼</button>
   </div>
+</header>
 
-  <!-- footer selecionados -->
-  <div class="footer">
-    <div id="bubble" class="bubble" style="display:none">Total selecionado: R$ 0,00</div>
-    <button id="btnMassa" class="btn-massa" style="display:none">Aprovar selecionados</button>
-  </div>
+<div id="overlay"><div class="spinner"></div></div>
+<div id="menuEmpresas" class="menu"></div>
 
-  <!-- modal histórico -->
-  <div id="modalHist" class="modal">
-    <div class="box">
-      <button class="close" onclick="fecharHist()">Fechar</button>
-      <h3>Histórico</h3>
-      <div id="histBody" style="white-space:pre-wrap;font-size:13px;color:#cbd5e1"></div>
+<div class="container">
+  <!-- Totais por modalidade -->
+  <div id="modsCards" class="mods-cards"></div>
+
+  <!-- Lista -->
+  <div class="list-head">
+    <div class="left">
+      <input id="master" class="master" type="checkbox" />
+      <div style="font-weight:900">Títulos do dia</div>
     </div>
+    <div id="contagem" style="color:var(--muted);font-size:12px">0 itens</div>
   </div>
+  <div id="lista" class="lista"></div>
+</div>
+
+<div class="footer">
+  <div id="bubble" class="bubble" style="display:none">Total selecionado: R$ 0,00</div>
+  <button id="btnMassa" class="btn-massa" style="display:none">Aprovar selecionados</button>
+</div>
+
+<!-- modal histórico -->
+<div id="modalHist" class="modal">
+  <div class="box">
+    <button class="close" onclick="fecharHist()">Fechar</button>
+    <h3>Histórico</h3>
+    <div id="histBody" style="white-space:pre-wrap;font-size:13px;color:#cbd5e1"></div>
+  </div>
+</div>
 
 <script>
-/* ========= CONFIG ========= */
-const endpointTitulos = "https://script.google.com/macros/s/AKfycbwt9y43T8Ya0AhNusue3PTekaBPDnrqSK33dsbnmOKezcm3wnSrUz3z2jO_9BoJd8MH/exec";
-const EMP_DEFAULT = ["CAP DELICIA","CAP VILLA","CAP PADARIA","CAP MERCATTO","CAP M.KIDS"];
+const endpointTitulos="https://script.google.com/macros/s/AKfycbwt9y43T8Ya0AhNusue3PTekaBPDnrqSK33dsbnmOKezcm3wnSrUz3z2jO_9BoJd8MH/exec";
+const EMP_DEFAULT=["CAP DELICIA","CAP VILLA","CAP PADARIA","CAP MERCATTO","CAP M.KIDS"];
 
-/* ========= STATE ========= */
-let TITULOS = {};                    // empresa -> array
-let SELEC = [];                      // [{id, emp, idx, valor}]
+let TITULOS={},SELEC=[],EMPRESA_ATUAL="CAP MERCATTO";
 
-/* ========= HELPERS ========= */
-const $ = (id)=>document.getElementById(id);
-const BRL = (n)=> (isNaN(n)?0:n).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
-const iso = (d)=> {
-  const dt = new Date(d);
-  if(!isNaN(dt)) return dt.toISOString().slice(0,10);
-  const m = String(d||"").match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
-  if(m){ return `${m[3]}-${m[2]}-${m[1]}`; }
-  return String(d||"").slice(0,10);
-};
-const ID = (emp,idx)=> `${emp.replace(/\s+/g,'_')}__${idx}`;
+const $=id=>document.getElementById(id);
+const BRL=n=>(isNaN(n)?0:n).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
+const iso=d=>{const dt=new Date(d);if(!isNaN(dt))return dt.toISOString().slice(0,10);return String(d||"").slice(0,10);}
+const ID=(emp,idx)=>`${emp.replace(/\s+/g,'_')}__${idx}`;
 
-/* ========= UI: OVERLAY ========= */
-function showOverlay(){ $("overlay").style.display="flex"; }
-function hideOverlay(){ $("overlay").style.display="none"; }
+$("btnEmpresas").onclick=()=>{$("menuEmpresas").style.display=$("menuEmpresas").style.display==="block"?"none":"block";};
+document.addEventListener("click",e=>{const m=$("menuEmpresas");if(!m.contains(e.target)&&e.target!==$("btnEmpresas"))m.style.display="none";});
 
-/* ========= EMPRESAS MENU ========= */
-$("btnEmpresas").onclick = ()=>{
-  const m = $("menuEmpresas");
-  m.style.display = (m.style.display==="block"?"none":"block");
-};
-document.addEventListener("click",(e)=>{
-  const m=$("menuEmpresas");
-  if(!m.contains(e.target) && e.target!==$("btnEmpresas")) m.style.display="none";
-});
-
-/* ========= LOAD: TITULOS ========= */
-async function loadTitulos(empresas, diaISO, filtro){
-  TITULOS = {};
-  const resps = await Promise.all(empresas.map(emp =>
-    fetch(`${endpointTitulos}?action=listar&empresa=${encodeURIComponent(emp)}`)
-      .then(r=>r.json().then(d=>({emp, data: d.titulos||d})))
-  ));
-
-  resps.forEach(({emp,data})=>{
-    const all = data.filter(t => iso(t.vencimento) === diaISO);
-    const arr = all.filter(t=>{
-      let statusNorm = (t.status === "Sim" ? "Pendente" : t.status);
-      return (filtro==="Todos" ? true : (statusNorm===filtro));
-    });
-    TITULOS[emp] = arr;
-  });
+async function loadTitulos(empresa,diaISO,filtro){
+  const r=await fetch(`${endpointTitulos}?action=listar&empresa=${encodeURIComponent(empresa)}`);
+  const d=await r.json();const data=d.titulos||d;
+  const all=data.filter(t=>iso(t.vencimento)===diaISO);
+  return all.filter(t=>{let st=(t.status==="Sim"?"Pendente":t.status);return filtro==="Todos"?true:st===filtro;});
 }
 
-/* ========= RENDER: LISTA ========= */
-function renderLista(diaISO){
-  const lista = $("lista"); lista.innerHTML = "";
-  SELEC = [];
+function renderLista(arr,emp){
+  const lista=$("lista");lista.innerHTML="";SELEC=[];
   $("master").checked=false;
-  let totalItens = 0;
-
-  for(const emp of Object.keys(TITULOS)){
-    const arr = TITULOS[emp]||[];
-    arr.forEach((t,idx)=>{
-      totalItens++;
-      const valor = Number(String(t.valor).replace("R$","").replace(/\./g,"").replace(",","."))||0;
-      const id = ID(emp,idx);
-      let status = (t.status === "Sim" ? "Pendente" : t.status);
-
-      const card = document.createElement("div");
-      card.className="titulo";
-      card.dataset.id = id;
-      card.dataset.emp = emp;
-      card.dataset.idx = idx;
-      card.innerHTML = `
-        <div class="ck"><input type="checkbox" onchange="toggleSel(this)" /></div>
-        <div class="info">
-          <div class="row"><b>${t.fornecedor}</b> • ${emp}</div>
-          <div class="row">
-            <span>Venc: <b>${iso(t.vencimento).split("-").reverse().join("/")}</b></span>
-            <span>• Meio: <b>${t.meio_pagamento}</b></span>
-          </div>
-          <div class="row">
-            <span>Valor: <b>${BRL(valor)}</b></span>
-            <span class="pill" data-status></span>
-          </div>
-        </div>
-        <div class="actions">
-          <button class="mini aprovar" onclick="acaoStatus(this,'Aprovado')">✓</button>
-          <button class="mini negar"   onclick="acaoStatus(this,'Negado')">✗</button>
-          <button class="mini hist"    onclick="abrirHist('${id}')">H</button>
-        </div>`;
-
-      setPill(card.querySelector("[data-status]"), status);
-      card.dataset.valor = valor;
-      lista.appendChild(card);
-    });
-  }
-  $("contagem").textContent = `${totalItens} ${totalItens===1?'item':'itens'}`;
-}
-
-/* ========= PILL ========= */
-function setPill(el, status){
-  el.className="pill";
-  if(status==="Aprovado"){ el.classList.add("ok"); el.textContent="Aprovado"; }
-  else if(status==="Negado"){ el.classList.add("warn"); el.textContent="Negado"; }
-  else if(status==="Liquidado"){ el.textContent="Liquidado"; }
-  else { el.textContent="Pendente"; }
-}
-
-/* ========= SELEÇÃO ========= */
-$("master").onchange = ()=>{
-  document.querySelectorAll("#lista .titulo .ck input").forEach(cb=>{
-    cb.checked = $("master").checked; cb.dispatchEvent(new Event("change"));
+  let total=0,somaModal={};
+  arr.forEach((t,idx)=>{total++;
+    const valor=Number(String(t.valor).replace("R$","").replace(/\./g,"").replace(",","."))||0;
+    somaModal[t.meio_pagamento]=(somaModal[t.meio_pagamento]||0)+valor;
+    const id=ID(emp,idx),st=(t.status==="Sim"?"Pendente":t.status);
+    const card=document.createElement("div");
+    card.className="titulo";
+    card.dataset.id=id;card.dataset.emp=emp;card.dataset.idx=idx;card.dataset.valor=valor;
+    card.innerHTML=`
+      <div class="ck"><input type="checkbox" onchange="toggleSel(this)" /></div>
+      <div class="info">
+        <div class="row"><b>${t.fornecedor}</b> • ${emp}</div>
+        <div class="row">Venc: <b>${iso(t.vencimento).split("-").reverse().join("/")}</b> • Meio: <b>${t.meio_pagamento}</b></div>
+        <div class="row">Valor: <b>${BRL(valor)}</b> • <span class="pill ${st==='Aprovado'?'ok':st==='Negado'?'warn':''}">${st}</span></div>
+      </div>
+      <div class="actions">
+        <button class="mini aprovar" onclick="acaoStatus(this,'Aprovado')">✓</button>
+        <button class="mini negar" onclick="acaoStatus(this,'Negado')">✗</button>
+        <button class="mini hist" onclick="abrirHist('${id}')">H</button>
+      </div>`;
+    lista.appendChild(card);
   });
-};
-function toggleSel(chk){
-  const card = chk.closest(".titulo");
-  const id = card.dataset.id, emp = card.dataset.emp, idx = Number(card.dataset.idx);
-  const valor = Number(card.dataset.valor)||0;
-  if(chk.checked){ SELEC.push({id,emp,idx,valor}); }
-  else{ SELEC = SELEC.filter(x=>x.id!==id); }
-  renderSelecionados();
-}
-function renderSelecionados(){
-  const total = SELEC.reduce((s,x)=>s+x.valor,0);
-  const b = $("bubble"), bt = $("btnMassa");
-  if(SELEC.length){ b.style.display="block"; bt.style.display="block"; b.textContent = "Total selecionado: " + BRL(total); }
-  else{ b.style.display="none"; bt.style.display="none"; }
+  $("contagem").textContent=`${total} ${total===1?'item':'itens'}`;
+  renderModalidades(somaModal);
 }
 
-/* ========= AÇÕES: APROVAR/NEGAR ========= */
-async function acaoStatus(btn, novo){
-  const card = btn.closest(".titulo");
-  const id   = card.dataset.id;
-  const emp  = card.dataset.emp;
-  const idx  = Number(card.dataset.idx);
-  const valor= Number(card.dataset.valor)||0;
-  btn.classList.add("loading");
-  setPill(card.querySelector("[data-status]"), novo);
-  addHist(id, novo, valor);
-  try{
-    await fetch(`${endpointTitulos}?action=atualizar&empresa=${encodeURIComponent(emp)}&index=${idx}&status=${encodeURIComponent(novo)}`);
-  }catch(e){ console.error(e); }
-  btn.classList.remove("loading");
-}
-
-$("btnMassa").onclick = async ()=>{
-  const bt = $("btnMassa"); 
-  bt.classList.add("loading");
-  for (const s of SELEC) {
-    const card = document.querySelector(`.titulo[data-id="${s.id}"]`);
-    if (!card) continue;
-    const apBtn = card.querySelector(".mini.aprovar");
-    await acaoStatus(apBtn, "Aprovado");
-    const chk = card.querySelector(".ck input");
-    if (chk) chk.checked = false;
+function renderModalidades(sum){
+  const mods=$("modsCards");mods.innerHTML="";
+  if(!Object.keys(sum).length){mods.innerHTML="<div style='color:var(--muted)'>Sem dados</div>";return;}
+  for(const[k,v] of Object.entries(sum)){
+    const c=document.createElement("div");c.className="mod-card";
+    c.innerHTML=`<span>${k}</span><b>${BRL(v)}</b>`;
+    mods.appendChild(c);
   }
-  SELEC = [];
-  $("master").checked = false;
-  renderSelecionados();
-  bt.classList.remove("loading");
-};
+}
 
-/* ========= HISTÓRICO ========= */
-function addHist(id, acao, valor){
-  const arr = JSON.parse(localStorage.getItem("hist_"+id)||"[]");
-  arr.push({data:new Date().toLocaleString("pt-BR"), acao, valor});
-  localStorage.setItem("hist_"+id, JSON.stringify(arr));
-}
-function abrirHist(id){
-  const arr = JSON.parse(localStorage.getItem("hist_"+id)||"[]");
-  const texto = arr.length ? arr.map(x=>`${x.data} — ${x.acao} — ${BRL(x.valor)}`).join("\n") : "Sem histórico.";
-  $("histBody").textContent = texto;
-  $("modalHist").style.display="flex";
-}
-function fecharHist(){ $("modalHist").style.display="none"; }
+function setPill(el,status){el.className="pill";if(status==="Aprovado"){el.classList.add("ok");el.textContent="Aprovado";}
+else if(status==="Negado"){el.classList.add("warn");el.textContent="Negado";}
+else if(status==="Liquidado"){el.textContent="Liquidado";}
+else{el.textContent="Pendente";}}
 
-/* ========= BOOT ========= */
-async function refresh(){
-  showOverlay();
-  const diaISO = $("filtroData").value;
-  const filtro = $("filtroStatus").value;
-  const empresas = [...document.querySelectorAll("#menuEmpresas input:checked")].map(i=>i.value);
-  await loadTitulos(empresas, diaISO, filtro);
-  renderLista(diaISO);
-  hideOverlay();
-}
-(function boot(){
-  const hoje = new Date().toISOString().slice(0,10);
-  $("filtroData").value = hoje;
-  const M = $("menuEmpresas"); M.innerHTML="";
-  EMP_DEFAULT.forEach(emp=>{
-    const checked = (emp!=="CAP VILLA") ? "checked" : "";
-    const lbl = document.createElement("label");
-    lbl.innerHTML = `<input type="checkbox" value="${emp}" ${checked} /> ${emp}`;
-    lbl.querySelector("input").onchange = refresh;
-    M.appendChild(lbl);
-  });
-  $("filtroStatus").onchange = refresh;
-  $("filtroData").onchange   = refresh;
-  refresh();
-})();
+$("master").onchange=()=>{document.querySelectorAll("#lista .titulo .ck input").forEach(cb=>{cb.checked=$("master").checked;cb.dispatchEvent(new Event("change"));});};
+function toggleSel(chk){const card=chk.closest(".titulo");const id=card.dataset.id,emp=card.dataset.emp,idx=Number(card.dataset.idx);const valor=Number(card.dataset.valor)||0;if(chk.checked){SELEC.push({id,emp,idx,valor});}else{SELEC=SELEC.filter(x=>x.id!==id);}renderSelecionados();}
+function renderSelecionados(){const total=SELEC.reduce((s,x)=>s+x.valor,0);const b=$("bubble"),bt=$("btnMassa");if(SELEC.length){b.style.display="block";bt.style.display="block";b.textContent="Total selecionado: "+BRL(total);}else{b.style.display="none";bt.style.display="none";}}
+
+async function acaoStatus(btn,novo){const card=btn.closest(".titulo"),emp=card.dataset.emp,idx=card.dataset.idx,valor=Number(card.dataset.valor)||0;btn.classList.add("loading");setPill(card.querySelector("[data-status]"),novo);addHist(card.dataset.id,novo,valor);try{await fetch(`${endpointTitulos}?action=atualizar&empresa=${encodeURIComponent(emp)}&index=${idx}&status=${encodeURIComponent(novo)}`);}catch(e){console.error(e);}btn.classList.remove("loading");}
+
+$("btnMassa").onclick=async()=>{const bt=$("btnMassa");bt.classList.add("loading");for(const s of SELEC){const card=document.querySelector(`.titulo[data-id="${s.id}"]`);if(!card)continue;const apBtn=card.querySelector(".mini.aprovar");await acaoStatus(apBtn,"Aprovado");const chk=card.querySelector(".ck input");if(chk)chk.checked=false;}SELEC=[];$("master").checked=false;renderSelecionados();bt.classList.remove("loading");};
+
+function addHist(id,acao,valor){const arr=JSON.parse(localStorage.getItem("hist_"+id)||"[]");arr.push({data:new Date().toLocaleString("pt-BR"),acao,valor});localStorage.setItem("hist_"+id,JSON.stringify(arr));}
+function abrirHist(id){const arr=JSON.parse(localStorage.getItem("hist_"+id)||"[]");const texto=arr.length?arr.map(x=>`${x.data} — ${x.acao} — ${BRL(x.valor)}`).join("\n"):"Sem histórico.";$("histBody").textContent=texto;$("modalHist").style.display="flex";}
+function fecharHist(){$("modalHist").style.display="none";}
+
+async function refresh(){showOverlay();const diaISO=$("filtroData").value;const filtro=$("filtroStatus").value;const arr=await loadTitulos(EMPRESA_ATUAL,diaISO,filtro);renderLista(arr,EMPRESA_ATUAL);hideOverlay();}
+(function boot(){const hoje=new Date().toISOString().slice(0,10);$("filtroData").value=hoje;const M=$("menuEmpresas");EMP_DEFAULT.forEach(emp=>{const d=document.createElement("div");d.textContent=emp;d.onclick=()=>{EMPRESA_ATUAL=emp;$("btnEmpresas").textContent=emp;refresh();M.style.display="none";};M.appendChild(d);});$("btnEmpresas").textContent=EMPRESA_ATUAL;$("filtroStatus").onchange=refresh;$("filtroData").onchange=refresh;refresh();})();
 </script>
 </body>
 </html>
