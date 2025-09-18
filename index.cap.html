@@ -320,21 +320,32 @@ function renderSaldos(sumPorEmpresa){
   EMP_DEFAULT.forEach(emp=>{
     if(!(emp in SALDOS)) return;
     const caixa = SALDOS[emp]||0;
-    const tit = sumPorEmpresa[emp]||0; // já ignora Negados
+    const tit = sumPorEmpresa[emp]||0; 
     const final = caixa - tit;
+
+    // calcular totais por status no mesmo loop
+    let totStatus = {Aprovado:0, Pendente:0, Liquidado:0, Negado:0};
+    (TITULOS[emp]||[]).forEach(t=>{
+      let st = (t.status === "Sim" ? "Pendente" : t.status);
+      const v = Number(String(t.valor).replace("R$","").replace(/\./g,"").replace(",",".") ) || 0;
+      if(st in totStatus) totStatus[st] += v;
+    });
 
     const card = document.createElement("div");
     card.className="saldo-card";
     card.innerHTML =
       `<h3>${emp}</h3>
-       <div class="v">Conta: ${BRL(caixa)}</div>
-       <div class="v">Títulos (exceto Negados): ${BRL(tit)}</div>
-       <div class="f ${final>=0?'ok':'bad'}">Saldo Final (Dia): ${BRL(final)}</div>`;
+       <div>Conta: <b>${BRL(caixa)}</b></div>
+       <div style="color:var(--muted)">Pendentes: <b>${BRL(totStatus.Pendente)}</b></div>
+       <div style="color:var(--green)">Aprovados: <b>${BRL(totStatus.Aprovado)}</b></div>
+       <div style="color:var(--amber)">Liquidados: <b>${BRL(totStatus.Liquidado)}</b></div>
+       <div style="color:var(--red)">Negados: <b>${BRL(totStatus.Negado)}</b></div>
+       <div class="f ${final>=0?'ok':'bad'}">Saldo Final: ${BRL(final)}</div>`;
 
-  card.onclick = ()=> {
-  abrirSaldo(emp, caixa, tit, final, TITULOS[emp]||[]);
-};
-
+    // ainda permite abrir o popup se quiser detalhes de modalidades
+    card.onclick = ()=> {
+      abrirSaldo(emp, caixa, tit, final, TITULOS[emp]||[]);
+    };
 
     wrap.appendChild(card);
   });
@@ -527,6 +538,7 @@ $("btnMassa").onclick = async ()=>{
 
 
 /* ========= HISTÓRICO ========= */
+/* ========= HISTÓRICO ========= */
 function addHist(id, acao, valor){
   const arr = JSON.parse(localStorage.getItem("hist_"+id)||"[]");
   arr.push({data:new Date().toLocaleString("pt-BR"), acao, valor});
@@ -539,9 +551,16 @@ function abrirHist(id){
   $("modalHist").style.display="flex";
 }
 function fecharHist(){ $("modalHist").style.display="none"; }
+
+// fechar modalSaldo clicando fora da box
+document.getElementById("modalSaldo").addEventListener("click",(e)=>{
+  if(e.target.id==="modalSaldo") fecharSaldo();
+});
+function fecharSaldo(){ $("modalSaldo").style.display="none"; }
+
 function abrirSaldo(emp, caixa, tit, final, arr){
-  let modalidades = [];
   const somaPorModal = {};  
+  let modalidades = [];
 
   // soma por modalidade (exceto Negados)
   arr.forEach(t=>{
@@ -557,7 +576,7 @@ function abrirSaldo(emp, caixa, tit, final, arr){
   }
   if(!modalidades.length) modalidades.push("<div>Sem títulos no dia</div>");
 
-  // soma dos Negados e por status
+  // soma por status
   let totStatus = {Aprovado:0, Pendente:0, Liquidado:0, Negado:0};
   arr.forEach(t=>{
     let st = (t.status === "Sim" ? "Pendente" : t.status);
@@ -581,7 +600,6 @@ function abrirSaldo(emp, caixa, tit, final, arr){
 
   $("modalSaldo").style.display="flex";
 }
-
 
 /* ========= BOOT ========= */
 async function refresh(){
