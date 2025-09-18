@@ -315,24 +315,27 @@ const byStatus = (filtro==="Todos" ? true : (statusNorm===filtro));
 
 /* ========= RENDER: SALDOS ========= */
 function renderSaldos(sumPorEmpresa){
-  const wrap = $("saldos"); wrap.innerHTML = "";
+  const wrap = $("saldos"); 
+  wrap.innerHTML = "";
   EMP_DEFAULT.forEach(emp=>{
     if(!(emp in SALDOS)) return;
     const caixa = SALDOS[emp]||0;
-    const tit = sumPorEmpresa[emp]||0;
+    const tit = sumPorEmpresa[emp]||0; // já ignora Negados
     const final = caixa - tit;
+
     const card = document.createElement("div");
     card.className="saldo-card";
     card.innerHTML =
       `<h3>${emp}</h3>
        <div class="v">Conta: ${BRL(caixa)}</div>
-       <div class="v">Títulos do Dia: ${BRL(tit)}</div>
+       <div class="v">Títulos (exceto Negados): ${BRL(tit)}</div>
        <div class="f ${final>=0?'ok':'bad'}">Saldo Final (Dia): ${BRL(final)}</div>`;
-   card.onclick = ()=> abrirSaldo(emp, caixa, tit, final);
-wrap.appendChild(card);
 
+    card.onclick = ()=> abrirSaldo(emp, caixa, tit, final);
+    wrap.appendChild(card);
   });
 }
+
 
 
 /* ========= RENDER: LISTA ========= */
@@ -539,9 +542,13 @@ function fecharHist(){ $("modalHist").style.display="none"; }
   const arr = TITULOS[emp]||[];
   const somaPorModal = {};
   arr.forEach(t=>{
+  const st = (t.status === "Sim" ? "Pendente" : t.status);
+  if(st !== "Negado"){  // soma apenas status diferentes de Negado
     const v = Number(String(t.valor).replace("R$","").replace(/\./g,"").replace(",","."))||0;
     somaPorModal[t.meio_pagamento] = (somaPorModal[t.meio_pagamento]||0)+v;
-  });
+  }
+});
+
   for(const [k,v] of Object.entries(somaPorModal)){
     modalidades.push(`<div>${k}: <b>${BRL(v)}</b></div>`);
   }
