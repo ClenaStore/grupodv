@@ -236,9 +236,10 @@ async function loadSaldos(){
 }
 
 /* ========= LOAD: TITULOS ========= */
-async function loadTitulos(empresas, diaISO, filtro){
+/* ========= LOAD: TITULOS ========= */
+async function loadTitulos(diaISO, filtro){
   TITULOS = {};
-  const resps = await Promise.all(empresas.map(emp =>
+  const resps = await Promise.all(EMP_DEFAULT.map(emp =>
     fetch(`${endpointTitulos}?action=listar&empresa=${encodeURIComponent(emp)}`)
       .then(r=>r.json().then(d=>({emp, data: d.titulos||d})))
   ));
@@ -254,81 +255,61 @@ async function loadTitulos(empresas, diaISO, filtro){
   });
 }
 
-/* ========= RENDER: SALDOS ========= */
-function renderSaldos(sumPorEmpresa){
-  const wrap = $("saldos"); wrap.innerHTML = "";
-  EMP_DEFAULT.forEach(emp=>{
-    if(!(emp in SALDOS)) return;
-    const caixa = SALDOS[emp]||0;
-    const tit = sumPorEmpresa[emp]||0;
-    const final = caixa - tit;
-    const card = document.createElement("div");
-    card.className="saldo-card";
-    card.innerHTML =
-      `<h3>${emp}</h3>
-       <div class="v">Conta: ${BRL(caixa)}</div>
-       <div class="v">Títulos do Dia: ${BRL(tit)}</div>
-       <div class="f ${final>=0?'ok':'bad'}">Saldo Final (Dia): ${BRL(final)}</div>`;
-    wrap.appendChild(card);
-  });
-}
-
-
 /* ========= RENDER: LISTA ========= */
 function renderLista(diaISO){
   const lista = $("lista"); lista.innerHTML = "";
   SELEC = [];
   $("master").checked=false;
-  let totalItens = 0;
 
-  // agrega modalidades + soma por empresa
+  const empresasAtivas = [...document.querySelectorAll("#menuEmpresas input:checked")].map(i=>i.value);
+
+  let totalItens = 0;
   const somaModal = {};
   const somaEmp = {};
 
-  for(const emp of Object.keys(TITULOS)){
+  for(const emp of empresasAtivas){
     const arr = TITULOS[emp]||[];
     arr.forEach((t,idx)=>{
       totalItens++;
-      const valor = Number(String(t.valor).replace("R$","").replace(/\./g,"").replace(",","."))||0;
-      const meio = t.meio_pagamento;
-      somaModal[meio] = (somaModal[meio]||0)+valor;
+      ...
+    });
+  }
 
-      // para saldo final contam Pendente/Aprovado/Liquidado
-      const stLocal = localStorage.getItem("status_"+ID(emp,idx)) || t.status;
-      if(stLocal==="Pendente"||stLocal==="Aprovado"||stLocal==="Liquidado"){
-        somaEmp[emp] = (somaEmp[emp]||0)+valor;
-      }
+  $("contagem").textContent = `${totalItens} ${totalItens===1?'item':'itens'}`;
+  renderModalidades(somaModal);
+  renderChart(somaModal);
+  renderSaldos(somaEmp);
+}
 
-      const id = ID(emp,idx);
-      const status = stLocal;
+/* ========= BOOT ========= */
+async function refresh(){
+  showOverlay();
+  const diaISO = $("filtroData").value;
+  const filtro = $("filtroStatus").value;
+  await loadSaldos();
+  await loadTitulos(diaISO, filtro); // carrega todas as empresas
+  renderLista(diaISO); // só exibe as marcadas
+  hideOverlay();
+}
 
-      const card = document.createElement("div");
-      card.className="titulo";
-      card.dataset.id = id;
-      card.dataset.emp = emp;
-      card.dataset.idx = idx;
-      card.innerHTML = `
-        <div class="ck"><input type="checkbox" onchange="toggleSel(this)" /></div>
-        <div class="info">
-          <div class="row"><b>${t.fornecedor}</b> • ${emp}</div>
-          <div class="row">
-            <span>Venc: <b>${iso(t.vencimento).split("-").reverse().join("/")}</b></span>
-            <span>• Meio: <b>${meio}</b></span>
-          </div>
-          <div class="row">
-            <span>Valor: <b>${BRL(valor)}</b></span>
-            <span class="pill" data-status>Padrão</span>
-          </div>
-        </div>
-        <div class="actions">
-          <button class="mini aprovar" onclick="acaoStatus(this,'Aprovado')">✓</button>
-          <button class="mini negar"   onclick="acaoStatus(this,'Negado')">✗</button>
-          <button class="mini hist"    onclick="abrirHist('${id}')">H</button>
-        </div>`;
+(function boot(){
+  ...
+  // empresas menu
+  const M = $("menuEmpresas"); M.innerHTML="";
+  EMP_DEFAULT.forEach(emp=>{
+    const checked = (emp!=="CAP VILLA") ? "checked" : "";
+    const lbl = document.createElement("label");
+    lbl.innerHTML = `<input type="checkbox" value="${emp}" ${checked} /> ${emp}`;
+    lbl.querySelector("input").onchange = ()=> renderLista($("filtroData").value);
+    M.appendChild(lbl);
+  });
 
-      // status pill
-      const pill = card.querySelector("[data-status]");
-      setPill(pill, status);
+  $("filtroStatus").onchange = refresh;
+  $("filtroData").onchange   = refresh;
+
+  refresh();
+})();
+
 
       // valor salvo no node
       card.dataset.valor = valor;
