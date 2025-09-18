@@ -247,12 +247,7 @@ async function loadTitulos(empresas, diaISO, filtro){
     const arr = data.filter(t=>{
       const tDia = iso(t.vencimento);
       const byDay = (tDia===diaISO);
-      // usa o valor salvo no localStorage se existir
-const stLocal = localStorage.getItem("status_"+ID(emp, data.indexOf(t))) || t.status;
-const statusNorm = (stLocal==="Sim" ? "Pendente" : stLocal);
-const byStatus = (filtro==="Todos" ? true : (statusNorm===filtro));
-
-
+      const byStatus = (filtro==="Todos" ? true : (t.status===filtro));
       return byDay && byStatus;
     });
     TITULOS[emp] = arr;
@@ -299,8 +294,7 @@ function renderLista(diaISO){
       somaModal[meio] = (somaModal[meio]||0)+valor;
 
       // para saldo final contam Pendente/Aprovado/Liquidado
-  let stLocal = localStorage.getItem("status_"+ID(emp,idx)) || t.status;
-if(stLocal==="Sim") stLocal = "Pendente";
+      const stLocal = localStorage.getItem("status_"+ID(emp,idx)) || t.status;
       if(stLocal==="Pendente"||stLocal==="Aprovado"||stLocal==="Liquidado"){
         somaEmp[emp] = (somaEmp[emp]||0)+valor;
       }
@@ -482,12 +476,9 @@ async function refresh(){
 }
 
 (function boot(){
+  // data = hoje
   const hoje = new Date().toISOString().slice(0,10);
   $("filtroData").value = hoje;
-
-  // ADICIONAR ESTA LINHA ↓
-  $("filtroStatus").value = "Pendente";
-
 
   // empresas menu
   const M = $("menuEmpresas"); M.innerHTML="";
