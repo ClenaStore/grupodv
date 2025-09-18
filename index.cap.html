@@ -345,9 +345,9 @@ function renderSaldos(sumPorEmpresa){
        <div class="f ${final>=0?'ok':'bad'}">Saldo Final: ${BRL(final)}</div>`;
 
     // ainda permite abrir o popup se quiser detalhes de modalidades
-    card.onclick = ()=> {
-      abrirSaldo(emp, caixa, tit, final, TITULOS[emp]||[]);
-    };
+   card.onclick = ()=> {
+  abrirSaldo(emp, caixa, tit, final, TITULOS[emp+"_ALL"]||[]);
+};
 
     wrap.appendChild(card);
   });
