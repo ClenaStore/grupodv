@@ -322,8 +322,18 @@ function renderSaldos(sumPorEmpresa){
   EMP_DEFAULT.forEach(emp=>{
     if(!(emp in SALDOS)) return;
     const caixa = SALDOS[emp]||0;
-    const tit = sumPorEmpresa[emp]||0; 
-    const final = caixa - tit;
+// recalcula só com Pendente, Aprovado e Liquidado
+let somaSemNegados = 0;
+(TITULOS[emp+"_ALL"]||[]).forEach(t=>{
+  let st = (t.status === "Sim" ? "Pendente" : t.status);
+  if(st==="Pendente" || st==="Aprovado" || st==="Liquidado"){
+    const v = Number(String(t.valor).replace("R$","").replace(/\./g,"").replace(",",".") ) || 0;
+    somaSemNegados += v;
+  }
+});
+
+const final = caixa - somaSemNegados;
+
 
     // calcular totais por status no mesmo loop
     let totStatus = {Aprovado:0, Pendente:0, Liquidado:0, Negado:0};
