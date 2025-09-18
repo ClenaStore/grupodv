@@ -367,6 +367,7 @@ function renderLista(diaISO){
   const somaEmp = {};
 
   for(const emp of Object.keys(TITULOS)){
+    if(emp.endsWith("_ALL")) continue;
     const arr = TITULOS[emp]||[];
     arr.forEach((t,idx)=>{
       totalItens++;
