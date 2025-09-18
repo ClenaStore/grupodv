@@ -19,7 +19,7 @@
     --chip:#101a2e;
   }
   *{box-sizing:border-box}
-  body{margin:0;font-family:Inter,system-ui;background:linear-gradient(180deg,#0b1220 0,#0a0f1a 100%);color:var(--ink)}
+  body{margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Arial;background:var(--bg);color:var(--ink)}
 
   header{position:sticky;top:0;z-index:20;background:linear-gradient(180deg,#0f172a,#0b1220);border-bottom:1px solid var(--line);padding:10px 12px;display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
   header h1{font-size:16px;margin:0;font-weight:800}
@@ -93,7 +93,7 @@
       <option value="Todos">Todos</option>
     </select>
     <input type="date" id="filtroData" />
-    <button class="btn" id="btnEmpresas">Empresa ▼</button>
+    <button class="btn" id="btnEmpresas">CAP MERCATTO ▼</button>
   </div>
 </header>
 
@@ -132,7 +132,6 @@
 <script>
 const endpointTitulos="https://script.google.com/macros/s/AKfycbwt9y43T8Ya0AhNusue3PTekaBPDnrqSK33dsbnmOKezcm3wnSrUz3z2jO_9BoJd8MH/exec";
 const EMP_DEFAULT=["CAP DELICIA","CAP VILLA","CAP PADARIA","CAP MERCATTO","CAP M.KIDS"];
-
 let TITULOS={},SELEC=[],EMPRESA_ATUAL="CAP MERCATTO";
 
 const $=id=>document.getElementById(id);
@@ -151,16 +150,14 @@ async function loadTitulos(empresa,diaISO,filtro){
 }
 
 function renderLista(arr,emp){
-  const lista=$("lista");lista.innerHTML="";SELEC=[];
-  $("master").checked=false;
+  const lista=$("lista");lista.innerHTML="";SELEC=[];$("master").checked=false;
   let total=0,somaModal={};
   arr.forEach((t,idx)=>{total++;
     const valor=Number(String(t.valor).replace("R$","").replace(/\./g,"").replace(",","."))||0;
     somaModal[t.meio_pagamento]=(somaModal[t.meio_pagamento]||0)+valor;
     const id=ID(emp,idx),st=(t.status==="Sim"?"Pendente":t.status);
     const card=document.createElement("div");
-    card.className="titulo";
-    card.dataset.id=id;card.dataset.emp=emp;card.dataset.idx=idx;card.dataset.valor=valor;
+    card.className="titulo";card.dataset.id=id;card.dataset.emp=emp;card.dataset.idx=idx;card.dataset.valor=valor;
     card.innerHTML=`
       <div class="ck"><input type="checkbox" onchange="toggleSel(this)" /></div>
       <div class="info">
@@ -181,18 +178,18 @@ function renderLista(arr,emp){
 
 function renderModalidades(sum){
   const mods=$("modsCards");mods.innerHTML="";
-  if(!Object.keys(sum).length){mods.innerHTML="<div style='color:var(--muted)'>Sem dados</div>";return;}
+  let total=0;
   for(const[k,v] of Object.entries(sum)){
-    const c=document.createElement("div");c.className="mod-card";
-    c.innerHTML=`<span>${k}</span><b>${BRL(v)}</b>`;
-    mods.appendChild(c);
+    const c=document.createElement("div");c.className="mod-card";c.innerHTML=`<span>${k}</span><b>${BRL(v)}</b>`;mods.appendChild(c);
+    total+=v;
   }
+  if(total>0){const c=document.createElement("div");c.className="mod-card";c.innerHTML=`<span>Total Geral</span><b>${BRL(total)}</b>`;mods.prepend(c);}
+  if(!Object.keys(sum).length){mods.innerHTML="<div style='color:var(--muted)'>Sem dados</div>";}
 }
 
 function setPill(el,status){el.className="pill";if(status==="Aprovado"){el.classList.add("ok");el.textContent="Aprovado";}
 else if(status==="Negado"){el.classList.add("warn");el.textContent="Negado";}
-else if(status==="Liquidado"){el.textContent="Liquidado";}
-else{el.textContent="Pendente";}}
+else if(status==="Liquidado"){el.textContent="Liquidado";}else{el.textContent="Pendente";}}
 
 $("master").onchange=()=>{document.querySelectorAll("#lista .titulo .ck input").forEach(cb=>{cb.checked=$("master").checked;cb.dispatchEvent(new Event("change"));});};
 function toggleSel(chk){const card=chk.closest(".titulo");const id=card.dataset.id,emp=card.dataset.emp,idx=Number(card.dataset.idx);const valor=Number(card.dataset.valor)||0;if(chk.checked){SELEC.push({id,emp,idx,valor});}else{SELEC=SELEC.filter(x=>x.id!==id);}renderSelecionados();}
