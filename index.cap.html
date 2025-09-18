@@ -113,7 +113,11 @@
   /* Gráfico + Modalidades */
   .viz{display:flex;gap:12px;align-items:stretch;flex-wrap:wrap;margin:12px 0}
   .card{background:#0f172a;border:1px solid var(--line);border-radius:14px;padding:10px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
-  .chart-card{flex:1 1 260px;text-align:center}
+ .chart-card{
+  flex:0 0 220px;   /* largura fixa menor */
+  max-width:220px;  /* garante que não estique */
+  text-align:center;
+}
   .mods-card{flex:1 1 260px}
   .mods{display:grid;grid-template-columns:1fr 1fr;gap:8px}
   .mod{background:var(--chip);border:1px solid #22314b;border-radius:12px;padding:8px;font-size:13px;display:flex;justify-content:space-between}
