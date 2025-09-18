@@ -555,15 +555,27 @@ function fecharHist(){ $("modalHist").style.display="none"; }
   if(!modalidades.length) modalidades.push("<div>Sem títulos no dia</div>");
 
   $("saldoTitulo").textContent = emp;
-  $("saldoBody").innerHTML = `
-    <div>Conta: <b>${BRL(caixa)}</b></div>
-    <div>Títulos do dia: <b>${BRL(tit)}</b></div>
-    <div style="margin:6px 0;font-weight:800">Modalidades</div>
-    ${modalidades.join("")}
-    <div style="margin-top:8px" class="${final>=0?'ok':'bad'}">
-      Saldo Final (Dia): <b>${BRL(final)}</b>
-    </div>
-  `;
+ // soma dos Negados
+let negados = 0;
+arr.forEach(t=>{
+  const st = (t.status === "Sim" ? "Pendente" : t.status);
+  if(st === "Negado"){
+    const v = Number(String(t.valor).replace("R$","").replace(/\./g,"").replace(",","."))||0;
+    negados += v;
+  }
+});
+
+$("saldoBody").innerHTML = `
+  <div>Conta: <b>${BRL(caixa)}</b></div>
+  <div>Títulos (exceto Negados): <b>${BRL(tit)}</b></div>
+  <div>Negados: <b>${BRL(negados)}</b></div>
+  <div style="margin:6px 0;font-weight:800">Modalidades</div>
+  ${modalidades.join("")}
+  <div style="margin-top:8px" class="${final>=0?'ok':'bad'}">
+    Saldo Final (Dia): <b>${BRL(final)}</b>
+  </div>
+`;
+
   $("modalSaldo").style.display="flex";
 }
 function fecharSaldo(){
