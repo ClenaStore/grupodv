@@ -96,6 +96,19 @@
   .saldo-card .f{margin-top:4px;font-weight:800}
   .saldo-card .ok{color:var(--green)}
   .saldo-card .bad{color:var(--red)}
+  /* Mobile: cards menores e clicáveis */
+@media (max-width:768px){
+  .saldo-card{
+    min-width:100px;
+    padding:6px;
+    font-size:11px;
+    cursor:pointer;
+  }
+  .saldo-card h3{font-size:11px}
+  .saldo-card .v{font-size:13px}
+  .saldo-card .f{font-size:12px}
+}
+
 
   /* Gráfico + Modalidades */
   .viz{display:flex;gap:12px;align-items:stretch;flex-wrap:wrap;margin:12px 0}
@@ -208,15 +221,24 @@
     <div id="bubble" class="bubble" style="display:none">Total selecionado: R$ 0,00</div>
     <button id="btnMassa" class="btn-massa" style="display:none">Aprovar selecionados</button>
   </div>
-
-  <!-- modal histórico -->
-  <div id="modalHist" class="modal">
-    <div class="box">
-      <button class="close" onclick="fecharHist()">Fechar</button>
-      <h3>Histórico</h3>
-      <div id="histBody" style="white-space:pre-wrap;font-size:13px;color:#cbd5e1"></div>
-    </div>
+<!-- modal histórico -->
+<div id="modalHist" class="modal">
+  <div class="box">
+    <button class="close" onclick="fecharHist()">Fechar</button>
+    <h3>Histórico</h3>
+    <div id="histBody" style="white-space:pre-wrap;font-size:13px;color:#cbd5e1"></div>
   </div>
+</div>
+
+<!-- modal detalhes saldo -->
+<div id="modalSaldo" class="modal">
+  <div class="box">
+    <button class="close" onclick="fecharSaldo()">Fechar</button>
+    <h3 id="saldoTitulo"></h3>
+    <div id="saldoBody" style="font-size:13px;color:#cbd5e1"></div>
+  </div>
+</div>
+
 
 <script>
 /* ========= CONFIG ========= */
@@ -306,7 +328,9 @@ function renderSaldos(sumPorEmpresa){
        <div class="v">Conta: ${BRL(caixa)}</div>
        <div class="v">Títulos do Dia: ${BRL(tit)}</div>
        <div class="f ${final>=0?'ok':'bad'}">Saldo Final (Dia): ${BRL(final)}</div>`;
-    wrap.appendChild(card);
+   card.onclick = ()=> abrirSaldo(emp, caixa, tit, final);
+wrap.appendChild(card);
+
   });
 }
 
@@ -508,6 +532,37 @@ function abrirHist(id){
   $("modalHist").style.display="flex";
 }
 function fecharHist(){ $("modalHist").style.display="none"; }
+
+  function abrirSaldo(emp, caixa, tit, final){
+  // soma títulos por modalidade
+  let modalidades = [];
+  const arr = TITULOS[emp]||[];
+  const somaPorModal = {};
+  arr.forEach(t=>{
+    const v = Number(String(t.valor).replace("R$","").replace(/\./g,"").replace(",","."))||0;
+    somaPorModal[t.meio_pagamento] = (somaPorModal[t.meio_pagamento]||0)+v;
+  });
+  for(const [k,v] of Object.entries(somaPorModal)){
+    modalidades.push(`<div>${k}: <b>${BRL(v)}</b></div>`);
+  }
+  if(!modalidades.length) modalidades.push("<div>Sem títulos no dia</div>");
+
+  $("saldoTitulo").textContent = emp;
+  $("saldoBody").innerHTML = `
+    <div>Conta: <b>${BRL(caixa)}</b></div>
+    <div>Títulos do dia: <b>${BRL(tit)}</b></div>
+    <div style="margin:6px 0;font-weight:800">Modalidades</div>
+    ${modalidades.join("")}
+    <div style="margin-top:8px" class="${final>=0?'ok':'bad'}">
+      Saldo Final (Dia): <b>${BRL(final)}</b>
+    </div>
+  `;
+  $("modalSaldo").style.display="flex";
+}
+function fecharSaldo(){
+  $("modalSaldo").style.display="none";
+}
+
 
 /* ========= BOOT ========= */
 async function refresh(){
