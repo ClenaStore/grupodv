@@ -6,38 +6,24 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
 <style>
   :root{
-    --bg:#0b1220;
-    --card:#0f172a;
-    --ink:#e5f0ff;
-    --muted:#a8b3c7;
-    --line:#243043;
-    --teal:#06b6d4;
-    --blue:#4f46e5;
-    --green:#16a34a;
-    --red:#ef4444;
-    --amber:#f59e0b;
-    --chip:#101a2e;
+    --bg:#0b1220;--card:#0f172a;--ink:#e5f0ff;--muted:#a8b3c7;--line:#243043;
+    --teal:#06b6d4;--blue:#4f46e5;--green:#16a34a;--red:#ef4444;--amber:#f59e0b;--chip:#101a2e;
   }
   *{box-sizing:border-box}
   body{margin:0;font-family:Inter,system-ui;background:var(--bg);color:var(--ink)}
 
-  header{
-    position:sticky;top:0;z-index:20;
-    background:linear-gradient(180deg,#0f172a,#0b1220);
-    border-bottom:1px solid var(--line);
-    padding:10px 12px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap
-  }
+  header{position:sticky;top:0;z-index:20;background:linear-gradient(180deg,#0f172a,#0b1220);
+    border-bottom:1px solid var(--line);padding:10px 12px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap}
   header h1{font-size:16px;margin:0;font-weight:800}
   .controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-  select,input[type="date"]{
-    background:#0b1528;border:1px solid #22314b;color:var(--ink);
-    padding:8px 10px;border-radius:10px;font-size:13px
-  }
+  select,input[type="date"]{background:#0b1528;border:1px solid #22314b;color:var(--ink);
+    padding:8px 10px;border-radius:10px;font-size:13px}
   .btn{border:1px solid #2a3955;background:#0b1528;color:var(--ink);padding:8px 12px;border-radius:10px;cursor:pointer;font-weight:700}
   .btn.icon{display:flex;align-items:center;gap:6px}
 
   /* loader */
-  #overlay{position:fixed;inset:0;background:rgba(3,7,18,.55);backdrop-filter:blur(2px);display:none;align-items:center;justify-content:center;z-index:100}
+  #overlay{position:fixed;inset:0;background:rgba(3,7,18,.55);backdrop-filter:blur(2px);
+    display:none;align-items:center;justify-content:center;z-index:100}
   .spinner{width:48px;height:48px;border:6px solid var(--teal);border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite}
   @keyframes spin{to{transform:rotate(360deg)}}
 
@@ -59,11 +45,8 @@
   .list-head .left{display:flex;gap:8px;align-items:center}
   .master{width:18px;height:18px}
   .lista{display:grid;gap:10px;margin-top:10px}
-  .titulo{
-    background:linear-gradient(180deg,#101a2f,#0f172a);
-    border:1px solid var(--line);border-radius:14px;padding:10px;
-    display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center
-  }
+  .titulo{background:linear-gradient(180deg,#101a2f,#0f172a);border:1px solid var(--line);
+    border-radius:14px;padding:10px;display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center}
   .ck{display:flex;align-items:center;justify-content:center}
   .ck input{width:18px;height:18px}
   .info{display:grid;gap:4px}
@@ -78,10 +61,8 @@
   .mini.negar{background:linear-gradient(180deg,#fb6969,#ef4444)}
   .mini.hist{background:linear-gradient(180deg,#ffd166,#f59e0b);color:#2a1500}
   .mini.loading{opacity:.75;pointer-events:none}
-  .mini.loading::after{
-    content:"";width:12px;height:12px;border:2px solid #fff;border-top-color:transparent;
-    border-radius:50%;animation:spin .8s linear infinite;position:absolute;right:6px;top:50%;transform:translateY(-50%);
-  }
+  .mini.loading::after{content:"";width:12px;height:12px;border:2px solid #fff;border-top-color:transparent;
+    border-radius:50%;animation:spin .8s linear infinite;position:absolute;right:6px;top:50%;transform:translateY(-50%)}
 
   /* Footer */
   .footer{position:fixed;right:12px;bottom:12px;display:flex;flex-direction:column;gap:10px;align-items:flex-end;z-index:15}
@@ -89,14 +70,9 @@
   .btn-massa{background:linear-gradient(180deg,var(--teal),#0796ad);color:#002027;border:0;border-radius:12px;padding:10px 14px;font-weight:900;cursor:pointer}
 
   /* Menu empresas */
-  .menu{position:fixed;top:60px;right:10px;background:#0f172a;border:1px solid var(--line);border-radius:12px;padding:10px;box-shadow:0 10px 30px rgba(0,0,0,.4);display:none;z-index:30}
+  .menu{position:fixed;top:60px;right:10px;background:#0f172a;border:1px solid var(--line);
+    border-radius:12px;padding:10px;box-shadow:0 10px 30px rgba(0,0,0,.4);display:none;z-index:30}
   .menu label{display:block;font-size:13px;margin:6px 0}
-
-  /* Modal */
-  .modal{position:fixed;inset:0;background:rgba(2,6,15,.65);display:none;align-items:center;justify-content:center;z-index:50}
-  .modal .box{background:#0f172a;border:1px solid var(--line);border-radius:12px;max-width:90%;width:420px;padding:12px}
-  .modal h3{margin:0 0 8px}
-  .modal .close{float:right;border:1px solid var(--line);background:#0b1528;border-radius:8px;color:#fff;padding:4px 8px;cursor:pointer}
 </style>
 </head>
 <body>
@@ -113,7 +89,7 @@
       </select>
       <input type="date" id="filtroInicio" />
       <input type="date" id="filtroFim" />
-      <button class="btn icon" id="btnEmpresas">Empresas ⚙</button>
+      <button class="btn icon" id="btnEmpresas">Empresa: <span id="empresaSelecionada">CAP DELICIA</span> ▼</button>
     </div>
   </header>
 
@@ -142,15 +118,6 @@
   <div class="footer">
     <div id="bubble" class="bubble" style="display:none">Total selecionado: R$ 0,00</div>
     <button id="btnMassa" class="btn-massa" style="display:none">Aprovar selecionados</button>
-  </div>
-
-  <!-- modal histórico -->
-  <div id="modalHist" class="modal">
-    <div class="box">
-      <button class="close" onclick="fecharHist()">Fechar</button>
-      <h3>Histórico</h3>
-      <div id="histBody" style="white-space:pre-wrap;font-size:13px;color:#cbd5e1"></div>
-    </div>
   </div>
 
 <script>
@@ -276,49 +243,26 @@ async function acaoStatus(btn,novo){
   const id=card.dataset.id,emp=card.dataset.emp,idx=Number(card.dataset.idx),valor=Number(card.dataset.valor)||0;
   btn.classList.add("loading");
   setPill(card.querySelector("[data-status]"),novo);
-  addHist(id,novo,valor);
   try{await fetch(`${endpointTitulos}?action=atualizar&empresa=${encodeURIComponent(emp)}&index=${idx}&status=${encodeURIComponent(novo)}`)}catch(e){console.error(e)}
   btn.classList.remove("loading");
 }
-$("btnMassa").onclick=async()=>{
-  const bt=$("btnMassa");bt.classList.add("loading");
-  for(const s of SELEC){
-    const card=document.querySelector(`.titulo[data-id="${s.id}"]`);
-    if(!card)continue;
-    await acaoStatus(card.querySelector(".mini.aprovar"),"Aprovado");
-    card.querySelector(".ck input").checked=false;
-  }
-  SELEC=[];$("master").checked=false;renderSelecionados();bt.classList.remove("loading");
-}
-
-/* Histórico */
-function addHist(id,acao,valor){
-  const arr=JSON.parse(localStorage.getItem("hist_"+id)||"[]");
-  arr.push({data:new Date().toLocaleString("pt-BR"),acao,valor});
-  localStorage.setItem("hist_"+id,JSON.stringify(arr));
-}
-function abrirHist(id){
-  const arr=JSON.parse(localStorage.getItem("hist_"+id)||"[]");
-  $("histBody").textContent=arr.length?arr.map(x=>`${x.data} — ${x.acao} — ${BRL(x.valor)}`).join("\n"):"Sem histórico.";
-  $("modalHist").style.display="flex";
-}
-function fecharHist(){$("modalHist").style.display="none"}
 
 /* Boot */
 async function refresh(){
   showOverlay();
   const inicio=$("filtroInicio").value,fim=$("filtroFim").value,filtro=$("filtroStatus").value;
-  const empresas=[...document.querySelectorAll("#menuEmpresas input:checked")].map(i=>i.value);
-  await loadTitulos(empresas,inicio,fim,filtro);
+  const empresa=document.querySelector("#menuEmpresas input:checked").value;
+  await loadTitulos([empresa],inicio,fim,filtro);
+  $("empresaSelecionada").textContent=empresa;
   renderLista();hideOverlay();
 }
 (function boot(){
   const hoje=new Date().toISOString().slice(0,10);
   $("filtroInicio").value=hoje;$("filtroFim").value=hoje;
   const M=$("menuEmpresas");M.innerHTML="";
-  EMP_DEFAULT.forEach(emp=>{
+  EMP_DEFAULT.forEach((emp,i)=>{
     const lbl=document.createElement("label");
-    lbl.innerHTML=`<input type="checkbox" value="${emp}" checked /> ${emp}`;
+    lbl.innerHTML=`<input type="radio" name="empresaSel" value="${emp}" ${i===0?"checked":""}/> ${emp}`;
     lbl.querySelector("input").onchange=refresh;M.appendChild(lbl);
   });
   $("filtroStatus").onchange=refresh;
