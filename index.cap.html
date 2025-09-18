@@ -261,18 +261,18 @@ function renderSaldos(sumPorEmpresa){
     if(!(emp in SALDOS)) return;
     const caixa = SALDOS[emp]||0;
     const tit = sumPorEmpresa[emp]||0;
-    const final = caixa - tit; // Pendente+Aprovado+Liquidado contam
+    const final = caixa - tit;
     const card = document.createElement("div");
     card.className="saldo-card";
-card.innerHTML =
-  `<h3>${emp}</h3>
-   <div class="v">Caixa: ${BRL(caixa)}</div>
-   <div class="v">Títulos do Dia: ${BRL(tit)}</div>
-   <div class="f ${final>=0?'ok':'bad'}">Saldo Final (Dia): ${BRL(final)}</div>`;
-
+    card.innerHTML =
+      `<h3>${emp}</h3>
+       <div class="v">Conta: ${BRL(caixa)}</div>
+       <div class="v">Títulos do Dia: ${BRL(tit)}</div>
+       <div class="f ${final>=0?'ok':'bad'}">Saldo Final (Dia): ${BRL(final)}</div>`;
     wrap.appendChild(card);
   });
 }
+
 
 /* ========= RENDER: LISTA ========= */
 function renderLista(diaISO){
