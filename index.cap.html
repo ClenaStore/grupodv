@@ -64,10 +64,27 @@
 
 
   /* Saldo cards - mobile first (carrossel horizontal) */
-  .saldos{
-    display:flex; gap:10px; overflow:auto; padding-bottom:6px;
-    scrollbar-width:thin; scroll-snap-type:x mandatory;
+/* Mobile: carrossel horizontal */
+.saldos {
+  display:flex;
+  gap:10px;
+  overflow:auto;
+  padding-bottom:6px;
+  scrollbar-width:thin;
+  scroll-snap-type:x mandatory;
+}
+
+/* Desktop: grid */
+@media (min-width:1024px) {
+  .saldos {
+    display:grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap:12px;
+    overflow:visible;
+    padding-bottom:0;
   }
+}
+
   .saldo-card{
     min-width:220px; scroll-snap-align:start;
     background:linear-gradient(180deg,#121b31,#0e1528);
@@ -499,8 +516,15 @@ async function refresh(){
 
   await loadSaldos();
   await loadTitulos(empresas, diaISO, filtro);
-  renderLista(diaISO);
+   renderLista(diaISO);
+
+  // garante que saldos sejam renderizados mesmo sem títulos
+  const somaEmp = {};
+  empresas.forEach(emp => { somaEmp[emp] = 0; });
+  renderSaldos(somaEmp);
+
   hideOverlay();
+
 }
 
 (function boot(){
