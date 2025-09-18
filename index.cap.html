@@ -5,10 +5,8 @@
 <title>Painel Financeiro • CAP</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
 <style>
-  :root{
-    --bg:#0b1220;--card:#0f172a;--ink:#e5f0ff;--muted:#a8b3c7;--line:#243043;
-    --teal:#06b6d4;--blue:#4f46e5;--green:#16a34a;--red:#ef4444;--amber:#f59e0b;
-  }
+  :root{--bg:#0b1220;--card:#0f172a;--ink:#e5f0ff;--muted:#a8b3c7;--line:#243043;
+    --teal:#06b6d4;--blue:#4f46e5;--green:#16a34a;--red:#ef4444;--amber:#f59e0b;}
   *{box-sizing:border-box}
   body{margin:0;font-family:Inter,system-ui;background:var(--bg);color:var(--ink)}
 
@@ -52,6 +50,7 @@
   .mini.aprovar{background:linear-gradient(180deg,#19c37d,#16a34a)}
   .mini.negar{background:linear-gradient(180deg,#fb6969,#ef4444)}
   .mini.hist{background:linear-gradient(180deg,#ffd166,#f59e0b);color:#2a1500}
+  .mini.obs{background:linear-gradient(180deg,#60a5fa,#1d4ed8)}
   .mini.loading{opacity:.75;pointer-events:none}
 
   .footer{position:fixed;right:12px;bottom:12px;display:flex;flex-direction:column;gap:10px;align-items:flex-end;z-index:15}
@@ -62,6 +61,12 @@
   .menu{position:fixed;top:60px;right:10px;background:#0f172a;border:1px solid var(--line);
     border-radius:12px;padding:10px;box-shadow:0 10px 30px rgba(0,0,0,.4);display:none;z-index:30}
   .menu label{display:block;font-size:13px;margin:6px 0}
+
+  .modal{position:fixed;inset:0;background:rgba(2,6,15,.65);display:none;align-items:center;justify-content:center;z-index:200}
+  .modal .box{background:#0f172a;border:1px solid var(--line);border-radius:12px;max-width:90%;width:400px;padding:12px}
+  .modal h3{margin:0 0 8px}
+  .modal .close{float:right;border:1px solid var(--line);background:#0b1528;border-radius:8px;color:#fff;padding:4px 8px;cursor:pointer}
+  textarea{width:100%;min-height:80px;border-radius:8px;border:1px solid #22314b;background:#0b1528;color:#fff;padding:6px}
 </style>
 </head>
 <body>
@@ -102,10 +107,29 @@
   <button id="btnMassa" class="btn-massa" style="display:none">Aprovar selecionados</button>
 </div>
 
+<!-- modal histórico -->
+<div id="modalHist" class="modal">
+  <div class="box">
+    <button class="close" onclick="fecharHist()">Fechar</button>
+    <h3>Histórico</h3>
+    <div id="histBody" style="white-space:pre-wrap;font-size:13px;color:#cbd5e1"></div>
+  </div>
+</div>
+
+<!-- modal observação -->
+<div id="modalObs" class="modal">
+  <div class="box">
+    <button class="close" onclick="fecharObs()">Fechar</button>
+    <h3>Observação</h3>
+    <textarea id="textoObs" placeholder="Digite a observação..."></textarea>
+    <button class="btn" style="margin-top:8px" onclick="salvarObs()">Salvar</button>
+  </div>
+</div>
+
 <script>
 const endpointTitulos="https://script.google.com/macros/s/AKfycbwt9y43T8Ya0AhNusue3PTekaBPDnrqSK33dsbnmOKezcm3wnSrUz3z2jO_9BoJd8MH/exec";
 const EMP_DEFAULT=["CAP DELICIA","CAP VILLA","CAP PADARIA","CAP MERCATTO","CAP M.KIDS"];
-let TITULOS={},SELEC=[];
+let TITULOS={},SELEC=[],obsContext={};
 
 const $=id=>document.getElementById(id);
 const BRL=n=>(isNaN(n)?0:n).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
@@ -144,7 +168,7 @@ function renderLista(){
     const arr=TITULOS[emp]||[];
     arr.forEach((t,idx)=>{
       totalItens++;
-      const valor=Number(String(t.valor).replace("R$","").replace(/\./g,"").replace(",","."));
+      const valor=Number(String(t.valor).replace("R$","").replace(/\./g,"").replace(",","."))||0;
       const meio=t.meio_pagamento||"Outros";
       somaModal[meio]=(somaModal[meio]||0)+valor;
       const id=ID(emp,idx);
@@ -159,8 +183,10 @@ function renderLista(){
           <div class="row">Valor: <b>${BRL(valor)}</b> <span class="pill" data-status>${st}</span></div>
         </div>
         <div class="actions">
+          <button class="mini obs" onclick="abrirObs('${id}','${emp}',${idx})">✏️</button>
           <button class="mini aprovar" onclick="acaoStatus(this,'Aprovado')">✓</button>
           <button class="mini negar" onclick="acaoStatus(this,'Negado')">✗</button>
+          <button class="mini hist" onclick="abrirHist('${id}')">H</button>
         </div>`;
       setPill(card.querySelector("[data-status]"),st);
       lista.appendChild(card);
@@ -231,6 +257,32 @@ $("btnMassa").onclick=async()=>{
     card.querySelector(".ck input").checked=false;
   }
   SELEC=[];$("master").checked=false;renderSelecionados();bt.classList.remove("loading");
+}
+
+/* Histórico */
+function abrirHist(id){
+  const arr=JSON.parse(localStorage.getItem("hist_"+id)||"[]");
+  $("histBody").textContent=arr.length?arr.map(x=>`${x.data} — ${x.acao}`).join("\n"):"Sem histórico.";
+  $("modalHist").style.display="flex";
+}
+function fecharHist(){$("modalHist").style.display="none"}
+
+/* Observação */
+function abrirObs(id,emp,idx){
+  obsContext={id,emp,idx};
+  $("textoObs").value="";
+  $("modalObs").style.display="flex";
+}
+function fecharObs(){$("modalObs").style.display="none"}
+async function salvarObs(){
+  const {emp,idx}=obsContext;
+  const texto=$("textoObs").value.trim();
+  if(!texto)return;
+  try{
+    await fetch(`${endpointTitulos}?action=atualizarObservacao&empresa=${encodeURIComponent(emp)}&index=${idx}&coluna=AI&texto=${encodeURIComponent(texto)}`);
+    alert("Observação salva!");
+  }catch(e){console.error(e)}
+  fecharObs();
 }
 
 /* Boot */
