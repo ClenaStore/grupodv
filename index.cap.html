@@ -558,12 +558,17 @@ function fecharHist(){ $("modalHist").style.display="none"; }
  // soma dos Negados
 let negados = 0;
 arr.forEach(t=>{
-  const st = (t.status === "Sim" ? "Pendente" : t.status);
-  if(st === "Negado"){
-    const v = Number(String(t.valor).replace("R$","").replace(/\./g,"").replace(",","."))||0;
+  let st = (t.status === "Sim" ? "Pendente" : t.status);
+  if(st.trim().toUpperCase() === "NEGADO"){   // garante comparação certa
+    const v = Number(String(t.valor)
+      .replace("R$","")
+      .replace(/\./g,"")
+      .replace(",",".")
+    ) || 0;
     negados += v;
   }
 });
+
 
 $("saldoBody").innerHTML = `
   <div>Conta: <b>${BRL(caixa)}</b></div>
