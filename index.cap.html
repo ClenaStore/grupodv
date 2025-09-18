@@ -299,18 +299,20 @@ async function loadTitulos(empresas, diaISO, filtro){
       .then(r=>r.json().then(d=>({emp, data: d.titulos||d})))
   ));
 
-  resps.forEach(({emp,data})=>{
-    const arr = data.filter(t=>{
-      const tDia = iso(t.vencimento);
-      const byDay = (tDia===diaISO);
-let statusNorm = (t.status === "Sim" ? "Pendente" : t.status);
-const byStatus = (filtro==="Todos" ? true : (statusNorm===filtro));
+ resps.forEach(({emp,data})=>{
+  // todos do dia (bruto)
+  const all = data.filter(t => iso(t.vencimento) === diaISO);
 
-
-      return byDay && byStatus;
-    });
-    TITULOS[emp] = arr;
+  // filtrados conforme o status escolhido
+  const arr = all.filter(t=>{
+    let statusNorm = (t.status === "Sim" ? "Pendente" : t.status);
+    return (filtro==="Todos" ? true : (statusNorm===filtro));
   });
+
+  TITULOS[emp] = arr;          // usado na lista
+  TITULOS[emp+"_ALL"] = all;   // usado no saldo
+});
+
 }
 
 /* ========= RENDER: SALDOS ========= */
@@ -325,7 +327,7 @@ function renderSaldos(sumPorEmpresa){
 
     // calcular totais por status no mesmo loop
     let totStatus = {Aprovado:0, Pendente:0, Liquidado:0, Negado:0};
-    (TITULOS[emp]||[]).forEach(t=>{
+    (TITULOS[emp+"_ALL"]||[]).forEach(t=>{
       let st = (t.status === "Sim" ? "Pendente" : t.status);
       const v = Number(String(t.valor).replace("R$","").replace(/\./g,"").replace(",",".") ) || 0;
       if(st in totStatus) totStatus[st] += v;
