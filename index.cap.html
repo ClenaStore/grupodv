@@ -324,4 +324,15 @@ window.onload=()=>{
   document.getElementById("filtroData").value=hoje;
 
   const menu=document.getElementById("menuEmpresas");
-  ["CAP DELICIA","CAP VILLA","CAP PADARIA","CAP MERCATTO","CAP M.KIDS"].forEach
+  ["CAP DELICIA","CAP VILLA","CAP PADARIA","CAP MERCATTO","CAP M.KIDS"].forEach(emp=>{
+    const checked = emp !== "CAP VILLA" ? "checked" : "";
+    const lbl=document.createElement("label");
+    lbl.innerHTML=`<input type="checkbox" value="${emp}" ${checked} onchange="carregarTitulos()"> ${emp}`;
+    menu.appendChild(lbl);
+  });
+
+  carregarSaldos().then(carregarTitulos);
+};
+</script>
+</body>
+</html>
