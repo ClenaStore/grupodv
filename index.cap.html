@@ -5,8 +5,10 @@
 <title>Painel Financeiro • CAP</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
 <style>
-  :root{--bg:#0b1220;--card:#0f172a;--ink:#e5f0ff;--muted:#a8b3c7;--line:#243043;
-    --teal:#06b6d4;--blue:#4f46e5;--green:#16a34a;--red:#ef4444;--amber:#f59e0b;}
+  :root{
+    --bg:#0b1220;--card:#0f172a;--ink:#e5f0ff;--muted:#a8b3c7;--line:#243043;
+    --teal:#06b6d4;--blue:#4f46e5;--green:#16a34a;--red:#ef4444;--amber:#f59e0b;
+  }
   *{box-sizing:border-box}
   body{margin:0;font-family:Inter,system-ui;background:var(--bg);color:var(--ink)}
 
@@ -36,53 +38,23 @@
   .mod.cartao{background:linear-gradient(180deg,#4f46e5,#312e81)}
 
   .list-head{display:flex;align-items:center;justify-content:space-between;margin-top:6px}
-  .lista{display:grid;gap:14px;margin-top:10px}
-
-  .titulo{
-    background:linear-gradient(180deg,#101a2f,#0f172a);
-    border:1px solid var(--line);
-    border-radius:14px;
-    padding:16px;
-    display:flex;
-    flex-direction:column;
-    gap:10px;
-  }
+  .lista{display:grid;gap:16px;margin-top:10px}
+  .titulo{background:linear-gradient(180deg,#101a2f,#0f172a);border:1px solid var(--line);
+    border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px}
   .ck input{width:18px;height:18px}
-  .info{display:grid;gap:6px;font-size:14px}
   .row{display:flex;gap:8px;flex-wrap:wrap;font-size:13px;color:var(--muted)}
   .row b{color:var(--ink)}
   .pill{padding:4px 8px;border-radius:999px;border:1px solid #2a3955;background:#0b1528;font-size:12px;font-weight:800}
   .pill.ok{border-color:#155e32;color:#b6f3c5;background:#0e2a1b}
   .pill.warn{border-color:#7a1e1e;color:#ffb4b4;background:#2a0e0e}
+  .historico,.obsText{font-size:12px;color:#cbd5e1;background:#0b1528;padding:6px;border-radius:8px;white-space:pre-wrap}
 
-  .extra{
-    font-size:12px;
-    color:var(--muted);
-    background:#0b1528;
-    padding:6px 8px;
-    border-radius:8px;
-  }
-
-  .actions{
-    display:flex;
-    gap:10px;
-    justify-content:space-around;
-    margin-top:10px;
-  }
-  .actions .mini{
-    flex:1;
-    text-align:center;
-    font-size:14px;
-    padding:10px;
-    border-radius:10px;
-    border:1px solid #22314b;
-    cursor:pointer;
-    font-weight:800;
-  }
-  .mini.aprovar{background:linear-gradient(180deg,#19c37d,#16a34a);color:#04130b}
-  .mini.negar{background:linear-gradient(180deg,#fb6969,#ef4444);color:#2b0404}
-  .mini.hist{background:linear-gradient(180deg,#ffd166,#f59e0b);color:#2a1500}
+  .actions{display:flex;flex-wrap:wrap;gap:8px;justify-content:space-between}
+  .mini{flex:1;text-align:center;padding:10px;border-radius:10px;border:1px solid #22314b;color:#fff;font-weight:800;cursor:pointer}
   .mini.obs{background:linear-gradient(180deg,#60a5fa,#1d4ed8)}
+  .mini.aprovar{background:linear-gradient(180deg,#19c37d,#16a34a)}
+  .mini.negar{background:linear-gradient(180deg,#fb6969,#ef4444)}
+  .mini.hist{background:linear-gradient(180deg,#ffd166,#f59e0b);color:#2a1500}
   .mini.loading{opacity:.75;pointer-events:none}
 
   .footer{position:fixed;right:12px;bottom:12px;display:flex;flex-direction:column;gap:10px;align-items:flex-end;z-index:15}
@@ -139,15 +111,6 @@
   <button id="btnMassa" class="btn-massa" style="display:none">Aprovar selecionados</button>
 </div>
 
-<!-- modal histórico -->
-<div id="modalHist" class="modal">
-  <div class="box">
-    <button class="close" onclick="fecharHist()">Fechar</button>
-    <h3>Histórico</h3>
-    <div id="histBody" style="white-space:pre-wrap;font-size:13px;color:#cbd5e1"></div>
-  </div>
-</div>
-
 <!-- modal observação -->
 <div id="modalObs" class="modal">
   <div class="box">
@@ -159,7 +122,7 @@
 </div>
 
 <script>
-const endpointTitulos="https://script.google.com/macros/s/AKfycbzfP-Mb0vB7eWNJKD9OzZlvVcwR_fuv2t6ft89qKUxW9sMusdMHv5VK1A_2aRJI7CTF/exec";
+const endpointTitulos="SEU_ENDPOINT_AQUI";
 const EMP_DEFAULT=["CAP DELICIA","CAP VILLA","CAP PADARIA","CAP MERCATTO","CAP M.KIDS"];
 let TITULOS={},SELEC=[],obsContext={};
 
@@ -206,20 +169,23 @@ function renderLista(){
       const id=ID(emp,idx);
       const st=(t.status==="Sim"?"Pendente":t.status);
       const card=document.createElement("div");
-      card.className="titulo";card.dataset.id=id;card.dataset.emp=emp;card.dataset.idx=idx;card.dataset.valor=valor;
+      card.className="titulo";
+      card.dataset.id=id;card.dataset.emp=emp;card.dataset.idx=idx;card.dataset.valor=valor;
+
       card.innerHTML=`
-        <div class="info">
-          <div class="row"><b>${t.fornecedor}</b> • ${emp}</div>
-          <div class="row">Venc: <b>${iso(t.vencimento).split("-").reverse().join("/")}</b> • Meio: <b>${meio}</b></div>
-          <div class="row">Valor: <b>${BRL(valor)}</b> <span class="pill" data-status>${st}</span></div>
-          ${t.historico ? `<div class="extra">📜 Histórico: ${t.historico}</div>` : ""}
-          ${t.observacao ? `<div class="extra">📝 Obs: ${t.observacao}</div>` : ""}
+        <div style="display:flex;align-items:center;gap:8px">
+          <input type="checkbox" onchange="toggleSel(this)" />
+          <b>${t.fornecedor}</b> • ${emp}
         </div>
+        <div class="row">Venc: <b>${iso(t.vencimento).split("-").reverse().join("/")}</b> • Meio: <b>${meio}</b></div>
+        <div class="row">Valor: <b>${BRL(valor)}</b> <span class="pill" data-status>${st}</span></div>
+        ${t.observacao?`<div class="obsText"><b>Obs:</b> ${t.observacao}</div>`:""}
+        ${t.historico?`<div class="historico"><b>Histórico:</b><br>${t.historico}</div>`:""}
         <div class="actions">
           <button class="mini obs" onclick="abrirObs('${id}','${emp}',${idx})">✏️ Observação</button>
           <button class="mini aprovar" onclick="acaoStatus(this,'Aprovado')">✓ Aprovar</button>
           <button class="mini negar" onclick="acaoStatus(this,'Negado')">✗ Negar</button>
-          <button class="mini hist" onclick="abrirHist('${id}')">📜 Histórico</button>
+          <button class="mini hist" onclick="abrirHist('${id}')">📒 Histórico</button>
         </div>`;
       setPill(card.querySelector("[data-status]"),st);
       lista.appendChild(card);
@@ -259,7 +225,7 @@ function renderModalidades(sum){
 }
 
 /* Seleção */
-$("master").onchange=()=>{document.querySelectorAll("#lista .ck input").forEach(cb=>{cb.checked=$("master").checked;cb.dispatchEvent(new Event("change"))})};
+$("master").onchange=()=>{document.querySelectorAll("#lista input[type=checkbox]").forEach(cb=>{cb.checked=$("master").checked;cb.dispatchEvent(new Event("change"))})};
 function toggleSel(chk){
   const card=chk.closest(".titulo");
   const id=card.dataset.id,emp=card.dataset.emp,idx=Number(card.dataset.idx),valor=Number(card.dataset.valor)||0;
@@ -269,8 +235,9 @@ function toggleSel(chk){
 function renderSelecionados(){
   const total=SELEC.reduce((s,x)=>s+x.valor,0);
   if(SELEC.length){$("bubble").style.display="block";$("btnMassa").style.display="block";$("bubble").textContent="Total selecionado: "+BRL(total)}
-  else{$("bubble").style.display="none";$("btnMassa").style.display="none"}}
-  
+  else{$("bubble").style.display="none";$("btnMassa").style.display="none"}
+}
+
 /* Aprovar/Negar */
 async function acaoStatus(btn,novo){
   const card=btn.closest(".titulo");
@@ -286,38 +253,33 @@ $("btnMassa").onclick=async()=>{
     const card=document.querySelector(`.titulo[data-id="${s.id}"]`);
     if(!card)continue;
     await acaoStatus(card.querySelector(".mini.aprovar"),"Aprovado");
-    card.querySelector(".ck input").checked=false;
+    card.querySelector("input[type=checkbox]").checked=false;
   }
   SELEC=[];$("master").checked=false;renderSelecionados();bt.classList.remove("loading");
 }
 
-/* Histórico (local) */
+/* Histórico local */
 function abrirHist(id){
   const arr=JSON.parse(localStorage.getItem("hist_"+id)||"[]");
-  $("histBody").textContent=arr.length?arr.map(x=>`${x.data} — ${x.acao}`).join("\n"):"Sem histórico.";
-  $("modalHist").style.display="flex";
+  alert(arr.length?arr.map(x=>`${x.data} — ${x.acao}`).join("\n"):"Sem histórico.");
 }
-function fecharHist(){$("modalHist").style.display="none"}
 
 /* Observação */
 function abrirObs(id,emp,idx){
-  obsContext={id,emp,idx};
+  obsContext={id,emp,idx,card:document.querySelector(`.titulo[data-id="${id}"]`)};
   $("textoObs").value="";
   $("modalObs").style.display="flex";
 }
 function fecharObs(){$("modalObs").style.display="none"}
 async function salvarObs(){
-  const {emp,idx,id}=obsContext;
+  const {emp,idx,card}=obsContext;
   const texto=$("textoObs").value.trim();
   if(!texto)return;
   try{
     await fetch(`${endpointTitulos}?action=atualizarObservacao&empresa=${encodeURIComponent(emp)}&index=${idx}&coluna=AI&texto=${encodeURIComponent(texto)}`);
-    const card=document.querySelector(`.titulo[data-id="${id}"] .info`);
-    if(card){
-      let obsDiv=card.querySelector(".extra.obs");
-      if(!obsDiv){obsDiv=document.createElement("div");obsDiv.className="extra obs";card.appendChild(obsDiv);}
-      obsDiv.textContent="📝 Obs: "+texto;
-    }
+    let obsEl=card.querySelector(".obsText");
+    if(!obsEl){obsEl=document.createElement("div");obsEl.className="obsText";card.insertBefore(obsEl,card.querySelector(".actions"))}
+    obsEl.innerHTML=`<b>Obs:</b> ${texto}`;
     alert("Observação salva!");
   }catch(e){console.error(e)}
   fecharObs();
