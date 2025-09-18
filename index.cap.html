@@ -42,11 +42,12 @@
   .ck input{width:18px;height:18px}
   .row{display:flex;gap:8px;flex-wrap:wrap;font-size:12px;color:var(--muted)}
   .row b{color:var(--ink)}
+  .extra{font-size:12px;color:#93c5fd;margin-top:4px}
   .pill{padding:4px 8px;border-radius:999px;border:1px solid #2a3955;background:#0b1528;font-size:12px;font-weight:800}
   .pill.ok{border-color:#155e32;color:#b6f3c5;background:#0e2a1b}
   .pill.warn{border-color:#7a1e1e;color:#ffb4b4;background:#2a0e0e}
   .actions{display:flex;gap:6px}
-  .mini{padding:6px 9px;border-radius:10px;border:1px solid #22314b;background:#0b1528;color:#fff;font-weight:800;cursor:pointer;position:relative}
+  .mini{padding:6px 9px;border-radius:10px;border:1px solid #22314b;background:#0b1528;color:#fff;font-weight:800;cursor:pointer}
   .mini.aprovar{background:linear-gradient(180deg,#19c37d,#16a34a)}
   .mini.negar{background:linear-gradient(180deg,#fb6969,#ef4444)}
   .mini.hist{background:linear-gradient(180deg,#ffd166,#f59e0b);color:#2a1500}
@@ -56,7 +57,6 @@
   .footer{position:fixed;right:12px;bottom:12px;display:flex;flex-direction:column;gap:10px;align-items:flex-end;z-index:15}
   .bubble{background:var(--blue);color:#fff;border-radius:12px;padding:8px 12px;font-weight:800}
   .btn-massa{background:linear-gradient(180deg,var(--teal),#0796ad);color:#002027;border:0;border-radius:12px;padding:10px 14px;font-weight:900;cursor:pointer}
-  .btn-massa.loading{opacity:.8;pointer-events:none}
 
   .menu{position:fixed;top:60px;right:10px;background:#0f172a;border:1px solid var(--line);
     border-radius:12px;padding:10px;box-shadow:0 10px 30px rgba(0,0,0,.4);display:none;z-index:30}
@@ -81,7 +81,7 @@
       <option value="Liquidado">Liquidados</option>
       <option value="Todos">Todos</option>
     </select>
-    <input type="date" id="filtroPeriodo" multiple />
+    <input type="date" id="filtroPeriodo" />
     <button class="btn icon" id="btnEmpresas">Empresa: <span id="empresaSelecionada">CAP DELICIA</span> ▼</button>
   </div>
 </header>
@@ -111,7 +111,7 @@
 <div id="modalHist" class="modal">
   <div class="box">
     <button class="close" onclick="fecharHist()">Fechar</button>
-    <h3>Histórico</h3>
+    <h3>Histórico de Movimentos</h3>
     <div id="histBody" style="white-space:pre-wrap;font-size:13px;color:#cbd5e1"></div>
   </div>
 </div>
@@ -173,14 +173,19 @@ function renderLista(){
       somaModal[meio]=(somaModal[meio]||0)+valor;
       const id=ID(emp,idx);
       const st=(t.status==="Sim"?"Pendente":t.status);
+
       const card=document.createElement("div");
-      card.className="titulo";card.dataset.id=id;card.dataset.emp=emp;card.dataset.idx=idx;card.dataset.valor=valor;
+      card.className="titulo";
+      card.dataset.id=id;card.dataset.emp=emp;card.dataset.idx=idx;card.dataset.valor=valor;
+
       card.innerHTML=`
         <div class="ck"><input type="checkbox" onchange="toggleSel(this)" /></div>
         <div class="info">
           <div class="row"><b>${t.fornecedor}</b> • ${emp}</div>
           <div class="row">Venc: <b>${iso(t.vencimento).split("-").reverse().join("/")}</b> • Meio: <b>${meio}</b></div>
           <div class="row">Valor: <b>${BRL(valor)}</b> <span class="pill" data-status>${st}</span></div>
+          ${t.historico?`<div class="extra">📜 ${t.historico}</div>`:""}
+          ${t.observacao?`<div class="extra">📝 ${t.observacao}</div>`:""}
         </div>
         <div class="actions">
           <button class="mini obs" onclick="abrirObs('${id}','${emp}',${idx})">✏️</button>
@@ -245,6 +250,7 @@ async function acaoStatus(btn,novo){
   const emp=card.dataset.emp,idx=card.dataset.idx;
   btn.classList.add("loading");
   setPill(card.querySelector("[data-status]"),novo);
+  addHist(card.dataset.id,novo);
   try{await fetch(`${endpointTitulos}?action=atualizar&empresa=${encodeURIComponent(emp)}&index=${idx}&status=${encodeURIComponent(novo)}`)}catch(e){console.error(e)}
   btn.classList.remove("loading");
 }
@@ -259,7 +265,12 @@ $("btnMassa").onclick=async()=>{
   SELEC=[];$("master").checked=false;renderSelecionados();bt.classList.remove("loading");
 }
 
-/* Histórico */
+/* Histórico de movimentos */
+function addHist(id,acao){
+  const arr=JSON.parse(localStorage.getItem("hist_"+id)||"[]");
+  arr.push({data:new Date().toLocaleString("pt-BR"),acao});
+  localStorage.setItem("hist_"+id,JSON.stringify(arr));
+}
 function abrirHist(id){
   const arr=JSON.parse(localStorage.getItem("hist_"+id)||"[]");
   $("histBody").textContent=arr.length?arr.map(x=>`${x.data} — ${x.acao}`).join("\n"):"Sem histórico.";
@@ -269,18 +280,26 @@ function fecharHist(){$("modalHist").style.display="none"}
 
 /* Observação */
 function abrirObs(id,emp,idx){
-  obsContext={id,emp,idx};
+  obsContext={id,emp,idx,card:document.querySelector(`.titulo[data-id="${id}"]`)};
   $("textoObs").value="";
   $("modalObs").style.display="flex";
 }
 function fecharObs(){$("modalObs").style.display="none"}
 async function salvarObs(){
-  const {emp,idx}=obsContext;
+  const {emp,idx,card,id}=obsContext;
   const texto=$("textoObs").value.trim();
   if(!texto)return;
   try{
-    await fetch(`${endpointTitulos}?action=atualizarObservacao&empresa=${encodeURIComponent(emp)}&index=${idx}&coluna=AI&texto=${encodeURIComponent(texto)}`);
-    alert("Observação salva!");
+    const r=await fetch(`${endpointTitulos}?action=atualizarObservacao&empresa=${encodeURIComponent(emp)}&index=${idx}&coluna=AI&texto=${encodeURIComponent(texto)}`);
+    const j=await r.json();
+    if(j.sucesso){
+      alert("Observação salva!");
+      let info=card.querySelector(".info");
+      let div=info.querySelector(".extra.obs");
+      if(!div){div=document.createElement("div");div.className="extra obs";info.appendChild(div);}
+      div.textContent="📝 "+texto;
+      addHist(id,"Obs: "+texto);
+    }
   }catch(e){console.error(e)}
   fecharObs();
 }
@@ -290,8 +309,7 @@ async function refresh(){
   showOverlay();
   const filtro=$("filtroStatus").value;
   const empresa=document.querySelector("#menuEmpresas input:checked").value;
-  const periodo=$("filtroPeriodo").value.split(",");
-  const inicio=periodo[0]||"",fim=periodo[1]||periodo[0]||"";
+  const inicio=$("filtroPeriodo").value,fim=inicio;
   await loadTitulos([empresa],inicio,fim,filtro);
   $("empresaSelecionada").textContent=empresa;
   renderLista();hideOverlay();
