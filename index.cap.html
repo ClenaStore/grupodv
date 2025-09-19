@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<title>Painel Financeiro • CAP</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<style>
+  :root{
+    --bg:#0b1220;--card:#0f172a;--ink:#e5f0ff;--muted:#a8b3c7;--line:#243043;
+    --teal:#06b6d4;--blue:#4f46e5;--green:#16a34a;--red:#ef4444;--amber:#f59e0b;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:Inter,system-ui;background:var(--bg);color:var(--ink);font-size:15px}
+
+  header{position:sticky;top:0;z-index:20;background:linear-gradient(180deg,#0f172a,#0b1220);
+    border-bottom:1px solid var(--line);padding:14px;display:flex;flex-direction:column;gap:10px}
+  header h1{font-size:18px;margin:0;font-weight:800}
+
+  .controls{width:100%;display:flex;flex-direction:column;gap:8px}
+  .row-filtros{display:flex;gap:8px;width:100%}
+  .row-filtros select{flex:1}
+  .row-linha{display:flex;gap:8px;width:100%}
+  .row-linha input{flex:1}
+
+  select,input{background:#0b1528;border:1px solid #22314b;color:var(--ink);
+    padding:10px 14px;border-radius:10px;font-size:15px;width:100%}
+  .btn{border:1px solid #2a3955;background:#0b1528;color:var(--ink);padding:10px 14px;border-radius:10px;cursor:pointer;font-weight:700;font-size:15px;width:100%;position:relative;overflow:hidden}
+  .btn.icon{display:flex;align-items:center;gap:6px;justify-content:center}
+
+  #overlay{position:fixed;inset:0;background:rgba(3,7,18,.55);display:none;align-items:center;justify-content:center;z-index:100}
+  .spinner{width:56px;height:56px;border:6px solid var(--teal);border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  .spinner-btn{width:16px;height:16px;border:2px solid #fff;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite;position:absolute;top:50%;left:50%;margin:-8px 0 0 -8px;display:none}
+  .loading .spinner-btn{display:block}
+  .loading span,.loading b,.loading i{visibility:hidden}
+
+  .container{padding:16px;max-width:1250px;margin:0 auto}
+
+  .mods-card{margin:16px 0;background:#0f172a;border:1px solid var(--line);border-radius:18px;padding:16px}
+  .mods{display:grid;grid-template-columns:1fr;gap:12px}
+  @media(min-width:768px){.mods{grid-template-columns:1fr 1fr}}
+  @media(min-width:1024px){.mods{grid-template-columns:1fr 1fr 1fr}}
+  .mod{border-radius:16px;padding:14px;font-weight:700;display:flex;justify-content:space-between;align-items:center;color:#fff;font-size:16px}
+  .mod.total{background:#0f172a;border:1px solid var(--line)}
+  .mod.boleto{background:linear-gradient(180deg,#a855f7,#6b21a8)}
+  .mod.pix{background:linear-gradient(180deg,#06b6d4,#0e7490)}
+  .mod.cartao{background:linear-gradient(180deg,#4f46e5,#312e81)}
+
+  .list-head{display:flex;align-items:center;justify-content:space-between;margin-top:10px;font-size:16px}
+  .lista{display:grid;gap:14px;margin-top:14px}
+  .titulo{background:linear-gradient(180deg,#101a2f,#0f172a);border:1px solid var(--line);
+    border-radius:18px;padding:12px;display:grid;grid-template-columns:1fr;gap:10px;position:relative}
+  .ck input{width:22px;height:22px}
+  .row{display:flex;gap:10px;flex-wrap:wrap;font-size:14px;color:var(--muted)}
+  .row b{color:var(--ink);font-size:15px}
+  .row.hist{color:#f59e0b;font-weight:600;font-size:13px}
+
+  .pill{padding:6px 12px;border-radius:999px;border:1px solid #2a3955;background:#0b1528;font-size:13px;font-weight:800;
+    position:absolute;top:8px;right:8px}
+  .pill.ok{border-color:#155e32;color:#b6f3c5;background:#0e2a1b}
+  .pill.warn{border-color:#7a1e1e;color:#ffb4b4;background:#2a0e0e}
+
+  .actions{display:flex;gap:6px;flex-wrap:wrap}
+  .mini{flex:1 1 calc(50% - 6px);padding:8px;border-radius:12px;border:1px solid #22314b;background:#0b1528;color:#fff;font-weight:700;cursor:pointer;font-size:14px;text-align:center;position:relative;overflow:hidden}
+  .mini.aprovar{background:linear-gradient(180deg,#19c37d,#16a34a)}
+  .mini.negar{background:linear-gradient(180deg,#fb6969,#ef4444)}
+  .mini.obs{background:linear-gradient(180deg,#60a5fa,#1d4ed8)}
+  .mini.loading{opacity:.75;pointer-events:none}
+
+  .footer{position:fixed;left:0;right:0;bottom:0;display:flex;flex-direction:column;gap:10px;align-items:stretch;z-index:15;padding:12px}
+  .bubble{background:var(--blue);color:#fff;border-radius:12px;padding:12px 16px;font-weight:700;font-size:15px;text-align:center}
+  .btn-massa{background:linear-gradient(180deg,var(--teal),#0796ad);color:#002027;border:0;border-radius:12px;padding:14px;font-weight:800;cursor:pointer;font-size:15px;width:100%;position:relative;overflow:hidden}
+  .btn-massa.loading{opacity:.8;pointer-events:none}
+
+  .menu{position:absolute;top:100%;right:0;background:#0f172a;border:1px solid var(--line);
+    border-radius:14px;padding:14px;box-shadow:0 10px 30px rgba(0,0,0,.4);display:none;z-index:30}
+  .menu label{display:block;font-size:15px;margin:6px 0}
+
+  .modal{position:fixed;inset:0;background:rgba(2,6,15,.65);display:none;align-items:center;justify-content:center;z-index:200}
+  .modal .box{background:#0f172a;border:1px solid var(--line);border-radius:16px;max-width:95%;width:500px;padding:16px}
+  .modal h3{margin:0 0 12px;font-size:18px}
+  .modal .close{float:right;border:1px solid var(--line);background:#0b1528;border-radius:8px;color:#fff;padding:6px 12px;cursor:pointer;font-size:14px}
+  textarea{width:100%;min-height:90px;border-radius:8px;border:1px solid #22314b;background:#0b1528;color:#fff;padding:10px;font-size:14px}
+</style>
+</head>
+<body>
+<header>
+  <h1>Painel Financeiro • CAP</h1>
+  <div class="controls">
+    <div class="row-filtros">
+      <select id="filtroStatus">
+        <option value="Pendente" selected>Pendentes</option>
+        <option value="Aprovado">Aprovados</option>
+        <option value="Negado">Negados</option>
+        <option value="Liquidado">Liquidados</option>
+        <option value="Todos">Todos</option>
+      </select>
+      <select id="filtroMeio">
+        <option value="Todos" selected>Todos</option>
+        <option value="Pix">Pix</option>
+        <option value="Cartão">Cartão</option>
+        <option value="Boleto">Boleto</option>
+        <option value="Outros">Outros</option>
+      </select>
+    </div>
+    <div class="row-linha">
+      <input type="text" id="filtroPeriodo" placeholder="Selecione período" />
+      <div style="position:relative;flex:1">
+        <button class="btn icon" id="btnEmpresas"><span id="empresaSelecionada">CAP DELICIA</span> ▼</button>
+        <div id="menuEmpresas" class="menu"></div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div id="overlay"><div class="spinner"></div></div>
+
+<div class="container">
+  <div class="mods-card">
+    <div style="font-weight:800;margin-bottom:8px;font-size:16px">Modalidades</div>
+    <div id="mods" class="mods"></div>
+  </div>
+
+  <div class="list-head">
+    <div><input id="master" type="checkbox" /> <b>Títulos</b></div>
+    <div id="contagem" style="color:var(--muted);font-size:14px">0 itens</div>
+  </div>
+  <div id="lista" class="lista"></div>
+</div>
+
+<div class="footer">
+  <div id="bubble" class="bubble" style="display:none">Total selecionado: R$ 0,00</div>
+  <button id="btnMassa" class="btn-massa" style="display:none"><span>Aprovar selecionados</span><div class="spinner-btn"></div></button>
+</div>
+
+<!-- modal observação -->
+<div id="modalObs" class="modal">
+  <div class="box">
+    <button class="close" onclick="fecharObs()">Fechar</button>
+    <h3>Observação</h3>
+    <textarea id="textoObs" placeholder="Digite a observação..."></textarea>
+    <button class="btn" style="margin-top:10px" onclick="salvarObs()"><span>Salvar</span><div class="spinner-btn"></div></button>
+  </div>
+</div>
+
+<script>
+const endpointTitulos="https://script.google.com/macros/s/AKfycbzzLGp4BH0X3-mdhMqG_e07wrnUo9yFXUmJ8wdP9iVVgPxk1-tnmjsCIAEAb7r_0_yd/exec";
+const EMP_DEFAULT=["CAP DELICIA","CAP VILLA","CAP PADARIA","CAP MERCATTO","CAP M.KIDS"];
+let TITULOS={},SELEC=[],obsContext={};
+
+const $=id=>document.getElementById(id);
+const BRL=n=>(isNaN(n)?0:n).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
+const iso = d => { const dt=new Date(d); dt.setMinutes(dt.getMinutes()-dt.getTimezoneOffset()); return dt.toISOString().slice(0,10); };
+const ID=(emp,linha)=>`${emp.replace(/\s+/g,'_')}__${linha}`;
+
+function setLoading(btn,on=true){if(on)btn.classList.add("loading");else btn.classList.remove("loading");}
+
+function normalizeMeio(meio){
+  meio = (meio||"Outros").toLowerCase();
+  if(meio.includes("pix")) return "Pix";
+  if(meio.includes("cart")) return "Cartão";
+  if(meio.includes("bol")) return "Boleto";
+  return "Outros";
+}
+
+function addHistLocal(id,texto){
+  let hist=JSON.parse(localStorage.getItem("hist_"+id)||"[]");
+  hist.push({data:new Date().toLocaleString("pt-BR"),texto});
+  localStorage.setItem("hist_"+id,JSON.stringify(hist));
+}
+function getHistLocal(id){return JSON.parse(localStorage.getItem("hist_"+id)||"[]");}
+
+function renderMods(){
+  const mods=$("mods");mods.innerHTML="";
+  let soma={Pix:0,Cartão:0,Boleto:0,Outros:0,Total:0};
+  for(const emp of Object.keys(TITULOS)){
+    (TITULOS[emp]||[]).forEach(t=>{
+      const valor=Number(String(t.valor).replace("R$","").replace(/\./g,"").replace(",","."))||0;
+      const meio=normalizeMeio(t.meio_pagamento);
+      soma.Total+=valor;
+      soma[meio]+=valor;
+    });
+  }
+  const card=(cls,label,val)=>`<div class="mod ${cls}"><span>${label}</span><b>${BRL(val)}</b></div>`;
+  mods.innerHTML+=card("pix","Pix",soma.Pix);
+  mods.innerHTML+=card("cartao","Cartão",soma["Cartão"]);
+  mods.innerHTML+=card("boleto","Boleto",soma.Boleto);
+  mods.innerHTML+=card("total","Total",soma.Total);
+}
+
+function renderLista(){
+  const lista=$("lista");lista.innerHTML="";SELEC=[];$("master").checked=false;
+  let totalItens=0;
+  for(const emp of Object.keys(TITULOS)){
+    (TITULOS[emp]||[]).forEach((t)=>{
+      totalItens++;
+      const valor=Number(String(t.valor).replace("R$","").replace(/\./g,"").replace(",","."))||0;
+      const id=ID(emp,t.linha);
+      const st=(t.status || "Pendente");
+      const obs=(t.observacao || "");
+      const histColuna=(t.historico || "");
+      const histLocal=getHistLocal(id);
+
+      const card=document.createElement("div");
+      card.className="titulo";card.dataset.id=id;card.dataset.emp=emp;card.dataset.linha=t.linha;card.dataset.valor=valor;
+      card.innerHTML=`
+        <div class="ck"><input type="checkbox" onchange="toggleSel(this)" /></div>
+        <div class="info">
+          <div class="row"><b>${t.fornecedor}</b> • ${emp}</div>
+          <div class="row">Venc: <b>${iso(t.vencimento).split("-").reverse().join("/")}</b> • Meio: <b>${t.meio_pagamento||"Outros"}</b></div>
+          <div class="row">Valor: <b>${BRL(valor)}</b></div>
+          ${obs ? `<div class="row obs" style="color:#60a5fa">Obs (planilha): ${obs}</div>` : ""}
+          ${histLocal.length ? `<div class="row obs" style="color:#a8b3c7">Obs (local): ${histLocal.map(h=>h.texto).join("<br>")}</div>` : ""}
+          ${histColuna ? `<div class="row hist">Histórico planilha: ${histColuna}</div>` : ""}
+        </div>
+        <span class="pill" data-status>${st}</span>
+        <div class="actions">
+          <button class="mini obs" onclick="abrirObs('${id}','${emp}',${t.linha},\`${obs}\`,'${t.fornecedor}')">
+<span>✏️ Obs</span><div class="spinner-btn"></div></button>
+          <button class="mini negar" onclick="acaoStatus(this,'Negado')"><span>✗ Negar</span><div class="spinner-btn"></div></button>
+          <button class="mini aprovar" onclick="acaoStatus(this,'Aprovado')"><span>✓ Aprovar</span><div class="spinner-btn"></div></button>
+        </div>`;
+
+      // Duplo clique/toque seleciona card
+      card.addEventListener("dblclick", ()=>{
+        const chk = card.querySelector(".ck input");
+        chk.checked = !chk.checked;
+        toggleSel(chk);
+      });
+
+      setPill(card.querySelector("[data-status]"),st);
+      lista.appendChild(card);
+    });
+  }
+  $("contagem").textContent=`${totalItens} ${totalItens===1?"item":"itens"}`;
+  renderMods();
+}
+
+function setPill(el,status){
+  el.className="pill";
+  if(status==="Aprovado"){el.classList.add("ok");el.textContent="Aprovado"}
+  else if(status==="Negado"){el.classList.add("warn");el.textContent="Negado"}
+  else el.textContent=status;
+}
+
+function toggleSel(chk){
+  const card=chk.closest(".titulo");
+  const id=card.dataset.id,emp=card.dataset.emp,linha=Number(card.dataset.linha),valor=Number(card.dataset.valor)||0;
+  if(chk.checked)SELEC.push({id,emp,linha,valor}); else SELEC=SELEC.filter(x=>x.id!==id);
+  const total=SELEC.reduce((s,x)=>s+x.valor,0);
+  if(SELEC.length){$("bubble").style.display="block";$("btnMassa").style.display="block";$("bubble").textContent="Total selecionado: "+BRL(total)}
+  else{$("bubble").style.display="none";$("btnMassa").style.display="none"}
+}
+
+async function acaoStatus(btn,novo){
+  const card=btn.closest(".titulo");
+  const emp=card.dataset.emp,linha=card.dataset.linha,id=card.dataset.id;
+  setLoading(btn,true);
+  setPill(card.querySelector("[data-status]"),novo);
+  addHistLocal(id,"Status alterado para "+novo);
+  try{await fetch(`${endpointTitulos}?action=atualizar&empresa=${encodeURIComponent(emp)}&linha=${linha}&status=${encodeURIComponent(novo)}`);}catch(e){console.error(e)}
+  setLoading(btn,false);
+}
+
+async function atualizarStatusMassa(novo="Aprovado"){
+  const btn=$("btnMassa");
+  setLoading(btn,true);
+  for(const s of SELEC){
+    const card=document.querySelector(`.titulo[data-id="${s.id}"]`);
+    if(!card) continue;
+    setPill(card.querySelector("[data-status]"),novo);
+    addHistLocal(s.id,"Status alterado para "+novo);
+    try{
+      await fetch(`${endpointTitulos}?action=atualizar&empresa=${encodeURIComponent(s.emp)}&linha=${s.linha}&status=${encodeURIComponent(novo)}`);
+    }catch(e){console.error(e)}
+    card.querySelector(".ck input").checked=false;
+  }
+  SELEC=[];$("master").checked=false;
+  $("bubble").style.display="none";$("btnMassa").style.display="none";
+  setLoading(btn,false);
+}
+$("btnMassa").onclick=()=>atualizarStatusMassa("Aprovado");
+
+function abrirObs(id,emp,linha,txt,fornecedor){
+  obsContext={id,emp,linha};
+  $("textoObs").value=txt||"";
+  $("modalObs").style.display="flex";
+  $("modalObs").querySelector("h3").textContent = "Observação - " + fornecedor;
+}
+
+function fecharObs(){$("modalObs").style.display="none"}
+async function salvarObs(){
+  const {id,emp,linha}=obsContext;
+  const texto=$("textoObs").value.trim();
+  if(!texto)return;
+
+  const btn=$("modalObs").querySelector(".btn");
+  setLoading(btn,true);
+
+  // Mostra em cinza (pendente) imediatamente
+  addHistLocal(id,"Obs pendente: "+texto);
+  renderLista();
+
+  try{
+    const resp = await fetch(`${endpointTitulos}?action=atualizarObservacao&empresa=${encodeURIComponent(emp)}&linha=${linha}&texto=${encodeURIComponent(texto)}`);
+    const ok = resp.ok;
+
+    if(ok){
+      // remove obs locais porque já confirmou na planilha
+      localStorage.removeItem("hist_"+id);
+
+      // acha o card em tela e atualiza direto
+      const card=document.querySelector(`.titulo[data-id="${id}"]`);
+      if(card){
+        const info=card.querySelector(".info");
+        // remove observações antigas
+        info.querySelectorAll(".row.obs").forEach(e=>e.remove());
+        // adiciona a azul confirmada
+        const div=document.createElement("div");
+        div.className="row obs";
+        div.style.color="#60a5fa"; // azul
+        div.textContent="Obs (planilha): "+texto;
+        info.appendChild(div);
+      }
+    }
+  }catch(e){console.error(e)}
+
+  setLoading(btn,false);
+  fecharObs();
+}
+
+
+async function loadTitulos(empresas,inicio,fim,filtroStatus,filtroMeio){
+  TITULOS={};$("overlay").style.display="flex";
+  const resps=await Promise.all(empresas.map(emp=>
+    fetch(`${endpointTitulos}?action=listar&empresa=${encodeURIComponent(emp)}`)
+      .then(r=>r.json().then(d=>({emp,data:d.titulos||d})))
+  ));
+  resps.forEach(({emp,data})=>{
+    const all=data.filter(t=>{const d=iso(t.vencimento);return (!inicio||d>=inicio)&&(!fim||d<=fim);});
+    const arr=all.filter(t=>{
+      let st=(t.status||"Pendente");
+      const meio=normalizeMeio(t.meio_pagamento);
+      const statusOk=filtroStatus==="Todos"?true:(st===filtroStatus);
+      const meioOk=filtroMeio==="Todos"?true:(meio===filtroMeio);
+      return statusOk&&meioOk;
+    });
+    TITULOS[emp]=arr;
+  });
+  $("overlay").style.display="none";
+}
+async function refresh(inicio,fim){
+  const filtro=$("filtroStatus").value;
+  const filtroMeio=$("filtroMeio").value;
+  const empresa=document.querySelector("#menuEmpresas input:checked").value;
+  await loadTitulos([empresa],inicio,fim,filtro,filtroMeio);
+  $("empresaSelecionada").textContent=empresa;
+  renderLista();
+}
+
+(function boot(){
+  const hoje = iso(new Date());
+  flatpickr("#filtroPeriodo", {
+    mode: "range",dateFormat: "Y-m-d",locale: "pt",defaultDate: [hoje, hoje],
+    onClose: sel=>{if(sel.length===2){const [ini,fim]=sel.map(d=>iso(d));refresh(ini,fim);}}
+  });
+  const M=$("menuEmpresas");
+  EMP_DEFAULT.forEach((emp,i)=>{const lbl=document.createElement("label");lbl.innerHTML=`<input type="radio" name="empresaSel" value="${emp}" ${i===0?"checked":""}/> ${emp}`;lbl.querySelector("input").onchange=()=>{refresh(hoje,hoje);M.style.display="none"};M.appendChild(lbl);});
+  $("btnEmpresas").onclick=(e)=>{e.stopPropagation();M.style.display=M.style.display==="block"?"none":"block";};
+  document.addEventListener("click",(e)=>{if(!M.contains(e.target)&&e.target.id!=="btnEmpresas"){M.style.display="none";}});
+  $("filtroStatus").onchange=()=>refresh(hoje,hoje);
+  $("filtroMeio").onchange=()=>refresh(hoje,hoje);
+  refresh(hoje,hoje);
+})();
+</script>
+</body>
+</html>
