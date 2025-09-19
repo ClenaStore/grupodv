@@ -173,15 +173,14 @@ function addHistLocal(id,texto){
 }
 function getHistLocal(id){return JSON.parse(localStorage.getItem("hist_"+id)||"[]");}
 
-<script>
+// 🔹 Soma sem os Negados
 function renderMods(){
   const mods=$("mods");mods.innerHTML="";
   let soma={Pix:0,Cartão:0,Boleto:0,Outros:0,Total:0};
   for(const emp of Object.keys(TITULOS)){
     (TITULOS[emp]||[]).forEach(t=>{
       const status=(t.status||"Pendente");
-      if(status==="Negado") return; // 🚨 ignora títulos Negados
-
+      if(status==="Negado") return; // ignora Negados
       const valor=Number(String(t.valor).replace("R$","").replace(/\./g,"").replace(",","."))||0;
       const meio=normalizeMeio(t.meio_pagamento);
       soma.Total+=valor;
@@ -194,8 +193,6 @@ function renderMods(){
   mods.innerHTML+=card("boleto","Boleto",soma.Boleto);
   mods.innerHTML+=card("total","Total",soma.Total);
 }
-</script>
-
 
 function renderLista(){
   const lista=$("lista");lista.innerHTML="";SELEC=[];$("master").checked=false;
@@ -224,13 +221,11 @@ function renderLista(){
         </div>
         <span class="pill" data-status>${st}</span>
         <div class="actions">
-          <button class="mini obs" onclick="abrirObs('${id}','${emp}',${t.linha},\`${obs}\`,'${t.fornecedor}')">
-<span>✏️ Obs</span><div class="spinner-btn"></div></button>
+          <button class="mini obs" onclick="abrirObs('${id}','${emp}',${t.linha},\`${obs}\`,'${t.fornecedor}')"><span>✏️ Obs</span><div class="spinner-btn"></div></button>
           <button class="mini negar" onclick="acaoStatus(this,'Negado')"><span>✗ Negar</span><div class="spinner-btn"></div></button>
           <button class="mini aprovar" onclick="acaoStatus(this,'Aprovado')"><span>✓ Aprovar</span><div class="spinner-btn"></div></button>
         </div>`;
 
-      // Duplo clique/toque seleciona card
       card.addEventListener("dblclick", ()=>{
         const chk = card.querySelector(".ck input");
         chk.checked = !chk.checked;
@@ -260,6 +255,15 @@ function toggleSel(chk){
   if(SELEC.length){$("bubble").style.display="block";$("btnMassa").style.display="block";$("bubble").textContent="Total selecionado: "+BRL(total)}
   else{$("bubble").style.display="none";$("btnMassa").style.display="none"}
 }
+
+// 🔹 Seleção em massa
+$("master").addEventListener("change",function(){
+  const chks=document.querySelectorAll(".titulo .ck input");
+  chks.forEach(chk=>{
+    chk.checked=this.checked;
+    toggleSel(chk);
+  });
+});
 
 async function acaoStatus(btn,novo){
   const card=btn.closest(".titulo");
@@ -302,42 +306,28 @@ async function salvarObs(){
   const {id,emp,linha}=obsContext;
   const texto=$("textoObs").value.trim();
   if(!texto)return;
-
   const btn=$("modalObs").querySelector(".btn");
   setLoading(btn,true);
-
-  // Mostra em cinza (pendente) imediatamente
   addHistLocal(id,"Obs pendente: "+texto);
   renderLista();
-
   try{
     const resp = await fetch(`${endpointTitulos}?action=atualizarObservacao&empresa=${encodeURIComponent(emp)}&linha=${linha}&texto=${encodeURIComponent(texto)}`);
-    const ok = resp.ok;
-
-    if(ok){
-      // remove obs locais porque já confirmou na planilha
+    if(resp.ok){
       localStorage.removeItem("hist_"+id);
-
-      // acha o card em tela e atualiza direto
       const card=document.querySelector(`.titulo[data-id="${id}"]`);
       if(card){
         const info=card.querySelector(".info");
-        // remove observações antigas
         info.querySelectorAll(".row.obs").forEach(e=>e.remove());
-        // adiciona a azul confirmada
         const div=document.createElement("div");
-        div.className="row obs";
-        div.style.color="#60a5fa"; // azul
+        div.className="row obs";div.style.color="#60a5fa";
         div.textContent="Obs (planilha): "+texto;
         info.appendChild(div);
       }
     }
   }catch(e){console.error(e)}
-
   setLoading(btn,false);
   fecharObs();
 }
-
 
 async function loadTitulos(empresas,inicio,fim,filtroStatus,filtroMeio){
   TITULOS={};$("overlay").style.display="flex";
