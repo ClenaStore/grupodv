@@ -173,14 +173,14 @@ function addHistLocal(id,texto){
 }
 function getHistLocal(id){return JSON.parse(localStorage.getItem("hist_"+id)||"[]");}
 
-// 🔹 Soma sem os Negados
+// 🔹 Soma usa __all (sempre considerando o período, ignorando Negados)
 function renderMods(){
   const mods=$("mods");mods.innerHTML="";
   let soma={Pix:0,Cartão:0,Boleto:0,Outros:0,Total:0};
   for(const emp of Object.keys(TITULOS)){
-    (TITULOS[emp]||[]).forEach(t=>{
+    (TITULOS[emp].__all||[]).forEach(t=>{
       const status=(t.status||"Pendente");
-      if(status==="Negado") return; // ignora Negados
+      if(status==="Negado") return;
       const valor=Number(String(t.valor).replace("R$","").replace(/\./g,"").replace(",","."))||0;
       const meio=normalizeMeio(t.meio_pagamento);
       soma.Total+=valor;
@@ -198,7 +198,7 @@ function renderLista(){
   const lista=$("lista");lista.innerHTML="";SELEC=[];$("master").checked=false;
   let totalItens=0;
   for(const emp of Object.keys(TITULOS)){
-    (TITULOS[emp]||[]).forEach((t)=>{
+    (TITULOS[emp].__filtered||[]).forEach((t)=>{
       totalItens++;
       const valor=Number(String(t.valor).replace("R$","").replace(/\./g,"").replace(",","."))||0;
       const id=ID(emp,t.linha);
@@ -337,14 +337,14 @@ async function loadTitulos(empresas,inicio,fim,filtroStatus,filtroMeio){
   ));
   resps.forEach(({emp,data})=>{
     const all=data.filter(t=>{const d=iso(t.vencimento);return (!inicio||d>=inicio)&&(!fim||d<=fim);});
-    const arr=all.filter(t=>{
+    const filtered=all.filter(t=>{
       let st=(t.status||"Pendente");
       const meio=normalizeMeio(t.meio_pagamento);
       const statusOk=filtroStatus==="Todos"?true:(st===filtroStatus);
       const meioOk=filtroMeio==="Todos"?true:(meio===filtroMeio);
       return statusOk&&meioOk;
     });
-    TITULOS[emp]=arr;
+    TITULOS[emp]={__all:all,__filtered:filtered};
   });
   $("overlay").style.display="none";
 }
