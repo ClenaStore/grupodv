@@ -97,17 +97,17 @@ select,input{background:#0b1528;border:1px solid #22314b;color:var(--ink);
 .menu label input[type="radio"] {
   appearance: none;
   -webkit-appearance: none;
-  width: 18px;          /* largura fixa */
-  height: 18px;         /* altura fixa (igual à largura) */
+  width: 18px !important;     /* largura fixa */
+  height: 18px !important;    /* altura igual -> quadrado */
   border: 2px solid var(--blue);
-  border-radius: 4px;   /* borda levemente arredondada */
-  background: #0b1528;  /* fundo do painel */
+  border-radius: 3px;         /* levemente arredondado */
+  background: #0b1528;
   cursor: pointer;
-  flex-shrink: 0;       /* impede de esticar */
+  flex: 0 0 18px;             /* impede de esticar no flex */
 }
 
 .menu label input[type="radio"]:checked {
-  background: var(--blue);   /* quadrado todo preenchido */
+  background: var(--blue);    /* quadrado todo preenchido */
 }
 
 
