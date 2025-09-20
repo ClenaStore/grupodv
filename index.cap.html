@@ -323,7 +323,7 @@ function renderLista(){
           <div class="row">Valor: <b>${BRL(valor)}</b></div>
           ${obs ? `<div class="row obs" style="color:#60a5fa">Obs (planilha): ${obs}</div>` : ""}
           ${histLocal.length ? `<div class="row obs" style="color:#a8b3c7">Obs (local): ${histLocal.map(h=>h.texto).join("<br>")}</div>` : ""}
-          ${histColuna ? `<div class="row hist">Histórico planilha: ${histColuna}</div>` : ""}
+          ${histColuna ? `<div class="row hist">Histórico F360: ${histColuna}</div>` : ""}
         </div>
         <span class="pill" data-status>${st}</span>
         <div class="actions">
