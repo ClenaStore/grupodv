@@ -367,24 +367,10 @@ function setPill(el,status){
 function toggleSel(chk){
   const card=chk.closest(".titulo");
   const id=card.dataset.id,emp=card.dataset.emp,linha=Number(card.dataset.linha),valor=Number(card.dataset.valor)||0;
-  if(chk.checked){
-    SELEC.push({id,emp,linha,valor}); 
-    // 🔹 Vibra curto ao selecionar
-    if (navigator.vibrate) navigator.vibrate(50);
-  } else {
-    SELEC=SELEC.filter(x=>x.id!==id);
-    // 🔹 Vibra diferente ao desmarcar
-    if (navigator.vibrate) navigator.vibrate([30, 50, 30]);
-  }
+  if(chk.checked)SELEC.push({id,emp,linha,valor}); else SELEC=SELEC.filter(x=>x.id!==id);
   const total=SELEC.reduce((s,x)=>s+x.valor,0);
-  if(SELEC.length){
-    $("bubble").style.display="block";
-    $("btnMassa").style.display="block";
-    $("bubble").textContent="Total selecionado: "+BRL(total);
-  } else {
-    $("bubble").style.display="none";
-    $("btnMassa").style.display="none";
-  }
+  if(SELEC.length){$("bubble").style.display="block";$("btnMassa").style.display="block";$("bubble").textContent="Total selecionado: "+BRL(total)}
+  else{$("bubble").style.display="none";$("btnMassa").style.display="none"}
 }
 
 // 🔹 Seleção em massa
