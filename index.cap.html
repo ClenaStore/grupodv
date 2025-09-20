@@ -46,9 +46,18 @@ select,input{background:#0b1528;border:1px solid #22314b;color:var(--ink);
 @media(min-width:1024px){.mods{grid-template-columns:1fr 1fr 1fr}}
 .mod{border-radius:16px;padding:14px;font-weight:700;display:flex;justify-content:space-between;align-items:center;color:#fff;font-size:16px}
 .mod.total{background:#0f172a;border:1px solid var(--line)}
-.mod.boleto{background:linear-gradient(180deg,#a855f7,#6b21a8)}
-.mod.pix{background:linear-gradient(180deg,#06b6d4,#0e7490)}
-.mod.cartao{background:linear-gradient(180deg,#4f46e5,#312e81)}
+.mod.pix {
+  background: linear-gradient(180deg, #3b82f6, #1e40af);   /* Azul */
+}
+
+.mod.cartao {
+  background: linear-gradient(180deg, #22c55e, #15803d);   /* Verde */
+}
+
+.mod.boleto {
+  background: linear-gradient(180deg, #9ca3af, #374151);   /* Cinza */
+}
+
 
 .list-head{display:flex;align-items:center;justify-content:space-between;margin-top:10px;font-size:16px}
 .lista{display:grid;gap:14px;margin-top:14px}
