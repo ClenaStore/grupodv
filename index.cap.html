@@ -70,6 +70,10 @@
   .mini.negar{background:linear-gradient(180deg,#fb6969,#ef4444)}
   .mini.obs{background:linear-gradient(180deg,#60a5fa,#1d4ed8)}
   .mini.loading{opacity:.75;pointer-events:none}
+.list-head label input {
+  width: 18px;
+  height: 18px;
+}
 
 .footer {
   position: fixed;
@@ -168,10 +172,14 @@
     <div id="mods" class="mods"></div>
   </div>
 
-  <div class="list-head">
-    <div><input id="master" type="checkbox" /> <b>Títulos</b></div>
-    <div id="contagem" style="color:var(--muted);font-size:14px">0 itens</div>
-  </div>
+ <div class="list-head">
+  <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
+    <input id="master" type="checkbox" />
+    <b>Títulos</b>
+  </label>
+  <div id="contagem" style="color:var(--muted);font-size:14px">0 itens</div>
+</div>
+
   <div id="lista" class="lista"></div>
 </div>
 
