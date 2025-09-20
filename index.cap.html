@@ -85,20 +85,32 @@ select,input{background:#0b1528;border:1px solid #22314b;color:var(--ink);
   color:var(--ink);
 }
 .menu label input[type="radio"] {
-  appearance:none;
-  -webkit-appearance:none;
-  width:18px;
-  height:18px;
-  border:2px solid var(--blue);
-  border-radius:4px;
-  background:transparent;
-  cursor:pointer;
-  display:grid;
-  place-content:center;
+  appearance: none;
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--blue);
+  border-radius: 4px;      /* mantém canto levemente arredondado */
+  background: transparent;
+  cursor: pointer;
+  position: relative;      /* para usar pseudo-elemento */
 }
+
 .menu label input[type="radio"]:checked {
-  background:var(--blue);
+  background: transparent; /* não preencher tudo */
 }
+
+.menu label input[type="radio"]:checked::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 10px;
+  height: 10px;
+  background: var(--blue); /* quadradinho interno */
+  border-radius: 2px;      /* opcional: arredondar canto do "check" */
+}
+
 
 .footer {
   position: fixed;
