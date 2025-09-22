@@ -268,6 +268,11 @@ const endpointTitulos="https://script.google.com/macros/s/AKfycbzJS4UkF6WZ-duyMJ
 const EMP_DEFAULT=["CAP DELICIA","CAP VILLA","CAP PADARIA","CAP MERCATTO","CAP M.KIDS"];
 let TITULOS={},SELEC=[],obsContext={};
 
+// 🔹 NOVO: variáveis globais para armazenar o período
+let periodoInicio = null;
+let periodoFim = null;
+
+
 const $=id=>document.getElementById(id);
 const BRL=n=>(isNaN(n)?0:n).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
 const iso = d => { const dt=new Date(d); dt.setMinutes(dt.getMinutes()-dt.getTimezoneOffset()); return dt.toISOString().slice(0,10); };
@@ -465,14 +470,20 @@ async function loadTitulos(empresas,inicio,fim,filtroStatus,filtroMeio){
   });
   $("overlay").style.display="none";
 }
-async function refresh(inicio,fim){
+async function refresh(){
   const filtro=$("filtroStatus").value;
   const filtroMeio=$("filtroMeio").value;
   const empresa=document.querySelector("#menuEmpresas input:checked").value;
-  await loadTitulos([empresa],inicio,fim,filtro,filtroMeio);
+
+  // usa período salvo ou hoje como fallback
+  const ini = periodoInicio || iso(new Date());
+  const fim = periodoFim   || iso(new Date());
+
+  await loadTitulos([empresa],ini,fim,filtro,filtroMeio);
   $("empresaSelecionada").textContent=empresa;
   renderLista();
 }
+
 
 (function boot(){
   const hoje = new Date(); // objeto Date do dia atual
@@ -481,12 +492,14 @@ async function refresh(inicio,fim){
     dateFormat: "d/m/Y", // formato brasileiro
     locale: "pt",
     defaultDate: [hoje, hoje], // agora pega o dia atual certo
-    onClose: sel=>{
-      if(sel.length===2){
-        const [ini,fim] = sel.map(d => iso(d));
-        refresh(ini,fim);
-      }
-    }
+  onClose: sel=>{
+  if(sel.length===2){
+    periodoInicio = iso(sel[0]); // 🔹 guarda no global
+    periodoFim = iso(sel[1]);
+    refresh();
+  }
+}
+
   });
 
   const M=$("menuEmpresas");
@@ -496,16 +509,16 @@ EMP_DEFAULT.forEach((emp,i)=>{
   lbl.style.alignItems = "center";
   lbl.style.gap = "8px"; // espaço entre bolinha e texto
   lbl.innerHTML = `<input type="radio" name="empresaSel" value="${emp}" ${i===0?"checked":""}><span>${emp}</span>`;
-  lbl.querySelector("input").onchange = ()=>{refresh(iso(hoje),iso(hoje));M.style.display="none"};
+lbl.querySelector("input").onchange = ()=>{refresh();M.style.display="none"};
   M.appendChild(lbl);
 });
 
 
   $("btnEmpresas").onclick=(e)=>{e.stopPropagation();M.style.display=M.style.display==="block"?"none":"block";};
   document.addEventListener("click",(e)=>{if(!M.contains(e.target)&&e.target.id!=="btnEmpresas"){M.style.display="none";}});
-  $("filtroStatus").onchange=()=>refresh(iso(hoje),iso(hoje));
-  $("filtroMeio").onchange=()=>refresh(iso(hoje),iso(hoje));
-  refresh(iso(hoje),iso(hoje));
+ $("filtroStatus").onchange=()=>refresh();
+$("filtroMeio").onchange=()=>refresh();
+refresh();
 })();
 
 </script>
