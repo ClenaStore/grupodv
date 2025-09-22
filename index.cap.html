@@ -505,37 +505,87 @@ async function salvarObs(){
   fecharObs();
 }
 
+// 🔹 Salva no storage local
+function salvarCache(emp, data){
+  localStorage.setItem("cache_"+emp, JSON.stringify({
+    ts: Date.now(),
+    data
+  }));
+}
+
+// 🔹 Lê do storage local
+function lerCache(emp){
+  const raw = localStorage.getItem("cache_"+emp);
+  if(!raw) return null;
+  try {
+    return JSON.parse(raw).data || null;
+  } catch(e){ return null; }
+}
+
+// 🔹 Busca direto da planilha e atualiza cache
+async function fetchEmpresa(emp){
+  try{
+    const r = await fetch(`${endpointTitulos}?action=listar&empresa=${encodeURIComponent(emp)}`);
+    const d = await r.json();
+    const data = d.titulos || d;
+    salvarCache(emp,data);
+    return data;
+  }catch(e){
+    console.error("Erro ao buscar", emp, e);
+    return lerCache(emp) || [];
+  }
+}
+
+// 🔹 Carrega empresas (com fallback no cache)
 async function loadTitulos(empresas,inicio,fim,filtroStatus,filtroMeio){
-  TITULOS={};$("overlay").style.display="flex";
-  const resps=await Promise.all(empresas.map(emp=>
-    fetch(`${endpointTitulos}?action=listar&empresa=${encodeURIComponent(emp)}`)
-      .then(r=>r.json().then(d=>({emp,data:d.titulos||d})))
-  ));
-  resps.forEach(({emp,data})=>{
-    const all=data.filter(t=>{const d=iso(t.vencimento);return (!inicio||d>=inicio)&&(!fim||d<=fim);});
-    const filtered=all.filter(t=>{
-      let st=(t.status||"Pendente");
-      const meio=normalizeMeio(t.meio_pagamento);
-      const statusOk=filtroStatus==="Todos"?true:(st===filtroStatus);
-      const meioOk=filtroMeio==="Todos"?true:(meio===filtroMeio);
-      return statusOk&&meioOk;
+  TITULOS={}; $("overlay").style.display="flex";
+
+  for(const emp of empresas){
+    // 1. Tenta exibir cache primeiro
+    let data = lerCache(emp) || [];
+    processarEmpresa(emp,data,inicio,fim,filtroStatus,filtroMeio);
+
+    // 2. Atualiza em segundo plano com dados da planilha
+    fetchEmpresa(emp).then(dataNova=>{
+      processarEmpresa(emp,dataNova,inicio,fim,filtroStatus,filtroMeio);
+      renderLista(); // atualiza lista silenciosamente
     });
-    TITULOS[emp]={__all:all,__filtered:filtered};
-  });
+  }
+
   $("overlay").style.display="none";
 }
+
+// 🔹 Aplica filtros e salva no objeto global
+function processarEmpresa(emp,data,inicio,fim,filtroStatus,filtroMeio){
+  const all=data.filter(t=>{
+    const d=iso(t.vencimento);
+    return (!inicio||d>=inicio)&&(!fim||d<=fim);
+  });
+  const filtered=all.filter(t=>{
+    let st=(t.status||"Pendente");
+    const meio=normalizeMeio(t.meio_pagamento);
+    const statusOk=filtroStatus==="Todos"?true:(st===filtroStatus);
+    const meioOk=filtroMeio==="Todos"?true:(meio===filtroMeio);
+    return statusOk&&meioOk;
+  });
+  TITULOS[emp]={__all:all,__filtered:filtered};
+}
+
+// 🔹 Agora refresh só carrega a empresa selecionada e atualiza as outras em background
 async function refresh(){
   const filtro=$("filtroStatus").value;
   const filtroMeio=$("filtroMeio").value;
   const empresa=document.querySelector("#menuEmpresas input:checked").value;
 
-  // usa período salvo ou hoje como fallback
   const ini = periodoInicio || iso(new Date());
   const fim = periodoFim   || iso(new Date());
 
   await loadTitulos([empresa],ini,fim,filtro,filtroMeio);
   $("empresaSelecionada").textContent=empresa;
   renderLista();
+
+  // Em segundo plano atualiza cache das demais
+  EMP_DEFAULT.filter(e=>e!==empresa).forEach(e=>fetchEmpresa(e));
 }
 
 
@@ -574,6 +624,10 @@ lbl.querySelector("input").onchange = ()=>{refresh();M.style.display="none"};
 $("filtroMeio").onchange=()=>refresh();
 refresh();
 })();
+// 🔄 Atualização automática a cada 15 segundos
+setInterval(() => {
+  refresh();
+}, 15000);
 
 </script>
 </body>
