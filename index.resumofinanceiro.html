@@ -716,80 +716,82 @@ function drawGrid(){
     }
   }
 
-  async function aplicarFiltro() {
-    showLoading("Aplicando filtros…");
-    await new Promise(r=>setTimeout(r, 50)); // garante que o overlay apareça
+async function aplicarFiltro() {
+  showLoading("Aplicando filtros…");
+  await new Promise(r=>setTimeout(r, 50));
 
-    const inicio = document.getElementById("dataInicio").value;
-    const fim = document.getElementById("dataFim").value;
-    const empresaSelecionada = document.getElementById("empresaFiltro").value;
-    const painel = document.getElementById("painel");
-    painel.innerHTML = "";
+  const inicio = document.getElementById("dataInicio").value;
+  const fim = document.getElementById("dataFim").value;
+  const empresaSelecionada = document.getElementById("empresaFiltro").value;
+  const painel = document.getElementById("painel");
+  painel.innerHTML = "";
 
-    const dadosFiltrados = dados.filter(item => {
-      const dataOk = (!inicio || item.Data >= inicio) && (!fim || item.Data <= fim);
-      const empresaOk = !empresaSelecionada || item.Empresa === empresaSelecionada;
-      return dataOk && empresaOk;
+  const dadosFiltrados = dados.filter(item => {
+    const dataOk = (!inicio || item.Data >= inicio) && (!fim || item.Data <= fim);
+    const empresaOk = !empresaSelecionada || item.Empresa === empresaSelecionada;
+    return dataOk && empresaOk;
+  });
+
+  const empresas = [...new Set(dadosFiltrados.map(item => item.Empresa))];
+
+  empresas.forEach(emp => {
+    const dadosEmpresa = dadosFiltrados.filter(i => i.Empresa === emp);
+    const agrupado = {};
+    dadosEmpresa.forEach(item => {
+      let cat = normalize(item.Categoria);
+      if (cat === 'PREJUIZO' || cat === 'DESPERDICIO') cat = 'ERROS DE GARCONS';
+      const valor = parseFloat(item.Valor) || 0;
+      agrupado[cat] = (agrupado[cat] || 0) + valor;
     });
 
-    const empresas = [...new Set(dadosFiltrados.map(item => item.Empresa))];
+    const total = Object.values(agrupado).reduce((a, b) => a + b, 0);
+    const box = document.createElement("div");
+    box.className = "empresa-box";
 
-    empresas.forEach(emp => {
-      const dadosEmpresa = dadosFiltrados.filter(i => i.Empresa === emp);
-      const agrupado = {};
-      dadosEmpresa.forEach(item => {
-        let cat = normalize(item.Categoria);
-        if (cat === 'PREJUIZO' || cat === 'DESPERDICIO') cat = 'ERROS DE GARCONS';
-        const valor = parseFloat(item.Valor) || 0;
-        agrupado[cat] = (agrupado[cat] || 0) + valor;
-      });
+    let html = `<h2>${emp.toUpperCase()} — R$ ${BRL(total)}</h2><ul>`;
+    for (const catNorm in agrupado) {
+      const nomeExib = displayName(catNorm);
+      const emoji = emojis[nomeExib] || "📌";
+      const valor = BRL(agrupado[catNorm]);
+      html += `<li>${emoji} ${nomeExib}: R$ ${valor}</li>`;
+    }
+    html += `</ul>`;
+    box.innerHTML = html;
 
-      const total = Object.values(agrupado).reduce((a, b) => a + b, 0);
-      const box = document.createElement("div");
-      box.className = "empresa-box";
+    painel.appendChild(box);
+  });
 
-      const conteudo = document.createElement("div");
-      conteudo.className = "empresa-conteudo";
+  // 🔑 Card extra com a soma das 3 empresas
+  const empresasSomadas = ["Carneiro Mercatto Restaurante", "Carneiro Mercatto Emporio", "M.Kids"];
+  const dadosSomados = dadosFiltrados.filter(i => empresasSomadas.includes(i.Empresa));
+  if (dadosSomados.length) {
+    const totalSoma = dadosSomados.reduce((acc, i) => acc + (parseFloat(i.Valor) || 0), 0);
 
-      let html = `<h2>${emp.toUpperCase()} — R$ ${BRL(total)}</h2><ul>`;
-      for (const catNorm in agrupado) {
-        const nomeExib = displayName(catNorm);
-        const emoji = emojis[nomeExib] || "📌";
-        const valor = BRL(agrupado[catNorm]);
-        html += `<li>${emoji} ${nomeExib}: R$ ${valor}</li>`;
-      }
-      html += `</ul>`;
-      conteudo.innerHTML = html;
+    const cardSoma = document.createElement("div");
+    cardSoma.className = "empresa-box";
+    cardSoma.style.border = "2px solid var(--brand)";
+    cardSoma.style.background = "color-mix(in srgb, var(--surface) 90%, #fff)";
+    cardSoma.style.boxShadow = "0 0 12px rgba(34,211,238,.4)";
 
-      const canvasContainer = document.createElement("div");
-      canvasContainer.className = "grafico-desktop";
-      const canvas = document.createElement("canvas");
-      canvasContainer.appendChild(canvas);
+    cardSoma.innerHTML = `
+      <h2 style="color: var(--brand)">SOMA CONSOLIDADA — R$ ${BRL(totalSoma)}</h2>
+      <p style="margin:8px 0 0; color: var(--muted); font-weight:600">
+        Valores combinados de:<br>
+        • Carneiro Mercatto Restaurante<br>
+        • Carneiro Mercatto Empório<br>
+        • M.Kids
+      </p>
+    `;
 
-      const legend = document.createElement("div");
-      legend.className = "legend";
-      Object.keys(agrupado).forEach((catNorm, i) => {
-        const cor = `hsl(${i * 35}, 70%, 60%)`;
-        const item = document.createElement("span");
-        item.style.color = cor;
-        item.innerHTML = displayName(catNorm);
-        legend.appendChild(item);
-      });
-
-      box.appendChild(conteudo);
-      box.appendChild(canvasContainer);
-      box.appendChild(legend);
-      painel.appendChild(box);
-
-      desenharGrafico(canvas, agrupado);
-      canvasContainer.addEventListener('click', () => abrirEvolucaoAnual(emp));
-    });
-
-    if (empresas.length === 0)
-      painel.innerHTML = "<p style='text-align:center; color: var(--muted)'>Nenhum dado encontrado para os filtros selecionados.</p>";
-
-    hideLoading();
+    painel.appendChild(cardSoma);
   }
+
+  if (empresas.length === 0)
+    painel.innerHTML = "<p style='text-align:center; color: var(--muted)'>Nenhum dado encontrado para os filtros selecionados.</p>";
+
+  hideLoading();
+}
+
 
   function displayName(catNorm){
     if (catNorm === 'PREJUIZO' || catNorm === 'DESPERDICIO') return 'ERROS DE GARÇONS';
