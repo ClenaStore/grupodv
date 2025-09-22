@@ -42,26 +42,28 @@ select,input{background:#0b1528;border:1px solid #22314b;color:var(--ink);
 
 .status-cards {
   display: grid;
-  grid-template-columns: repeat(3,1fr);
+  grid-template-columns: 1fr; /* 🔹 sempre 1 por linha */
   gap: 10px;
   margin: 12px 0;
 }
+
 .status-card {
   border-radius: 12px;
-  padding: 10px;          /* 🔹 menor que modalidades */
+  padding: 10px;
   font-weight: 700;
   display: flex;
   justify-content: space-between;
   align-items: center;
   color: #fff;
-  font-size: 14px;        /* 🔹 menor que modalidades */
+  font-size: 14px;
 }
 .status-card span {
-  font-size: 13px;        /* 🔹 título menor */
+  font-size: 13px;
 }
 .status-card b {
-  font-size: 14px;        /* 🔹 valor compacto */
+  font-size: 14px;
 }
+
 .status-card.aprovado {
   background: linear-gradient(180deg,#19c37d,#16a34a);
 }
