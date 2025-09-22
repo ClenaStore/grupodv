@@ -267,22 +267,6 @@ textarea{width:100%;min-height:90px;border-radius:8px;border:1px solid #22314b;b
 const endpointTitulos="https://script.google.com/macros/s/AKfycbzJS4UkF6WZ-duyMJW_h3e5fo4Hev6Hq1a7rGhWNYCNJ6V_ou0lkN6wS49eeANf4Yuy/exec";
 const EMP_DEFAULT=["CAP DELICIA","CAP VILLA","CAP PADARIA","CAP MERCATTO","CAP M.KIDS"];
 let TITULOS={},SELEC=[],obsContext={};
-  // ---- Cache em localStorage ----
-const CACHE_KEY = "cacheTitulos";
-const CACHE_TTL = 15*60*1000; // 15 minutos
-
-function salvarCache(dados){
-  localStorage.setItem(CACHE_KEY, JSON.stringify({data:dados,ts:Date.now()}));
-}
-function carregarCache(){
-  try{
-    const c = JSON.parse(localStorage.getItem(CACHE_KEY));
-    if(!c) return null;
-    if(Date.now()-c.ts > CACHE_TTL){ localStorage.removeItem(CACHE_KEY); return null; }
-    return c.data;
-  }catch(e){ return null; }
-}
-
 
 const $=id=>document.getElementById(id);
 const BRL=n=>(isNaN(n)?0:n).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
@@ -489,38 +473,6 @@ async function refresh(inicio,fim){
   $("empresaSelecionada").textContent=empresa;
   renderLista();
 }
-// ---- Atualização silenciosa sem overlay ----
-async function refreshSilent(inicio,fim){
-  try{
-    const filtro=$("filtroStatus").value;
-    const filtroMeio=$("filtroMeio").value;
-    const empresa=document.querySelector("#menuEmpresas input:checked").value;
-
-    const resps=await Promise.all([empresa].map(emp=>
-      fetch(`${endpointTitulos}?action=listar&empresa=${encodeURIComponent(emp)}`)
-        .then(r=>r.json().then(d=>({emp,data:d.titulos||d})))
-    ));
-
-    resps.forEach(({emp,data})=>{
-      const all=data.filter(t=>{
-        const d=iso(t.vencimento);
-        return (!inicio||d>=inicio)&&(!fim||d<=fim);
-      });
-      const filtered=all.filter(t=>{
-        let st=(t.status||"Pendente");
-        const meio=normalizeMeio(t.meio_pagamento);
-        const statusOk=filtro==="Todos"?true:(st===filtro);
-        const meioOk=filtroMeio==="Todos"?true:(meio===filtroMeio);
-        return statusOk&&meioOk;
-      });
-      TITULOS[emp]={__all:all,__filtered:filtered};
-    });
-
-    salvarCache(TITULOS);
-    $("empresaSelecionada").textContent=empresa;
-    renderLista();
-  }catch(e){console.error("Erro refreshSilent:",e);}
-}
 
 (function boot(){
   const hoje = new Date(); // objeto Date do dia atual
@@ -551,24 +503,9 @@ EMP_DEFAULT.forEach((emp,i)=>{
 
   $("btnEmpresas").onclick=(e)=>{e.stopPropagation();M.style.display=M.style.display==="block"?"none":"block";};
   document.addEventListener("click",(e)=>{if(!M.contains(e.target)&&e.target.id!=="btnEmpresas"){M.style.display="none";}});
-$("filtroStatus").onchange=()=>refresh(iso(hoje),iso(hoje));
-$("filtroMeio").onchange=()=>refresh(iso(hoje),iso(hoje));
-
-// ---- Primeiro tenta cache ----
-const cache = carregarCache();
-if(cache){
-  TITULOS = cache;
-  renderLista();
-}else{
-  $("overlay").style.display="flex";
-  refreshSilent(iso(hoje), iso(hoje));
-}
-
-// ---- Atualizações em 5s em segundo plano ----
-setInterval(()=>{
-  refreshSilent(iso(new Date()), iso(new Date()));
-},5000);
-
+  $("filtroStatus").onchange=()=>refresh(iso(hoje),iso(hoje));
+  $("filtroMeio").onchange=()=>refresh(iso(hoje),iso(hoje));
+  refresh(iso(hoje),iso(hoje));
 })();
 
 </script>
