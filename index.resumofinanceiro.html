@@ -159,21 +159,24 @@
     }
     .range-label{ color: var(--muted); font-weight:700 }
 
-    #painel{
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 16px;
-    }
+    #painel {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); /* flexível */
+  gap: 16px;
+}
 
-    .empresa-box{
-      background: var(--card);
-      border: 1px solid var(--line);
-      border-radius: 12px;
-      padding: 16px;
-      box-shadow: var(--shadow);
-      font-size: 0.95em;
-      overflow: hidden;
-    }
+.empresa-box {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: var(--shadow);
+  font-size: 0.95em;
+  overflow: hidden;
+  word-wrap: break-word;       /* quebra palavras longas */
+  overflow-wrap: anywhere;     /* garante quebra em qualquer ponto */
+}
+
     .empresa-box h2{
       margin: 0 0 10px;
       font-size: clamp(1.05rem, .7vw + 1rem, 1.25rem);
