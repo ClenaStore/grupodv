@@ -465,22 +465,28 @@ async function loadTitulos(empresas,inicio,fim,filtroStatus,filtroMeio){
     fetch(`${endpointTitulos}?action=listar&empresa=${encodeURIComponent(emp)}`)
       .then(r=>r.json().then(d=>({emp,data:d.titulos||d})))
   ));
-resps.forEach(({emp,data})=>{
-  const all=data.filter(t=>{
-    const d=isoSafe(t.vencimento);
-    return (!inicio||!d||d>=inicio)&&(!fim||!d||d<=fim);
+  resps.forEach(({emp,data})=>{
+    const all = data.filter(t => {
+      const dt = new Date(t.vencimento);
+      if (isNaN(dt)) return false; // só entra se a data for válida
+      const iniDate = inicio ? new Date(inicio) : null;
+      const fimDate = fim ? new Date(fim) : null;
+      return (!iniDate || dt >= iniDate) && (!fimDate || dt <= fimDate);
+    });
+
+    const filtered=all.filter(t=>{
+      let st=(t.status||"Pendente");
+      const meio=normalizeMeio(t.meio_pagamento);
+      const statusOk=filtroStatus==="Todos"?true:(st===filtroStatus);
+      const meioOk=filtroMeio==="Todos"?true:(meio===filtroMeio);
+      return statusOk&&meioOk;
+    });
+
+    TITULOS[emp]={__all:all,__filtered:filtered};
   });
-  const filtered=all.filter(t=>{
-    let st=(t.status||"Pendente").toLowerCase();
-    const meio=normalizeMeio(t.meio_pagamento);
-    const statusOk=filtroStatus==="Todos" ? true : (st===filtroStatus.toLowerCase());
-    const meioOk=filtroMeio==="Todos" ? true : (meio===filtroMeio);
-    return statusOk&&meioOk;
-  });
-  TITULOS[emp]={__all:all,__filtered:filtered};  // 🔹 faltava isso
-});
-$("overlay").style.display="none";
+  $("overlay").style.display="none";
 }
+
 
 async function refresh(inicio=null,fim=null){
   const filtro=$("filtroStatus").value;
