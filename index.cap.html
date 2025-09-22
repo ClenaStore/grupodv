@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pt-BR" data-theme="dark">
+<html lang="pt-BR">
 <head>
 <meta charset="UTF-8" />
 <title>Aprovação de CAP</title>
@@ -8,104 +8,200 @@
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/pt.js"></script>
 <style>
-/* 🎨 Variáveis globais iguais ao Delivery */
 :root{
-  --bg:#0b1020; --surface:#10172a; --card:#0f172a;
-  --text:#e5e7eb; --muted:#94a3b8; --line:rgba(148,163,184,.25);
-  --icon-bg:rgba(255,255,255,.06); --shadow:0 20px 60px rgba(2,6,23,.35);
-  --brand:#60a5fa; --brand2:#22d3ee; --success:#16a34a;
-  --danger:#dc2626; --orange:#f59e0b;
+  --bg:#0b1220;--card:#0f172a;--ink:#e5f0ff;--muted:#a8b3c7;--line:#243043;
+  --teal:#06b6d4;--blue:#4f46e5;--green:#16a34a;--red:#ef4444;--amber:#f59e0b;
 }
-[data-theme="light"]{
-  --bg:#f6f7fb; --surface:#fff; --card:#fff;
-  --text:#0f172a; --muted:#475569; --line:#e5e7eb;
-  --icon-bg:rgba(2,6,23,.06); --shadow:0 16px 36px rgba(15,23,42,.08);
-}
-
 *{box-sizing:border-box}
-body{
-  margin:0;
-  font-family:Inter,system-ui;
-  background:var(--bg);
-  color:var(--text);
-  font-size:15px
-}
+body{margin:0;font-family:Inter,system-ui;background:var(--bg);color:var(--ink);font-size:15px}
 
-/* 🖼 Header */
-header{
-  position:sticky;top:0;z-index:40;
-  backdrop-filter:saturate(160%) blur(8px);
-  background:color-mix(in srgb, var(--surface) 80%, transparent);
-  border-bottom:1px solid var(--line);
-  padding:14px;
-}
-header .head{display:flex;align-items:center;gap:12px}
-header .brand{display:flex;align-items:center;gap:8px;text-decoration:none;color:var(--text);font-weight:800;font-size:16px}
-header .grow{flex:1}
-.btn{
-  border:1px solid var(--line);
-  background:var(--surface);
-  color:var(--text);
-  padding:8px 12px;
-  border-radius:10px;
-  cursor:pointer;
-  font-weight:700;
-  font-size:14px;
-  display:inline-flex;align-items:center;gap:6px;
-}
-.btn:hover{box-shadow:var(--shadow)}
+header{position:sticky;top:0;z-index:20;background:linear-gradient(180deg,#0f172a,#0b1220);
+  border-bottom:1px solid var(--line);padding:14px;display:flex;flex-direction:column;gap:10px}
+header h1{font-size:18px;margin:0;font-weight:800}
 
-/* Overlay de carregamento */
-#overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;z-index:100}
-.spinner{width:74px;height:74px;border:6px solid rgba(255,255,255,.25);border-top-color:#fff;border-radius:50%;animation:spin 1s linear infinite}
+.controls{width:100%;display:flex;flex-direction:column;gap:8px}
+.row-filtros{display:flex;gap:8px;width:100%}
+.row-filtros select{flex:1}
+.row-linha{display:flex;gap:8px;width:100%}
+.row-linha input{flex:1}
+
+select,input{background:#0b1528;border:1px solid #22314b;color:var(--ink);
+  padding:10px 14px;border-radius:10px;font-size:15px;width:100%}
+.btn{border:1px solid #2a3955;background:#0b1528;color:var(--ink);padding:10px 14px;border-radius:10px;cursor:pointer;font-weight:700;font-size:15px;width:100%;position:relative;overflow:hidden}
+.btn.icon{display:flex;align-items:center;gap:6px;justify-content:center}
+
+#overlay{position:fixed;inset:0;background:rgba(3,7,18,.55);display:none;align-items:center;justify-content:center;z-index:100}
+.spinner{width:56px;height:56px;border:6px solid var(--teal);border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
+
+.spinner-btn{width:16px;height:16px;border:2px solid #fff;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite;position:absolute;top:50%;left:50%;margin:-8px 0 0 -8px;display:none}
+.loading .spinner-btn{display:block}
+.loading span,.loading b,.loading i{visibility:hidden}
 
 .container{padding:16px;max-width:1250px;margin:0 auto}
 
-.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;box-shadow:var(--shadow);margin:14px 0}
-.mods {display:grid;grid-template-columns:1fr 1fr;gap:12px}
-@media(min-width:1024px){.mods{grid-template-columns:1fr 1fr 1fr}}
-.mod{border-radius:12px;padding:14px;font-weight:700;display:flex;justify-content:space-between;align-items:center;color:#fff;font-size:16px}
-.mod.total{background:var(--surface);border:1px solid var(--line)}
-.mod.pix{background:linear-gradient(180deg,#3b82f6,#1e40af)}
-.mod.cartao{background:linear-gradient(180deg,#22c55e,#15803d)}
-.mod.boleto{background:linear-gradient(180deg,#9ca3af,#374151)}
+.mods-card{margin:16px 0;background:#0f172a;border:1px solid var(--line);border-radius:18px;padding:16px}
+.mods {
+  display: grid;
+  grid-template-columns: 1fr 1fr; /* 🔹 Agora 2 cards por linha por padrão */
+  gap: 12px;
+}
+
+@media(min-width:768px){
+  .mods { grid-template-columns: 1fr 1fr; } /* mantém 2 no tablet */
+}
+
+@media(min-width:1024px){
+  .mods { grid-template-columns: 1fr 1fr 1fr; } /* 3 no desktop */
+}
+
+.mod{border-radius:16px;padding:14px;font-weight:700;display:flex;justify-content:space-between;align-items:center;color:#fff;font-size:16px}
+.mod.total{background:#0f172a;border:1px solid var(--line)}
+.mod.pix {
+  background: linear-gradient(180deg, #3b82f6, #1e40af);   /* Azul */
+}
+
+.mod.cartao {
+  background: linear-gradient(180deg, #22c55e, #15803d);   /* Verde */
+}
+
+.mod.boleto {
+  background: linear-gradient(180deg, #9ca3af, #374151);   /* Cinza */
+}
+
 
 .list-head{display:flex;align-items:center;justify-content:space-between;margin-top:10px;font-size:16px}
 .lista{display:grid;gap:14px;margin-top:14px}
-.titulo{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px;display:grid;gap:10px;position:relative}
-.ck input{width:20px;height:20px}
+.titulo{background:linear-gradient(180deg,#101a2f,#0f172a);border:1px solid var(--line);
+  border-radius:18px;padding:12px;display:grid;grid-template-columns:1fr;gap:10px;position:relative}
+.ck input{width:22px;height:22px}
 .row{display:flex;gap:10px;flex-wrap:wrap;font-size:14px;color:var(--muted)}
-.row b{color:var(--text)}
-.row.hist{color:var(--orange);font-weight:600;font-size:13px}
-.pill{padding:4px 10px;border-radius:999px;border:1px solid var(--line);background:var(--surface);font-size:12px;font-weight:800;position:absolute;top:8px;right:8px}
+.row b{color:var(--ink);font-size:15px}
+.row.hist{color:#f59e0b;font-weight:600;font-size:13px}
+
+.pill{padding:6px 12px;border-radius:999px;border:1px solid #2a3955;background:#0b1528;font-size:13px;font-weight:800;
+  position:absolute;top:8px;right:8px}
 .pill.ok{border-color:#155e32;color:#b6f3c5;background:#0e2a1b}
 .pill.warn{border-color:#7a1e1e;color:#ffb4b4;background:#2a0e0e}
 
 .actions{display:flex;gap:6px;flex-wrap:wrap}
-.mini{flex:1 1 calc(50% - 6px);padding:8px;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--text);font-weight:700;cursor:pointer;font-size:14px;text-align:center}
-.mini.aprovar{background:linear-gradient(180deg,#19c37d,#16a34a);color:#fff}
-.mini.negar{background:linear-gradient(180deg,#fb6969,#ef4444);color:#fff}
-.mini.obs{background:linear-gradient(180deg,#60a5fa,#1d4ed8);color:#fff}
+.mini{flex:1 1 calc(50% - 6px);padding:8px;border-radius:12px;border:1px solid #22314b;background:#0b1528;color:#fff;font-weight:700;cursor:pointer;font-size:14px;text-align:center;position:relative;overflow:hidden}
+.mini.aprovar{background:linear-gradient(180deg,#19c37d,#16a34a)}
+.mini.negar{background:linear-gradient(180deg,#fb6969,#ef4444)}
+.mini.obs{background:linear-gradient(180deg,#60a5fa,#1d4ed8)}
+.mini.loading{opacity:.75;pointer-events:none}
 
-.footer{position:fixed;right:12px;bottom:12px;display:flex;flex-direction:column;gap:8px;align-items:flex-end;z-index:15}
-.bubble{background:var(--brand);color:#fff;border-radius:8px;padding:6px 10px;font-weight:700;font-size:13px;display:none;box-shadow:0 2px 6px rgba(0,0,0,.3)}
-.btn-massa{background:linear-gradient(180deg,var(--brand),var(--brand2));color:#002027;border:0;border-radius:8px;padding:6px 12px;font-weight:700;font-size:13px;cursor:pointer;display:none;box-shadow:0 2px 6px rgba(0,0,0,.3)}
+.list-head label input {
+  width: 18px;
+  height: 18px;
+}
+
+/* radios no menu */
+.menu label {
+  display: flex;
+  align-items: center;
+  gap: 8px;         /* espaço entre quadrado e texto */
+  cursor: pointer;
+  color: var(--ink);
+}
+
+.menu label input[type="radio"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 18px !important;     /* largura fixa */
+  height: 18px !important;    /* altura igual -> quadrado */
+  border: 2px solid var(--blue);
+  border-radius: 3px;         /* levemente arredondado */
+  background: #0b1528;
+  cursor: pointer;
+  flex: 0 0 18px;             /* impede de esticar no flex */
+}
+
+.menu label input[type="radio"]:checked {
+  background: var(--blue);    /* quadrado todo preenchido */
+}
+
+
+
+
+
+.menu label input[type="radio"]:checked::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 10px;
+  height: 10px;
+  background: var(--blue); /* quadradinho interno */
+  border-radius: 2px;      /* opcional: arredondar canto do "check" */
+}
+
+
+.footer {
+  position: fixed;
+  right: 12px;
+  bottom: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-end;
+  z-index: 15;
+}
+.bubble {
+  background: var(--blue);
+  color: #fff;
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-weight: 700;
+  font-size: 13px;
+  text-align: right;
+  display: none;
+  width: auto;
+  box-shadow: 0 2px 6px rgba(0,0,0,.3);
+}
+.btn-massa {
+  background: linear-gradient(180deg, var(--teal), #0796ad);
+  color: #002027;
+  border: 0;
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  display: none;
+  width: auto;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 2px 6px rgba(0,0,0,.3);
+}
+.btn-massa.loading {
+  opacity: .8;
+  pointer-events: none;
+}
+
+.menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: #0f172a;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 14px;
+  box-shadow: 0 10px 30px rgba(0,0,0,.4);
+  display: none;
+  z-index: 30;
+}
 
 .modal{position:fixed;inset:0;background:rgba(2,6,15,.65);display:none;align-items:center;justify-content:center;z-index:200}
-.modal .box{background:var(--card);border:1px solid var(--line);border-radius:16px;max-width:95%;width:500px;padding:16px}
+.modal .box{background:#0f172a;border:1px solid var(--line);border-radius:16px;max-width:95%;width:500px;padding:16px}
 .modal h3{margin:0 0 12px;font-size:18px}
-.modal .close{float:right;border:1px solid var(--line);background:var(--surface);border-radius:8px;color:var(--text);padding:6px 12px;cursor:pointer;font-size:14px}
-textarea{width:100%;min-height:90px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--text);padding:10px;font-size:14px}
+.modal .close{float:right;border:1px solid var(--line);background:#0b1528;border-radius:8px;color:#fff;padding:6px 12px;cursor:pointer;font-size:14px}
+textarea{width:100%;min-height:90px;border-radius:8px;border:1px solid #22314b;background:#0b1528;color:#fff;padding:10px;font-size:14px}
 </style>
 </head>
 <body>
 <header>
-  <div class="head">
-    <a class="brand" href="#"><span>Aprovação de CAP</span></a>
-    <div class="grow"></div>
-    <button id="themeToggle" class="btn">🌓 Tema</button>
-  </div>
+  <h1>CAP - Grupo DV</h1>
   <div class="controls">
     <div class="row-filtros">
       <select id="filtroStatus">
@@ -136,25 +232,25 @@ textarea{width:100%;min-height:90px;border-radius:8px;border:1px solid var(--lin
 <div id="overlay"><div class="spinner"></div></div>
 
 <div class="container">
-  <div class="card">
+  <div class="mods-card">
     <div style="font-weight:800;margin-bottom:8px;font-size:16px">Modalidades</div>
     <div id="mods" class="mods"></div>
   </div>
 
-  <div class="list-head">
-    <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
-      <input id="master" type="checkbox" />
-      <b>Selecionar todos</b>
-    </label>
-    <div id="contagem" style="color:var(--muted);font-size:14px">0 itens</div>
-  </div>
+ <div class="list-head">
+  <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
+    <input id="master" type="checkbox" />
+    <b>Selecionar todos</b>
+  </label>
+  <div id="contagem" style="color:var(--muted);font-size:14px">0 itens</div>
+</div>
 
   <div id="lista" class="lista"></div>
 </div>
 
 <div class="footer">
-  <div id="bubble" class="bubble">Total selecionado: R$ 0,00</div>
-  <button id="btnMassa" class="btn-massa"><span>Aprovar selecionados</span></button>
+  <div id="bubble" class="bubble" style="display:none">Total selecionado: R$ 0,00</div>
+  <button id="btnMassa" class="btn-massa" style="display:none"><span>Aprovar selecionados</span><div class="spinner-btn"></div></button>
 </div>
 
 <!-- modal observação -->
@@ -163,16 +259,11 @@ textarea{width:100%;min-height:90px;border-radius:8px;border:1px solid var(--lin
     <button class="close" onclick="fecharObs()">Fechar</button>
     <h3>Observação</h3>
     <textarea id="textoObs" placeholder="Digite a observação..."></textarea>
-    <button class="btn" style="margin-top:10px" onclick="salvarObs()"><span>Salvar</span></button>
+    <button class="btn" style="margin-top:10px" onclick="salvarObs()"><span>Salvar</span><div class="spinner-btn"></div></button>
   </div>
 </div>
-<script>
 
-  /* 🔘 Toggle tema */
-document.getElementById("themeToggle").onclick=()=>{
-  const html=document.documentElement;
-  html.dataset.theme=html.dataset.theme==="light"?"dark":"light";
-};
+<script>
 const endpointTitulos="https://script.google.com/macros/s/AKfycbzJS4UkF6WZ-duyMJW_h3e5fo4Hev6Hq1a7rGhWNYCNJ6V_ou0lkN6wS49eeANf4Yuy/exec";
 const EMP_DEFAULT=["CAP DELICIA","CAP VILLA","CAP PADARIA","CAP MERCATTO","CAP M.KIDS"];
 let TITULOS={},SELEC=[],obsContext={};
