@@ -716,9 +716,9 @@ function drawGrid(){
     }
   }
 
- async function aplicarFiltro() {
+async function aplicarFiltro() {
   showLoading("Aplicando filtros…");
-  await new Promise(r=>setTimeout(r, 50));
+  await new Promise(r => setTimeout(r, 50)); // garante que o overlay apareça
 
   const inicio = document.getElementById("dataInicio").value;
   const fim = document.getElementById("dataFim").value;
@@ -751,7 +751,7 @@ function drawGrid(){
     const conteudo = document.createElement("div");
     conteudo.className = "empresa-conteudo";
 
-    // Cabeçalho normal
+    // Cabeçalho + lista de categorias
     let html = `<h2>${emp.toUpperCase()} — R$ ${BRL(total)}</h2><ul>`;
     for (const catNorm in agrupado) {
       const nomeExib = displayName(catNorm);
@@ -761,23 +761,33 @@ function drawGrid(){
     }
     html += `</ul>`;
 
-    // 🔑 Se for Carneiro Mercatto Restaurante, incluir soma consolidada
+    // 🔑 Soma consolidada dentro do card do Restaurante
     if (emp === "Carneiro Mercatto Restaurante") {
       const empresasSomadas = ["Carneiro Mercatto Restaurante", "Carneiro Mercatto Emporio", "M.Kids"];
       const dadosSomados = dadosFiltrados.filter(i => empresasSomadas.includes(i.Empresa));
       const totalSoma = dadosSomados.reduce((acc, i) => acc + (parseFloat(i.Valor) || 0), 0);
 
       html += `
-        <div style="margin-top:12px; padding:10px; border:2px solid var(--brand);
-                    border-radius:10px; background:color-mix(in srgb, var(--surface) 92%, #fff)">
-          <strong style="color:var(--brand)">🔹 Soma Consolidada (Restaurante + Empório + M.Kids):</strong><br>
-          <span style="font-size:1.1rem; font-weight:700">R$ ${BRL(totalSoma)}</span>
+        <div style="
+          margin-top:12px;
+          padding:10px;
+          border:2px solid var(--brand);
+          border-radius:10px;
+          background:color-mix(in srgb, var(--surface) 92%, #fff)">
+          <strong style="color:var(--brand)">🔹 Soma Consolidada</strong><br>
+          <span style="font-size:1.1rem; font-weight:700">
+            R$ ${BRL(totalSoma)}
+          </span>
+          <small style="display:block; margin-top:4px; color:var(--muted)">
+            (Restaurante + Empório + M.Kids)
+          </small>
         </div>
       `;
     }
 
     conteudo.innerHTML = html;
 
+    // Gráfico + legenda
     const canvasContainer = document.createElement("div");
     canvasContainer.className = "grafico-desktop";
     const canvas = document.createElement("canvas");
@@ -802,8 +812,9 @@ function drawGrid(){
     canvasContainer.addEventListener('click', () => abrirEvolucaoAnual(emp));
   });
 
-  if (empresas.length === 0)
+  if (empresas.length === 0) {
     painel.innerHTML = "<p style='text-align:center; color: var(--muted)'>Nenhum dado encontrado para os filtros selecionados.</p>";
+  }
 
   hideLoading();
 }
