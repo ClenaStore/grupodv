@@ -270,21 +270,7 @@ let TITULOS={},SELEC=[],obsContext={};
 
 const $=id=>document.getElementById(id);
 const BRL=n=>(isNaN(n)?0:n).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
-function parseDate(d){
-  if(!d) return null;
-  if(typeof d==="string" && d.includes("/")){
-    const [dia,mes,ano] = d.split("/");
-    return new Date(+ano,+mes-1,+dia);
-  }
-  return new Date(d);
-}
-function isoSafe(d){
-  const dt=parseDate(d);
-  if(!dt || isNaN(dt)) return null;
-  dt.setMinutes(dt.getMinutes()-dt.getTimezoneOffset());
-  return dt.toISOString().slice(0,10);
-}
-
+const iso = d => { const dt=new Date(d); dt.setMinutes(dt.getMinutes()-dt.getTimezoneOffset()); return dt.toISOString().slice(0,10); };
 const ID=(emp,linha)=>`${emp.replace(/\s+/g,'_')}__${linha}`;
 
 function setLoading(btn,on=true){if(on)btn.classList.add("loading");else btn.classList.remove("loading");}
@@ -308,15 +294,16 @@ function getHistLocal(id){return JSON.parse(localStorage.getItem("hist_"+id)||"[
 function renderMods(){
   const mods=$("mods");mods.innerHTML="";
   let soma={Pix:0,Cartão:0,Boleto:0,Outros:0,Total:0};
-for(const emp of Object.keys(TITULOS)){
-  (TITULOS[emp].__all||[]).forEach(t=>{
-    const valor=Number(String(t.valor).replace("R$","").replace(/\./g,"").replace(",","."))||0;
-    const meio=normalizeMeio(t.meio_pagamento);
-    soma.Total+=valor;
-    soma[meio]+=valor;
-  });
-}
-
+  for(const emp of Object.keys(TITULOS)){
+    (TITULOS[emp].__all||[]).forEach(t=>{
+      const status=(t.status||"Pendente");
+      if(status==="Negado") return;
+      const valor=Number(String(t.valor).replace("R$","").replace(/\./g,"").replace(",","."))||0;
+      const meio=normalizeMeio(t.meio_pagamento);
+      soma.Total+=valor;
+      soma[meio]+=valor;
+    });
+  }
   const card=(cls,label,val)=>`<div class="mod ${cls}"><span>${label}</span><b>${BRL(val)}</b></div>`;
   mods.innerHTML+=card("pix","Pix",soma.Pix);
   mods.innerHTML+=card("cartao","Cartão",soma["Cartão"]);
@@ -343,7 +330,7 @@ function renderLista(){
         <div class="ck"><input type="checkbox" onchange="toggleSel(this)" /></div>
         <div class="info">
           <div class="row"><b>${t.fornecedor}</b> • ${emp}</div>
-          <div class="row">Venc: <b>${isoSafe(t.vencimento)?.split("-").reverse().join("/") || ""}</b> • Meio: <b>${t.meio_pagamento||"Outros"}</b></div>
+          <div class="row">Venc: <b>${iso(t.vencimento).split("-").reverse().join("/")}</b> • Meio: <b>${t.meio_pagamento||"Outros"}</b></div>
           <div class="row">Valor: <b>${BRL(valor)}</b></div>
           ${obs ? `<div class="row obs" style="color:#60a5fa">Obs (planilha): ${obs}</div>` : ""}
           ${histLocal.length ? `<div class="row obs" style="color:#a8b3c7">Obs (local): ${histLocal.map(h=>h.texto).join("<br>")}</div>` : ""}
@@ -466,14 +453,7 @@ async function loadTitulos(empresas,inicio,fim,filtroStatus,filtroMeio){
       .then(r=>r.json().then(d=>({emp,data:d.titulos||d})))
   ));
   resps.forEach(({emp,data})=>{
-    const all = data.filter(t => {
-      const dt = new Date(t.vencimento);
-      if (isNaN(dt)) return false; // só entra se a data for válida
-      const iniDate = inicio ? new Date(inicio) : null;
-      const fimDate = fim ? new Date(fim) : null;
-      return (!iniDate || dt >= iniDate) && (!fimDate || dt <= fimDate);
-    });
-
+    const all=data.filter(t=>{const d=iso(t.vencimento);return (!inicio||d>=inicio)&&(!fim||d<=fim);});
     const filtered=all.filter(t=>{
       let st=(t.status||"Pendente");
       const meio=normalizeMeio(t.meio_pagamento);
@@ -481,14 +461,11 @@ async function loadTitulos(empresas,inicio,fim,filtroStatus,filtroMeio){
       const meioOk=filtroMeio==="Todos"?true:(meio===filtroMeio);
       return statusOk&&meioOk;
     });
-
     TITULOS[emp]={__all:all,__filtered:filtered};
   });
   $("overlay").style.display="none";
 }
-
-
-async function refresh(inicio=null,fim=null){
+async function refresh(inicio,fim){
   const filtro=$("filtroStatus").value;
   const filtroMeio=$("filtroMeio").value;
   const empresa=document.querySelector("#menuEmpresas input:checked").value;
@@ -506,9 +483,8 @@ async function refresh(inicio=null,fim=null){
     defaultDate: [hoje, hoje], // agora pega o dia atual certo
     onClose: sel=>{
       if(sel.length===2){
-       const [ini,fim] = sel.map(d => isoSafe(d));
-refresh(ini,fim);
-
+        const [ini,fim] = sel.map(d => iso(d));
+        refresh(ini,fim);
       }
     }
   });
@@ -520,16 +496,16 @@ EMP_DEFAULT.forEach((emp,i)=>{
   lbl.style.alignItems = "center";
   lbl.style.gap = "8px"; // espaço entre bolinha e texto
   lbl.innerHTML = `<input type="radio" name="empresaSel" value="${emp}" ${i===0?"checked":""}><span>${emp}</span>`;
-  lbl.querySelector("input").onchange = ()=>{refresh();M.style.display="none"};
+  lbl.querySelector("input").onchange = ()=>{refresh(iso(hoje),iso(hoje));M.style.display="none"};
   M.appendChild(lbl);
 });
 
 
   $("btnEmpresas").onclick=(e)=>{e.stopPropagation();M.style.display=M.style.display==="block"?"none":"block";};
   document.addEventListener("click",(e)=>{if(!M.contains(e.target)&&e.target.id!=="btnEmpresas"){M.style.display="none";}});
-$("filtroStatus").onchange=()=>refresh();
-$("filtroMeio").onchange=()=>refresh();
- refresh();
+  $("filtroStatus").onchange=()=>refresh(iso(hoje),iso(hoje));
+  $("filtroMeio").onchange=()=>refresh(iso(hoje),iso(hoje));
+  refresh(iso(hoje),iso(hoje));
 })();
 
 </script>
