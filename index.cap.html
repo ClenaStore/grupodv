@@ -294,25 +294,22 @@ function getHistLocal(id){return JSON.parse(localStorage.getItem("hist_"+id)||"[
 function renderMods(){
   const mods=$("mods");mods.innerHTML="";
   let soma={Pix:0,Cartão:0,Boleto:0,Outros:0,Total:0};
-  
   for(const emp of Object.keys(TITULOS)){
-    // 🔹 __all já vem filtrado só pelo período em loadTitulos()
     (TITULOS[emp].__all||[]).forEach(t=>{
-      const valor = Number(String(t.valor).replace("R$","").replace(/\./g,"").replace(",",".")) || 0;
-      const meio = normalizeMeio(t.meio_pagamento);
-      soma.Total += valor;
-      soma[meio] += valor;
+      const status=(t.status||"Pendente");
+      if(status==="Negado") return;
+      const valor=Number(String(t.valor).replace("R$","").replace(/\./g,"").replace(",","."))||0;
+      const meio=normalizeMeio(t.meio_pagamento);
+      soma.Total+=valor;
+      soma[meio]+=valor;
     });
   }
-
   const card=(cls,label,val)=>`<div class="mod ${cls}"><span>${label}</span><b>${BRL(val)}</b></div>`;
   mods.innerHTML+=card("pix","Pix",soma.Pix);
   mods.innerHTML+=card("cartao","Cartão",soma["Cartão"]);
   mods.innerHTML+=card("boleto","Boleto",soma.Boleto);
   mods.innerHTML+=card("total","Total",soma.Total);
 }
-
-
 
 function renderLista(){
   const lista=$("lista");lista.innerHTML="";SELEC=[];$("master").checked=false;
