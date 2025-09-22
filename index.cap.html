@@ -302,7 +302,6 @@ function renderMods(){
   for(const emp of Object.keys(TITULOS)){
     (TITULOS[emp].__all||[]).forEach(t=>{
       const status=(t.status||"Pendente");
-      if(status==="Negado") return;
       const valor=Number(String(t.valor).replace("R$","").replace(/\./g,"").replace(",","."))||0;
       const meio=normalizeMeio(t.meio_pagamento);
       soma.Total+=valor;
