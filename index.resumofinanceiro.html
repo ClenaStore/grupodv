@@ -733,6 +733,42 @@ function drawGrid(){
     }
   }
 
+    function consolidarPorUltimoDia(dados, inicioISO, fimISO) {
+  const inicio = new Date(inicioISO);
+  const fim = new Date(fimISO);
+  const hoje = new Date();
+
+  const mesAtual = hoje.getMonth();
+  const anoAtual = hoje.getFullYear();
+
+  // agrupa registros por mês/ano
+  const agrupados = {};
+  dados.forEach(r => {
+    const d = new Date(r.Data);
+    if (d < inicio || d > fim) return; // só dentro do range
+    const chave = `${d.getFullYear()}-${d.getMonth()}`;
+    if (!agrupados[chave]) agrupados[chave] = [];
+    agrupados[chave].push(r);
+  });
+
+  let resultado = [];
+  Object.entries(agrupados).forEach(([chave, lista]) => {
+    const [ano, mes] = chave.split("-").map(Number);
+
+    if (ano === anoAtual && mes === mesAtual) {
+      // 🔹 mês atual → todos os dias
+      resultado.push(...lista);
+    } else {
+      // 🔹 mês fechado → só o último dia
+      const ultimoDia = Math.max(...lista.map(r => new Date(r.Data).getDate()));
+      resultado.push(...lista.filter(r => new Date(r.Data).getDate() === ultimoDia));
+    }
+  });
+
+  return resultado;
+}
+
+
 async function aplicarFiltro() {
   showLoading("Aplicando filtros…");
   await new Promise(r => setTimeout(r, 50));
@@ -743,11 +779,16 @@ async function aplicarFiltro() {
   const painel = document.getElementById("painel");
   painel.innerHTML = "";
 
-  const dadosFiltrados = dados.filter(item => {
-    const dataOk = (!inicio || item.Data >= inicio) && (!fim || item.Data <= fim);
-    const empresaOk = !empresaSelecionada || item.Empresa === empresaSelecionada;
-    return dataOk && empresaOk;
-  });
+let dadosFiltrados = dados.filter(item => {
+  const d = new Date(item.Data);
+  const dataOk = (!inicio || d >= new Date(inicio)) && (!fim || d <= new Date(fim));
+  const empresaOk = !empresaSelecionada || item.Empresa === empresaSelecionada;
+  return dataOk && empresaOk;
+});
+
+// aplica consolidação de meses anteriores
+dadosFiltrados = consolidarPorUltimoDia(dadosFiltrados, inicio, fim);
+
 
   const empresas = [...new Set(dadosFiltrados.map(item => item.Empresa))];
 
@@ -757,7 +798,7 @@ async function aplicarFiltro() {
     dadosEmpresa.forEach(item => {
       let cat = normalize(item.Categoria);
       if (cat === 'PREJUIZO' || cat === 'DESPERDICIO') cat = 'ERROS DE GARCONS';
-      const valor = parseFloat(item.Valor) || 0;
+      const valor = normalizarValor(item.Valor);
       agrupado[cat] = (agrupado[cat] || 0) + valor;
     });
 
