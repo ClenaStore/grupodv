@@ -758,7 +758,10 @@ function consolidarPorUltimaDataOuMesAtual(registros, inicioISO, fimISO) {
 
     if (ano === anoAtual && mes === mesAtual) {
       // mês atual → mantém todos os dias dentro do range
-      saida.push(...registrosDoMes.filter(r => r.Data >= inicioISO && r.Data <= fimISO));
+      saida.push(...registrosDoMes.filter(r => {
+        const d = new Date(r.Data);
+        return d >= inicio && d <= fim;
+      }));
     } else {
       // mês fechado → pega só o último dia que existe no período
       const ultimoDia = Math.max(...registrosDoMes.map(r => new Date(r.Data).getDate()));
@@ -772,7 +775,6 @@ function consolidarPorUltimaDataOuMesAtual(registros, inicioISO, fimISO) {
   return saida;
 }
 
-    
 
 async function aplicarFiltro() {
   showLoading("Aplicando filtros…");
