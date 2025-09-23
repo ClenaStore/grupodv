@@ -733,49 +733,6 @@ function drawGrid(){
     }
   }
 
-function consolidarPorUltimaDataOuMesAtual(registros, inicioISO, fimISO) {
-  const hoje = new Date();
-  const mesAtual = hoje.getMonth();
-  const anoAtual = hoje.getFullYear();
-
-  const inicio = new Date(inicioISO);
-  const fim = new Date(fimISO);
-
-  // Agrupa por ano-mês
-  const agrupados = {};
-  registros.forEach(r => {
-    const d = new Date(r.Data);
-    const chaveMes = `${d.getFullYear()}-${d.getMonth()+1}`;
-    if (!agrupados[chaveMes]) agrupados[chaveMes] = [];
-    agrupados[chaveMes].push(r);
-  });
-
-  let saida = [];
-  for (const chave in agrupados) {
-    const [anoStr, mesStr] = chave.split("-");
-    const ano = parseInt(anoStr), mes = parseInt(mesStr)-1;
-    const registrosDoMes = agrupados[chave];
-
-    if (ano === anoAtual && mes === mesAtual) {
-      // mês atual → mantém todos os dias dentro do range
-      saida.push(...registrosDoMes.filter(r => {
-        const d = new Date(r.Data);
-        return d >= inicio && d <= fim;
-      }));
-    } else {
-      // mês fechado → pega só o último dia que existe no período
-      const ultimoDia = Math.max(...registrosDoMes.map(r => new Date(r.Data).getDate()));
-      const selecionados = registrosDoMes.filter(r => {
-        const d = new Date(r.Data);
-        return d.getDate() === ultimoDia;
-      });
-      saida.push(...selecionados);
-    }
-  }
-  return saida;
-}
-
-
 async function aplicarFiltro() {
   showLoading("Aplicando filtros…");
   await new Promise(r => setTimeout(r, 50));
@@ -786,17 +743,11 @@ async function aplicarFiltro() {
   const painel = document.getElementById("painel");
   painel.innerHTML = "";
 
-let dadosFiltrados = dados.filter(item => {
-  const d = new Date(item.Data);
-  const dataOk = (!inicio || d >= new Date(inicio)) && (!fim || d <= new Date(fim));
-  const empresaOk = !empresaSelecionada || item.Empresa === empresaSelecionada;
-  return dataOk && empresaOk;
-});
-
-// consolida corretamente
-dadosFiltrados = consolidarPorUltimaDataOuMesAtual(dadosFiltrados, inicio, fim);
-
-
+  const dadosFiltrados = dados.filter(item => {
+    const dataOk = (!inicio || item.Data >= inicio) && (!fim || item.Data <= fim);
+    const empresaOk = !empresaSelecionada || item.Empresa === empresaSelecionada;
+    return dataOk && empresaOk;
+  });
 
   const empresas = [...new Set(dadosFiltrados.map(item => item.Empresa))];
 
@@ -806,7 +757,7 @@ dadosFiltrados = consolidarPorUltimaDataOuMesAtual(dadosFiltrados, inicio, fim);
     dadosEmpresa.forEach(item => {
       let cat = normalize(item.Categoria);
       if (cat === 'PREJUIZO' || cat === 'DESPERDICIO') cat = 'ERROS DE GARCONS';
-     const valor = normalizarValorPlanilha(item.Valor);
+      const valor = parseFloat(item.Valor) || 0;
       agrupado[cat] = (agrupado[cat] || 0) + valor;
     });
 
