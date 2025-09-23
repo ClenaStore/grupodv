@@ -806,7 +806,7 @@ dadosFiltrados = consolidarPorUltimaDataOuMesAtual(dadosFiltrados, inicio, fim);
     dadosEmpresa.forEach(item => {
       let cat = normalize(item.Categoria);
       if (cat === 'PREJUIZO' || cat === 'DESPERDICIO') cat = 'ERROS DE GARCONS';
-      const valor = parseFloat(item.Valor) || 0;
+     const valor = normalizarValorPlanilha(item.Valor);
       agrupado[cat] = (agrupado[cat] || 0) + valor;
     });
 
