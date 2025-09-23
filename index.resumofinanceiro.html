@@ -785,13 +785,15 @@ async function aplicarFiltro() {
   painel.innerHTML = "";
 
 let dadosFiltrados = dados.filter(item => {
-  const dataOk = (!inicio || item.Data >= inicio) && (!fim || item.Data <= fim);
+  const d = new Date(item.Data);
+  const dataOk = (!inicio || d >= new Date(inicio)) && (!fim || d <= new Date(fim));
   const empresaOk = !empresaSelecionada || item.Empresa === empresaSelecionada;
   return dataOk && empresaOk;
 });
 
-// consolida por último dia de cada mês (exceto mês atual)
+// consolida corretamente
 dadosFiltrados = consolidarPorUltimaDataOuMesAtual(dadosFiltrados, inicio, fim);
+
 
 
   const empresas = [...new Set(dadosFiltrados.map(item => item.Empresa))];
