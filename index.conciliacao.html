@@ -124,7 +124,28 @@
 
 <script>
 const API_URL="https://script.google.com/macros/s/AKfycbxVmPiaFQptAWVN1GKNiy_LKW-QyovxVNsBMLV-NrEDVDchxLaCCAavqlQoQb4-IWmk/exec";
-let chart;
+let chartCartao, chartBanco;
+
+/* -------- THEME -------- */
+function aplicarTema(){
+  const tema=localStorage.getItem("tema")||"light";
+  document.documentElement.dataset.theme=tema;
+}
+aplicarTema();
+document.getElementById("btnTema").addEventListener("click",()=>{
+  const atual=document.documentElement.dataset.theme;
+  const novo=atual==="dark"?"light":"dark";
+  localStorage.setItem("tema",novo);
+  aplicarTema();
+});
+
+/* User menu */
+const user=document.getElementById('userMenu');
+user.querySelector('.user-btn').addEventListener('click',()=>user.classList.toggle('open'));
+window.addEventListener('click',e=>{if(!user.contains(e.target)) user.classList.remove('open');});
+
+/* Loading */
+function showLoading(v){document.getElementById('loading').classList.toggle('show',!!v);}
 
 /* Chart */
 function criaDoughnut(el, valor, cor){
@@ -145,31 +166,42 @@ async function carregar(){
   const res=await fetch(API_URL);
   const js=await res.json();
 
-  // Empresas no filtro
+  // Empresas únicas
   const empresas=[...new Set(js.map(r=>r.empresa))];
   const sel=document.getElementById("fEmpresa");
   sel.innerHTML=`<option value="">Todas</option>`+empresas.map(e=>`<option>${e}</option>`).join("");
 
+  // Data default
+  const ontem=new Date(); ontem.setDate(ontem.getDate()-1);
+  document.getElementById("fData").value=ontem.toISOString().slice(0,10);
+
   function aplicar(){
     const emp=sel.value;
-    const dados=js.filter(r=>!emp||r.empresa===emp);
+    const data=document.getElementById("fData").value;
+    let pend=js.filter(r=>(!emp||r.empresa===emp)&&(!data||r.data===data));
 
-    // Percentual médio
-    const totConc=dados.reduce((s,r)=>s+r.conciliado,0);
-    const totPend=dados.reduce((s,r)=>s+r.pendente,0);
-    const perc= (totConc+totPend>0)? (totConc/(totConc+totPend)*100) : 100;
+    // Percentuais: vamos somar conciliado e pendente
+    const totConc=pend.reduce((s,r)=>s+r.conciliado,0);
+    const totPend=pend.reduce((s,r)=>s+r.pendente,0);
+    const perc=totConc+totPend ? (totConc/(totConc+totPend))*100 : 100;
 
-    if(chart) chart.destroy();
-    chart=criaDoughnut("grafCartao",perc,"#2563eb"); // usa o canvas já existente
+    if(chartCartao) chartCartao.destroy();
+    if(chartBanco) chartBanco.destroy();
+    chartCartao=criaDoughnut("grafCartao",perc,"#2563eb");
+    chartBanco=criaDoughnut("grafBanco",perc,"#f59e0b");
 
-    // Tabela de pendências
+    // Preencher tabela com pendências >0
     const tbody=document.getElementById("tblPend");
-    tbody.innerHTML=dados.filter(r=>r.pendente>0)
-      .map(r=>`<tr><td>${r.data||"-"}</td><td>${r.empresa}</td><td>Pendente</td><td>R$ ${r.pendente.toLocaleString("pt-BR",{minimumFractionDigits:2})}</td></tr>`).join("");
+    tbody.innerHTML=pend.filter(r=>r.pendente>0)
+      .map(r=>`<tr>
+        <td>${r.data||"-"}</td>
+        <td>${r.empresa}</td>
+        <td>Pendente</td>
+        <td>R$ ${Number(r.pendente).toLocaleString("pt-BR",{minimumFractionDigits:2})}</td>
+      </tr>`).join("");
   }
   aplicar();
-  sel.onchange=aplicar;
-
+  sel.onchange=aplicar; document.getElementById("fData").onchange=aplicar;
   showLoading(false);
 }
 carregar();
