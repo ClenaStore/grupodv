@@ -43,7 +43,7 @@
     .field input,.field select{width:100%; padding:10px; border:1px solid var(--line); border-radius:10px;}
     .card{background:var(--card); border:1px solid var(--line); border-radius:14px; box-shadow:var(--shadow); padding:16px; margin-bottom:18px}
     .card h3{margin:0 0 12px}
-    .flex{display:flex; gap:24px; flex-wrap:wrap; align-items:center; justify-content:space-around}
+    .flex{display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:24px;}
     .circle-wrap{display:flex; flex-direction:column; align-items:center; gap:10px}
     canvas{width:120px!important; height:120px!important}
     button{padding:8px 14px; border:1px solid var(--line); border-radius:10px; background:var(--surface); font-weight:700; cursor:pointer}
@@ -101,16 +101,7 @@
 
   <div class="card">
     <h3>Conciliação</h3>
-    <div class="flex">
-      <div class="circle-wrap">
-        <canvas id="grafCartao"></canvas>
-        <button>Conciliar cartões</button>
-      </div>
-      <div class="circle-wrap">
-        <canvas id="grafBanco"></canvas>
-        <button>Conciliar bancos</button>
-      </div>
-    </div>
+    <div class="flex" id="areaGraficos"></div>
   </div>
 
   <div class="card">
@@ -125,10 +116,27 @@
 <script>
 const API_URL="https://script.google.com/macros/s/AKfycbxVmPiaFQptAWVN1GKNiy_LKW-QyovxVNsBMLV-NrEDVDchxLaCCAavqlQoQb4-IWmk/exec";
 let charts=[];
-
 const cores=["#2563eb","#f59e0b","#16a34a","#ef4444","#8b5cf6","#06b6d4"];
 
-/* Chart Doughnut */
+/* Tema */
+function aplicarTema(){
+  const tema=localStorage.getItem("tema")||"light";
+  document.documentElement.dataset.theme=tema;
+}
+aplicarTema();
+document.getElementById("btnTema").addEventListener("click",()=>{
+  const atual=document.documentElement.dataset.theme;
+  const novo=atual==="dark"?"light":"dark";
+  localStorage.setItem("tema",novo);
+  aplicarTema();
+});
+
+/* User menu */
+const user=document.getElementById('userMenu');
+user.querySelector('.user-btn').addEventListener('click',()=>user.classList.toggle('open'));
+window.addEventListener('click',e=>{if(!user.contains(e.target)) user.classList.remove('open');});
+
+/* Doughnut */
 function criaDoughnut(canvas, valor, cor, label=""){
   return new Chart(canvas,{
     type:'doughnut',
@@ -144,61 +152,51 @@ function criaDoughnut(canvas, valor, cor, label=""){
   });
 }
 
-/* Carregar dados */
+/* Carregar */
 async function carregar(){
   document.getElementById('loading').classList.add("show");
   const res=await fetch(API_URL);
   const js=await res.json();
 
-  // Empresas no select
   const empresas=[...new Set(js.map(r=>r.empresa))];
   const sel=document.getElementById("fEmpresa");
   sel.innerHTML=`<option value="">Todas</option>`+empresas.map(e=>`<option>${e}</option>`).join("");
 
-  // Data default
   const ontem=new Date(); ontem.setDate(ontem.getDate()-1);
   document.getElementById("fData").value=ontem.toISOString().slice(0,10);
 
   function aplicar(){
-    // Limpar gráficos antigos
     charts.forEach(c=>c.destroy());
     charts=[];
-
     const emp=sel.value;
     const data=document.getElementById("fData").value;
-    const area=document.querySelector(".flex");
-    area.innerHTML=""; 
+    const area=document.getElementById("areaGraficos");
+    area.innerHTML="";
 
     let pend=js.filter(r=>(!emp||r.empresa===emp)&&(!data||r.data===data));
 
-    if(emp){ 
-      // Uma empresa → 2 gráficos fixos
+    if(emp){
       let empresa=pend[0];
       if(!empresa) return;
-
       let wrap1=document.createElement("div"); wrap1.className="circle-wrap";
       let c1=document.createElement("canvas"); wrap1.appendChild(c1);
       wrap1.innerHTML+=`<button>Conciliar cartões</button>`;
-
       let wrap2=document.createElement("div"); wrap2.className="circle-wrap";
       let c2=document.createElement("canvas"); wrap2.appendChild(c2);
       wrap2.innerHTML+=`<button>Conciliar bancos</button>`;
-
       area.appendChild(wrap1); area.appendChild(wrap2);
-
       charts.push(criaDoughnut(c1,empresa.percentual,cores[0],"Cartões"));
       charts.push(criaDoughnut(c2,empresa.percentual,cores[1],"Bancos"));
     }else{
-      // Todas → um gráfico por empresa
       pend.forEach((r,i)=>{
         let wrap=document.createElement("div"); wrap.className="circle-wrap";
         let c=document.createElement("canvas"); wrap.appendChild(c);
+        wrap.innerHTML+=`<strong>${r.empresa}</strong>`;
         area.appendChild(wrap);
         charts.push(criaDoughnut(c,r.percentual,cores[i%cores.length],r.empresa));
       });
     }
 
-    // Tabela de pendentes
     const tbody=document.getElementById("tblPend");
     tbody.innerHTML=pend.filter(r=>r.pendente>0)
       .map(r=>`<tr>
@@ -210,12 +208,11 @@ async function carregar(){
   }
 
   aplicar();
-  sel.onchange=aplicar; 
+  sel.onchange=aplicar;
   document.getElementById("fData").onchange=aplicar;
   document.getElementById('loading').classList.remove("show");
 }
 carregar();
 </script>
-
 </body>
 </html>
