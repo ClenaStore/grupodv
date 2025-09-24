@@ -124,9 +124,9 @@
 
 <script>
 const API_URL="https://script.google.com/macros/s/AKfycbxVmPiaFQptAWVN1GKNiy_LKW-QyovxVNsBMLV-NrEDVDchxLaCCAavqlQoQb4-IWmk/exec";
-let chartCartao, chartBanco;
+let charts=[];
 
-/* -------- THEME -------- */
+/* THEME */
 function aplicarTema(){
   const tema=localStorage.getItem("tema")||"light";
   document.documentElement.dataset.theme=tema;
@@ -147,17 +147,19 @@ window.addEventListener('click',e=>{if(!user.contains(e.target)) user.classList.
 /* Loading */
 function showLoading(v){document.getElementById('loading').classList.toggle('show',!!v);}
 
-/* Chart */
-function criaDoughnut(el, valor, cor){
-  const data={datasets:[{data:[valor,100-valor], backgroundColor:[cor,"#e5e7eb"], cutout:"70%"}]};
-  const cfg={type:'doughnut',data,
+/* Cria doughnut */
+function criaDoughnut(canvas, valor, cor, label=""){
+  return new Chart(canvas,{
+    type:'doughnut',
+    data:{datasets:[{data:[valor,100-valor], backgroundColor:[cor,"#e5e7eb"], cutout:"70%"}]},
     options:{plugins:{legend:{display:false},tooltip:{enabled:false}}},
     plugins:[{id:"text",beforeDraw(c){
-      const {ctx,width}=c; ctx.save(); ctx.font="bold 20px sans-serif"; ctx.fillStyle=cor;
+      const {ctx,width}=c; ctx.save(); ctx.font="bold 16px sans-serif"; ctx.fillStyle=cor;
       ctx.textAlign="center"; ctx.textBaseline="middle"; 
-      ctx.fillText(valor.toFixed(1)+"%",width/2,c.chartArea.height/2+20);
-    }}]};
-  return new Chart(document.getElementById(el),cfg);
+      ctx.fillText(valor.toFixed(1)+"%",width/2,c.chartArea.height/2+15);
+      if(label){ctx.font="12px sans-serif"; ctx.fillStyle="#555"; ctx.fillText(label,width/2,c.chartArea.height/2+35);}
+    }}]
+  });
 }
 
 /* Carregar dados */
@@ -171,32 +173,49 @@ async function carregar(){
   const sel=document.getElementById("fEmpresa");
   sel.innerHTML=`<option value="">Todas</option>`+empresas.map(e=>`<option>${e}</option>`).join("");
 
-  // Data padrão
+  // Data default
   const ontem=new Date(); ontem.setDate(ontem.getDate()-1);
   document.getElementById("fData").value=ontem.toISOString().slice(0,10);
 
   function aplicar(){
+    // limpa gráficos antigos
+    charts.forEach(c=>c.destroy());
+    charts=[];
+
     const emp=sel.value;
     const data=document.getElementById("fData").value;
+    const area=document.querySelector(".flex");
+    area.innerHTML=""; // limpa container
 
-    // Filtra dados
     let pend=js.filter(r=>(!emp||r.empresa===emp)&&(!data||r.data===data));
 
-    // Percentual
-    let perc;
     if(emp){ 
-      perc = pend[0] ? pend[0].percentual : 100;
-    }else{
-      const totConc=pend.reduce((s,r)=>s+r.conciliado,0);
-      const totPend=pend.reduce((s,r)=>s+r.pendente,0);
-      perc = totConc+totPend ? (totConc/(totConc+totPend))*100 : 100;
-    }
+      // Caso só uma empresa → 2 gráficos fixos
+      let empresa=pend[0];
+      if(!empresa) return;
 
-    // Atualiza gráficos
-    if(chartCartao) chartCartao.destroy();
-    if(chartBanco) chartBanco.destroy();
-    chartCartao=criaDoughnut("grafCartao",perc,"#2563eb");
-    chartBanco=criaDoughnut("grafBanco",perc,"#f59e0b");
+      let c1=document.createElement("canvas"); c1.width=120; c1.height=120;
+      let c2=document.createElement("canvas"); c2.width=120; c2.height=120;
+
+      let wrap1=document.createElement("div"); wrap1.className="circle-wrap"; wrap1.appendChild(c1);
+      wrap1.innerHTML+=`<button>Conciliar cartões</button>`;
+      let wrap2=document.createElement("div"); wrap2.className="circle-wrap"; wrap2.appendChild(c2);
+      wrap2.innerHTML+=`<button>Conciliar bancos</button>`;
+
+      area.appendChild(wrap1); area.appendChild(wrap2);
+
+      charts.push(criaDoughnut(c1,empresa.percentual,"#2563eb","Cartões"));
+      charts.push(criaDoughnut(c2,empresa.percentual,"#f59e0b","Bancos"));
+    }else{
+      // Caso "Todas" → 1 gráfico por empresa
+      pend.forEach(r=>{
+        let c=document.createElement("canvas"); c.width=120; c.height=120;
+        let wrap=document.createElement("div"); wrap.className="circle-wrap"; wrap.appendChild(c);
+        wrap.innerHTML+=`<strong>${r.empresa}</strong>`;
+        area.appendChild(wrap);
+        charts.push(criaDoughnut(c,r.percentual,"#2563eb",r.empresa));
+      });
+    }
 
     // Tabela de pendentes
     const tbody=document.getElementById("tblPend");
