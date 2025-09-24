@@ -160,37 +160,45 @@ function criaDoughnut(el, valor, cor){
   return new Chart(document.getElementById(el),cfg);
 }
 
-/* Carregar */
+/* Carregar dados */
 async function carregar(){
   showLoading(true);
   const res=await fetch(API_URL);
   const js=await res.json();
 
-  // Empresas únicas
+  // Empresas
   const empresas=[...new Set(js.map(r=>r.empresa))];
   const sel=document.getElementById("fEmpresa");
   sel.innerHTML=`<option value="">Todas</option>`+empresas.map(e=>`<option>${e}</option>`).join("");
 
-  // Data default
+  // Data padrão
   const ontem=new Date(); ontem.setDate(ontem.getDate()-1);
   document.getElementById("fData").value=ontem.toISOString().slice(0,10);
 
   function aplicar(){
     const emp=sel.value;
     const data=document.getElementById("fData").value;
+
+    // Filtra dados
     let pend=js.filter(r=>(!emp||r.empresa===emp)&&(!data||r.data===data));
 
-    // Percentuais: vamos somar conciliado e pendente
-    const totConc=pend.reduce((s,r)=>s+r.conciliado,0);
-    const totPend=pend.reduce((s,r)=>s+r.pendente,0);
-    const perc=totConc+totPend ? (totConc/(totConc+totPend))*100 : 100;
+    // Percentual
+    let perc;
+    if(emp){ 
+      perc = pend[0] ? pend[0].percentual : 100;
+    }else{
+      const totConc=pend.reduce((s,r)=>s+r.conciliado,0);
+      const totPend=pend.reduce((s,r)=>s+r.pendente,0);
+      perc = totConc+totPend ? (totConc/(totConc+totPend))*100 : 100;
+    }
 
+    // Atualiza gráficos
     if(chartCartao) chartCartao.destroy();
     if(chartBanco) chartBanco.destroy();
     chartCartao=criaDoughnut("grafCartao",perc,"#2563eb");
     chartBanco=criaDoughnut("grafBanco",perc,"#f59e0b");
 
-    // Preencher tabela com pendências >0
+    // Tabela de pendentes
     const tbody=document.getElementById("tblPend");
     tbody.innerHTML=pend.filter(r=>r.pendente>0)
       .map(r=>`<tr>
@@ -200,12 +208,13 @@ async function carregar(){
         <td>R$ ${Number(r.pendente).toLocaleString("pt-BR",{minimumFractionDigits:2})}</td>
       </tr>`).join("");
   }
+
   aplicar();
-  sel.onchange=aplicar; document.getElementById("fData").onchange=aplicar;
+  sel.onchange=aplicar; 
+  document.getElementById("fData").onchange=aplicar;
   showLoading(false);
 }
 carregar();
 </script>
-
 </body>
 </html>
