@@ -124,29 +124,7 @@
 
 <script>
 const API_URL="https://script.google.com/macros/s/AKfycbxVmPiaFQptAWVN1GKNiy_LKW-QyovxVNsBMLV-NrEDVDchxLaCCAavqlQoQb4-IWmk/exec";
-let chartCartao, chartBanco;
-
-/* -------- THEME GLOBAL -------- */
-function aplicarTema(){
-  const tema=localStorage.getItem("tema")||"light";
-  document.documentElement.dataset.theme=tema;
-}
-aplicarTema();
-
-document.getElementById("btnTema").addEventListener("click",()=>{
-  const atual=document.documentElement.dataset.theme;
-  const novo=atual==="dark"?"light":"dark";
-  localStorage.setItem("tema",novo);
-  aplicarTema();
-});
-
-/* User menu */
-const user=document.getElementById('userMenu');
-user.querySelector('.user-btn').addEventListener('click',()=>user.classList.toggle('open'));
-window.addEventListener('click',e=>{if(!user.contains(e.target)) user.classList.remove('open');});
-
-/* Loading */
-function showLoading(v){document.getElementById('loading').classList.toggle('show',!!v);}
+let chart;
 
 /* Chart */
 function criaDoughnut(el, valor, cor){
@@ -155,7 +133,8 @@ function criaDoughnut(el, valor, cor){
     options:{plugins:{legend:{display:false},tooltip:{enabled:false}}},
     plugins:[{id:"text",beforeDraw(c){
       const {ctx,width}=c; ctx.save(); ctx.font="bold 20px sans-serif"; ctx.fillStyle=cor;
-      ctx.textAlign="center"; ctx.textBaseline="middle"; ctx.fillText(valor+"%",width/2,c.chartArea.height/2+20);
+      ctx.textAlign="center"; ctx.textBaseline="middle"; 
+      ctx.fillText(valor.toFixed(1)+"%",width/2,c.chartArea.height/2+20);
     }}]};
   return new Chart(document.getElementById(el),cfg);
 }
@@ -166,47 +145,35 @@ async function carregar(){
   const res=await fetch(API_URL);
   const js=await res.json();
 
-  // Empresas
+  // Empresas no filtro
   const empresas=[...new Set(js.map(r=>r.empresa))];
   const sel=document.getElementById("fEmpresa");
   sel.innerHTML=`<option value="">Todas</option>`+empresas.map(e=>`<option>${e}</option>`).join("");
 
-  // Dia anterior
-  const ontem=new Date(); ontem.setDate(ontem.getDate()-1);
-  const iso=ontem.toISOString().slice(0,10);
-  document.getElementById("fData").value=iso;
-
   function aplicar(){
-    const emp=sel.value, data=document.getElementById("fData").value;
-    const pend=js.filter(r=>{
-      const okEmp=!emp||r.empresa===emp;
-      const okData=!data||r.data===data;
-      return okEmp&&okData;
-    });
+    const emp=sel.value;
+    const dados=js.filter(r=>!emp||r.empresa===emp);
 
-    const totCart=pend.filter(r=>r.tipo==="Cartão").length;
-    const concCart=pend.filter(r=>r.tipo==="Cartão" && r.status==="Conciliado").length;
-    const percCart=totCart?(Math.round(concCart/totCart*100)):100;
+    // Percentual médio
+    const totConc=dados.reduce((s,r)=>s+r.conciliado,0);
+    const totPend=dados.reduce((s,r)=>s+r.pendente,0);
+    const perc= (totConc+totPend>0)? (totConc/(totConc+totPend)*100) : 100;
 
-    const totBco=pend.filter(r=>r.tipo==="Banco").length;
-    const concBco=pend.filter(r=>r.tipo==="Banco" && r.status==="Conciliado").length;
-    const percBco=totBco?(Math.round(concBco/totBco*100)):100;
+    if(chart) chart.destroy();
+    chart=criaDoughnut("grafCartao",perc,"#2563eb"); // usa o canvas já existente
 
-    if(chartCartao) chartCartao.destroy();
-    if(chartBanco) chartBanco.destroy();
-    chartCartao=criaDoughnut("grafCartao",percCart,"#2563eb");
-    chartBanco=criaDoughnut("grafBanco",percBco,"#f59e0b");
-
+    // Tabela de pendências
     const tbody=document.getElementById("tblPend");
-    tbody.innerHTML=pend.filter(r=>r.status!=="Conciliado")
-      .map(r=>`<tr><td>${r.data}</td><td>${r.empresa}</td><td>${r.tipo}</td><td>R$ ${Number(r.valor).toLocaleString("pt-BR",{minimumFractionDigits:2})}</td></tr>`).join("");
+    tbody.innerHTML=dados.filter(r=>r.pendente>0)
+      .map(r=>`<tr><td>${r.data||"-"}</td><td>${r.empresa}</td><td>Pendente</td><td>R$ ${r.pendente.toLocaleString("pt-BR",{minimumFractionDigits:2})}</td></tr>`).join("");
   }
   aplicar();
-  sel.onchange=aplicar; document.getElementById("fData").onchange=aplicar;
+  sel.onchange=aplicar;
 
   showLoading(false);
 }
 carregar();
 </script>
+
 </body>
 </html>
