@@ -537,7 +537,7 @@ async function fetchEmpresa(emp){
 
 async function loadTitulos(empresas,inicio,fim,filtroStatus,filtroMeio){
   TITULOS={}; 
-  $("overlay").style.display="flex";
+  
 
   // Aguarda todas as empresas carregarem
   await Promise.all(empresas.map(async emp=>{
@@ -598,13 +598,15 @@ async function refresh(){
     dateFormat: "d/m/Y", // formato brasileiro
     locale: "pt",
     defaultDate: [hoje, hoje], // agora pega o dia atual certo
-  onClose: sel=>{
+ onClose: sel=>{
   if(sel.length===2){
-    periodoInicio = iso(sel[0]); // 🔹 guarda no global
+    periodoInicio = iso(sel[0]); 
     periodoFim = iso(sel[1]);
+    $("overlay").style.display="flex";   // ✅ mostra overlay só aqui
     refresh();
   }
 }
+
 
   });
 
@@ -615,7 +617,12 @@ EMP_DEFAULT.forEach((emp,i)=>{
   lbl.style.alignItems = "center";
   lbl.style.gap = "8px"; // espaço entre bolinha e texto
   lbl.innerHTML = `<input type="radio" name="empresaSel" value="${emp}" ${i===0?"checked":""}><span>${emp}</span>`;
-lbl.querySelector("input").onchange = ()=>{refresh();M.style.display="none"};
+lbl.querySelector("input").onchange = ()=>{
+  $("overlay").style.display="flex";    // ✅ mostra overlay só aqui
+  refresh();
+  M.style.display="none";
+};
+
   M.appendChild(lbl);
 });
 
