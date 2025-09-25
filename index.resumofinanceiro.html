@@ -766,36 +766,37 @@ async function aplicarFiltro() {
     const dadosEmpresa = dadosFiltrados.filter(i => i.Empresa === emp);
     const agrupado = {};
 
-    // agora pega a categoria exatamente como está na planilha
+    // 👉 usa a categoria exatamente como está na planilha
     dadosEmpresa.forEach(item => {
-      let cat = String(item.Categoria || "").trim();
-      agrupado[cat] = (agrupado[cat] || 0) + (parseFloat(item.Valor) || 0);
+      const cat = (item.Categoria || "OUTROS").trim();
+      const val = parseFloat(item.Valor) || 0;
+      agrupado[cat] = (agrupado[cat] || 0) + val;
     });
 
     const total = Object.values(agrupado).reduce((a, b) => a + b, 0);
+
     const box = document.createElement("div");
     box.className = "empresa-box";
 
     const conteudo = document.createElement("div");
     conteudo.className = "empresa-conteudo";
 
-    // Cabeçalho + lista
     let html = `<h2>${emp.toUpperCase()} — R$ ${BRL(total)}</h2><ul>`;
-    for (const cat in agrupado) {
+    for (const cat of Object.keys(agrupado)) {
       const emoji = emojis[normalize(cat)] || "📌";
-      const valor = BRL(agrupado[cat]);
-      html += `<li>${emoji} ${cat}: R$ ${valor}</li>`;
+      html += `<li>${emoji} ${cat}: R$ ${BRL(agrupado[cat])}</li>`;
     }
     html += `</ul>`;
 
-    // 🔑 Consolidado Carneiro Mercatto
+    conteudo.innerHTML = html;
+
+    // === Mantém seu consolidado Carneiro Mercatto ===
     if (normalize(emp) === "CARNEIRO MERCATTO RESTAURANTE") {
       const empresasSomadas = ["CARNEIRO MERCATTO RESTAURANTE", "CARNEIRO MERCATTO EMPORIO", "M.KIDS"];
       const dadosSomados = dados.filter(i => {
         const dataOk = (!inicio || i.Data >= inicio) && (!fim || i.Data <= fim);
         return dataOk && empresasSomadas.includes(normalize(i.Empresa));
       });
-
       const totalSoma = dadosSomados.reduce((acc, i) => acc + (parseFloat(i.Valor) || 0), 0);
 
       html += `
@@ -806,14 +807,11 @@ async function aplicarFiltro() {
           border-radius:10px;
           background:color-mix(in srgb, var(--surface) 92%, #fff)">
           <strong style="color:var(--brand)">🔹 Faturamento do Carneiro Mercatto</strong><br>
-          <span style="font-size:1.1rem; font-weight:700">
-            R$ ${BRL(totalSoma)}
-          </span>
+          <span style="font-size:1.1rem; font-weight:700">R$ ${BRL(totalSoma)}</span>
           <small style="display:block; margin-top:4px; color:var(--muted)">
             (Restaurante + Empório + M.Kids)
           </small>
-        </div>
-      `;
+        </div>`;
     }
 
     conteudo.innerHTML = html;
@@ -849,6 +847,7 @@ async function aplicarFiltro() {
 
   hideLoading();
 }
+
 
 
   function displayName(catNorm){
