@@ -754,12 +754,17 @@ async function aplicarFiltro() {
   empresas.forEach(emp => {
     const dadosEmpresa = dadosFiltrados.filter(i => i.Empresa === emp);
     const agrupado = {};
-    dadosEmpresa.forEach(item => {
-      let cat = normalize(item.Categoria);
-      if (cat === 'PREJUIZO' || cat === 'DESPERDICIO') cat = 'ERROS DE GARCONS';
-      const valor = parseFloat(item.Valor) || 0;
-      agrupado[cat] = (agrupado[cat] || 0) + valor;
-    });
+dadosEmpresa.forEach(item => {
+  // remove prefixos tipo "001 - "
+  let cat = String(item.Categoria || "").replace(/^\d+\s*-\s*/, "").trim();
+  let catNorm = normalize(cat);
+
+  if (catNorm === 'PREJUIZO' || catNorm === 'DESPERDICIO') catNorm = 'ERROS DE GARCONS';
+
+  const valor = parseFloat(item.Valor) || 0;
+  agrupado[catNorm] = (agrupado[catNorm] || 0) + valor;
+});
+
 
     const total = Object.values(agrupado).reduce((a, b) => a + b, 0);
     const box = document.createElement("div");
