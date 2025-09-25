@@ -650,6 +650,7 @@ function drawGrid(){
     "PREJUÍZO": "🧯", "DESPERDÍCIO": "🧯", "DESPERDICIO": "🧯"
   };
 
+  let dados = [];
   let graficoAnualRef = null;
   let empresaFoco = null;
   let selecionadas = new Set();
@@ -711,27 +712,26 @@ function drawGrid(){
     return new Date(y, m-1, d);
   }
 
-async function carregarDados() {
-  try {
-    const resposta = await fetch(url);
-    const todos = await resposta.json();
-
-    const empresas = [...new Set(todos.map(item => item.Empresa))].sort();
-    const select = document.getElementById("empresaFiltro");
-    select.innerHTML = '<option value="">Todas</option>';
-    empresas.forEach(emp => {
-      const option = document.createElement("option");
-      option.value = emp;
-      option.textContent = emp;
-      select.appendChild(option);
-    });
-  } catch(e) {
-    console.error(e);
-    hideLoading();
-    alert('Não foi possível carregar os dados agora.');
+  async function carregarDados() {
+    try{
+      const resposta = await fetch(url);
+      dados = await resposta.json();
+      const empresas = [...new Set(dados.map(item => item.Empresa))].sort();
+      const select = document.getElementById("empresaFiltro");
+      select.innerHTML = '<option value="">Todas</option>';
+      empresas.forEach(emp => {
+        const option = document.createElement("option");
+        option.value = emp;
+        option.textContent = emp;
+        select.appendChild(option);
+      });
+      await aplicarFiltro();
+    }catch(e){
+      console.error(e);
+      hideLoading();
+      alert('Não foi possível carregar os dados agora.');
+    }
   }
-}
-
 
 async function aplicarFiltro() {
   showLoading("Aplicando filtros…");
@@ -743,14 +743,11 @@ async function aplicarFiltro() {
   const painel = document.getElementById("painel");
   painel.innerHTML = "";
 
-const params = new URLSearchParams({
-  inicio,
-  fim,
-  empresa: empresaSelecionada
-});
-const resposta = await fetch(`${url}?${params.toString()}`);
-const dadosFiltrados = await resposta.json();
-
+  const dadosFiltrados = dados.filter(item => {
+    const dataOk = (!inicio || item.Data >= inicio) && (!fim || item.Data <= fim);
+    const empresaOk = !empresaSelecionada || item.Empresa === empresaSelecionada;
+    return dataOk && empresaOk;
+  });
 
   const empresas = [...new Set(dadosFiltrados.map(item => item.Empresa))];
 
@@ -871,154 +868,142 @@ const dadosFiltrados = await resposta.json();
   }
 
   /* ======= Helpers para o comparador ======= */
-async function empresasUnicas(){
-  const resposta = await fetch(url);
-  const todos = await resposta.json();
-  return [...new Set(todos.map(d => d.Empresa))].sort();
-}
-
-async function totaisMensaisPorEmpresa(emp, ano){
-  const params = new URLSearchParams({ empresa: emp, ano });
-  const resposta = await fetch(`${url}?${params.toString()}`);
-  const registros = await resposta.json();
-
-  const arr = Array(12).fill(0);
-  registros.forEach(r=>{
-    const v = parseFloat(r.Valor)||0;
-    const m = parseInt(String(r.Data).split('-')[1],10)-1;
-    if(m>=0 && m<12) arr[m]+=v;
-  });
-  return arr;
-}
-
-
-// === Evolução Anual ===
-async function abrirEvolucaoAnual(empresa){
-  empresaFoco = empresa;
-  selecionadas = new Set([empresa]);
-
-  const ano = new Date().getFullYear();
-  const mesAtualIdx = new Date().getMonth();
-
-  // Buscar registros direto na API
-  const params = new URLSearchParams({ empresa, ano });
-  const resposta = await fetch(`${url}?${params.toString()}`);
-  const recs = await resposta.json();
-
-  const porMes = Array(12).fill(0);
-  recs.forEach(r=>{
-    const valor = parseFloat(r.Valor) || 0;
-    const m = parseInt(String(r.Data).split('-')[1], 10) - 1;
-    if (m>=0 && m<12) porMes[m] += valor;
-  });
-
-  const isBonus = c => normalize(c) === 'BONIFICACAO';
-  const isSocio = c => normalize(c) === 'CONSUMO SOCIO';
-  const isErro  = c => ['ERROS DE GARCONS','PREJUIZO','DESPERDICIO'].includes(normalize(c));
-
-  let bonusAno=0, socioAno=0, erroAno=0;
-  let bonusMes=0, socioMes=0, erroMes=0;
-
-  recs.forEach(r=>{
-    const v = parseFloat(r.Valor) || 0;
-    const cat = normalize(r.Categoria);
-    const m = parseInt(String(r.Data).split('-')[1], 10) - 1;
-
-    if (isBonus(cat)) { bonusAno += v; if (m===mesAtualIdx) bonusMes += v; }
-    if (isSocio(cat)) { socioAno += v; if (m===mesAtualIdx) socioMes += v; }
-    if (isErro(cat))  { erroAno  += v; if (m===mesAtualIdx) erroMes  += v; }
-  });
-
-  document.getElementById('tituloAnual').textContent = `Evolução Anual — ${empresa} (${ano})`;
-  document.getElementById('kpiBonusAno').textContent = `R$ ${BRL(bonusAno)}`;
-  document.getElementById('kpiBonusMes').textContent = `Mês atual (${MONTHS[mesAtualIdx]}): R$ ${BRL(bonusMes)}`;
-  document.getElementById('kpiSocioAno').textContent = `R$ ${BRL(socioAno)}`;
-  document.getElementById('kpiSocioMes').textContent = `Mês atual (${MONTHS[mesAtualIdx]}): R$ ${BRL(socioMes)}`;
-  document.getElementById('kpiErroAno').textContent  = `R$ ${BRL(erroAno)}`;
-  document.getElementById('kpiErroMes').textContent  = `Mês atual (${MONTHS[mesAtualIdx]}): R$ ${BRL(erroMes)}`;
-
-  await montarChecklistComparacao();
-  await renderGraficoComparacao(ano);
-
-  document.getElementById('modalAnual').classList.add('open');
-  document.getElementById('fecharModal').onclick = fecharModal;
-  document.getElementById('modalAnual').addEventListener('click', (e)=>{ if(e.target.id === 'modalAnual') fecharModal(); }, { once:true });
-}
-
-// === Checklist comparador ===
-async function montarChecklistComparacao(){
-  const list = document.getElementById('compareList');
-  list.innerHTML = '';
-  const todas = await empresasUnicas();
-
-  todas.forEach((emp, idx)=>{
-    const id = `cmp_${idx}`;
-    const wrap = document.createElement('label');
-    wrap.className = 'check-item';
-    wrap.innerHTML = `
-      <input type="checkbox" id="${id}" value="${emp}" ${selecionadas.has(emp)?'checked':''}/>
-      <span>${emp}</span>
-    `;
-    wrap.querySelector('input').addEventListener('change', async (e)=>{
-      if(e.target.checked) selecionadas.add(emp); else selecionadas.delete(emp);
-      const ano = new Date().getFullYear();
-      await renderGraficoComparacao(ano);
+  function empresasUnicas(){ return [...new Set(dados.map(d=>d.Empresa))].sort(); }
+  function totaisMensaisPorEmpresa(emp, ano){
+    const arr = Array(12).fill(0);
+    dados.forEach(r=>{
+      if(r.Empresa!==emp) return;
+      if(!String(r.Data).startsWith(String(ano))) return;
+      const v = parseFloat(r.Valor)||0;
+      const m = parseInt(String(r.Data).split('-')[1],10)-1;
+      if(m>=0 && m<12) arr[m]+=v;
     });
-    list.appendChild(wrap);
-  });
+    return arr;
+  }
 
-  document.getElementById('btnCompareAll').onclick = async ()=>{
-    todas.forEach(emp=>selecionadas.add(emp));
-    await montarChecklistComparacao();
-    await renderGraficoComparacao(new Date().getFullYear());
-  };
-  document.getElementById('btnCompareNone').onclick = async ()=>{
-    selecionadas.clear();
-    selecionadas.add(empresaFoco);
-    await montarChecklistComparacao();
-    await renderGraficoComparacao(new Date().getFullYear());
-  };
-}
+  /* ===== Evolução Anual ===== */
+  function abrirEvolucaoAnual(empresa){
+    empresaFoco = empresa;
+    selecionadas = new Set([empresa]);
 
-// === Gráfico comparador ===
-async function renderGraficoComparacao(ano){
-  const ctx = document.getElementById('graficoAnual').getContext('2d');
-  const marcas = [...selecionadas];
-  if (graficoAnualRef) { graficoAnualRef.destroy(); graficoAnualRef = null; }
+    const ano = new Date().getFullYear();
+    const mesAtualIdx = new Date().getMonth();
 
-  if (marcas.length <= 1){
-    const emp = marcas[0] || empresaFoco;
-    const porMes = await totaisMensaisPorEmpresa(emp, ano);
-    graficoAnualRef = new Chart(ctx, {
-      type: 'bar',
-      data: {
-        labels: MONTHS,
-        datasets: [{
-          label: 'Total vendido por mês',
-          data: porMes,
-          backgroundColor: MONTHS.map((_,i)=> i===new Date().getMonth() ? 'rgba(37,99,235,.55)' : 'rgba(37,99,235,.22)'),
-          borderColor: '#2563eb',
-          borderWidth: 1
-        }]
-      },
-      options: {
-        responsive: true, maintainAspectRatio: false,
-        plugins: {
-          legend: { display:false },
-          title: { display:true, text:`Total vendido por mês — ${emp}` },
-          tooltip: { callbacks:{ label: c => 'R$ ' + (Number(c.parsed.y)||0).toLocaleString('pt-BR',{minimumFractionDigits:2}) } }
+    const recs = dados.filter(r => r.Empresa === empresa && String(r.Data).startsWith(String(ano)));
+    const porMes = Array(12).fill(0);
+    recs.forEach(r=>{
+      const valor = parseFloat(r.Valor) || 0;
+      const m = parseInt(String(r.Data).split('-')[1], 10) - 1;
+      if (m>=0 && m<12) porMes[m] += valor;
+    });
+
+    const isBonus = c => normalize(c) === 'BONIFICACAO';
+    const isSocio = c => normalize(c) === 'CONSUMO SOCIO';
+    const isErro  = c => ['ERROS DE GARCONS','PREJUIZO','DESPERDICIO'].includes(normalize(c));
+
+    let bonusAno=0, socioAno=0, erroAno=0;
+    let bonusMes=0, socioMes=0, erroMes=0;
+
+    recs.forEach(r=>{
+      const v = parseFloat(r.Valor) || 0;
+      const cat = normalize(r.Categoria);
+      const m = parseInt(String(r.Data).split('-')[1], 10) - 1;
+
+      if (isBonus(cat)) { bonusAno += v; if (m===mesAtualIdx) bonusMes += v; }
+      if (isSocio(cat)) { socioAno += v; if (m===mesAtualIdx)  socioMes += v; }
+      if (isErro(cat))  { erroAno  += v; if (m===mesAtualIdx)  erroMes  += v; }
+    });
+
+    document.getElementById('tituloAnual').textContent = `Evolução Anual — ${empresa} (${ano})`;
+    document.getElementById('kpiBonusAno').textContent = `R$ ${BRL(bonusAno)}`;
+    document.getElementById('kpiBonusMes').textContent = `Mês atual (${MONTHS[mesAtualIdx]}): R$ ${BRL(bonusMes)}`;
+    document.getElementById('kpiSocioAno').textContent = `R$ ${BRL(socioAno)}`;
+    document.getElementById('kpiSocioMes').textContent = `Mês atual (${MONTHS[mesAtualIdx]}): R$ ${BRL(socioMes)}`;
+    document.getElementById('kpiErroAno').textContent  = `R$ ${BRL(erroAno)}`;
+    document.getElementById('kpiErroMes').textContent  = `R$ ${BRL(erroMes)}`;
+
+    montarChecklistComparacao(empresa);
+    renderGraficoComparacao(ano);
+
+    document.getElementById('modalAnual').classList.add('open');
+
+    document.getElementById('fecharModal').onclick = fecharModal;
+    document.getElementById('modalAnual').addEventListener('click', (e)=>{ if(e.target.id === 'modalAnual') fecharModal(); }, { once:true });
+  }
+
+  function montarChecklistComparacao(){
+    const list = document.getElementById('compareList');
+    list.innerHTML = '';
+    const todas = empresasUnicas();
+
+    todas.forEach((emp, idx)=>{
+      const id = `cmp_${idx}`;
+      const wrap = document.createElement('label');
+      wrap.className = 'check-item';
+      wrap.innerHTML = `
+        <input type="checkbox" id="${id}" value="${emp}" ${selecionadas.has(emp)?'checked':''}/>
+        <span>${emp}</span>
+      `;
+      wrap.querySelector('input').addEventListener('change', (e)=>{
+        if(e.target.checked) selecionadas.add(emp); else selecionadas.delete(emp);
+        const ano = new Date().getFullYear();
+        renderGraficoComparacao(ano);
+      });
+      list.appendChild(wrap);
+    });
+
+    document.getElementById('btnCompareAll').onclick = ()=>{
+      todas.forEach(emp=>selecionadas.add(emp));
+      montarChecklistComparacao();
+      renderGraficoComparacao(new Date().getFullYear());
+    };
+    document.getElementById('btnCompareNone').onclick = ()=>{
+      selecionadas.clear();
+      selecionadas.add(empresaFoco);
+      montarChecklistComparacao();
+      renderGraficoComparacao(new Date().getFullYear());
+    };
+  }
+
+  function renderGraficoComparacao(ano){
+    const ctx = document.getElementById('graficoAnual').getContext('2d');
+    const marcas = [...selecionadas];
+    if (graficoAnualRef) { graficoAnualRef.destroy(); graficoAnualRef = null; }
+
+    if (marcas.length <= 1){
+      const emp = marcas[0] || empresaFoco;
+      const porMes = totaisMensaisPorEmpresa(emp, ano);
+      graficoAnualRef = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: MONTHS,
+          datasets: [{
+            label: 'Total vendido por mês',
+            data: porMes,
+            backgroundColor: MONTHS.map((_,i)=> i===new Date().getMonth() ? 'rgba(37,99,235,.55)' : 'rgba(37,99,235,.22)'),
+            borderColor: '#2563eb',
+            borderWidth: 1
+          }]
         },
-        scales: { y: { beginAtZero:true } }
-      }
-    });
-  } else {
-    const datasets = [];
-    for(let i=0;i<marcas.length;i++){
-      const emp = marcas[i];
-      const valores = await totaisMensaisPorEmpresa(emp, ano);
-      datasets.push({
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          interaction: { mode: 'nearest', axis: 'x', intersect: false },
+          events: ['mousemove','mouseout','click','touchstart','touchmove','touchend'],
+          plugins: {
+            legend: { display:false },
+            title: { display:true, text:`Total vendido por mês — ${emp}` },
+            tooltip: {
+              position: 'nearest',
+              callbacks:{ label: c => 'R$ ' + (Number(c.parsed.y)||0).toLocaleString('pt-BR',{minimumFractionDigits:2}) }
+            }
+          },
+          scales: { y: { beginAtZero:true } }
+        }
+      });
+    } else {
+      const datasets = marcas.map((emp, i)=>({
         label: emp,
-        data: valores,
+        data: totaisMensaisPorEmpresa(emp, ano),
         borderColor: colorFor(i),
         backgroundColor: colorFor(i),
         fill: false,
@@ -1026,19 +1011,29 @@ async function renderGraficoComparacao(ano){
         pointRadius: POINT_RADIUS,
         pointHoverRadius: HOVER_RADIUS,
         pointHitRadius: HIT_RADIUS
+      }));
+      graficoAnualRef = new Chart(ctx, {
+        type: 'line',
+        data: { labels: MONTHS, datasets },
+        options: {
+          responsive:true, maintainAspectRatio:false,
+          interaction: { mode: 'nearest', axis: 'x', intersect: false },
+          elements: { point: { radius: POINT_RADIUS, hoverRadius: HOVER_RADIUS, hitRadius: HIT_RADIUS } },
+          events: ['mousemove','mouseout','click','touchstart','touchmove','touchend'],
+          plugins:{
+            legend:{ display:true },
+            title:{ display:true, text:`Evolução comparada por mês — ${ano}` },
+            tooltip:{
+              position: 'nearest',
+              callbacks:{ label: c => `${c.dataset.label}: R$ ${(Number(c.parsed.y)||0).toLocaleString('pt-BR',{minimumFractionDigits:2})}` }
+            }
+          },
+          scales:{ y:{ beginAtZero:true } }
+        }
       });
     }
-    graficoAnualRef = new Chart(ctx, {
-      type: 'line',
-      data: { labels: MONTHS, datasets },
-      options: {
-        responsive:true, maintainAspectRatio:false,
-        plugins:{ title:{ display:true, text:`Evolução comparada por mês — ${ano}` } },
-        scales:{ y:{ beginAtZero:true } }
-      }
-    });
   }
-}
+
   function fecharModal(){
     document.getElementById('modalAnual').classList.remove('open');
     if (graficoAnualRef){ graficoAnualRef.destroy(); graficoAnualRef = null; }
