@@ -717,11 +717,22 @@ async function carregarDados() {
       const resposta = await fetch(url);
       let bruto = await resposta.json();
 
-      // 🔑 Corrige os valores dobrados
-      dados = bruto.map(item => ({
-        ...item,
-        Valor: (parseFloat(item.Valor) || 0) / 2
-      }));
+      const hoje = new Date();
+      const mesAtual = hoje.getMonth();   // 0=Jan ... 11=Dez
+      const anoAtual = hoje.getFullYear();
+
+      dados = bruto.map(item => {
+        const data = new Date(item.Data); 
+        const valorOriginal = parseFloat(item.Valor) || 0;
+
+        // Se o registro for do mês vigente, mantém o valor original
+        if (data.getFullYear() === anoAtual && data.getMonth() === mesAtual) {
+          return { ...item, Valor: valorOriginal };
+        }
+
+        // Caso contrário divide por 2
+        return { ...item, Valor: valorOriginal / 2 };
+      });
 
       const empresas = [...new Set(dados.map(item => item.Empresa))].sort();
       const select = document.getElementById("empresaFiltro");
@@ -732,13 +743,15 @@ async function carregarDados() {
         option.textContent = emp;
         select.appendChild(option);
       });
+
       await aplicarFiltro();
-    }catch(e){
+  }catch(e){
       console.error(e);
       hideLoading();
       alert('Não foi possível carregar os dados agora.');
-    }
   }
+}
+
 
 async function aplicarFiltro() {
   showLoading("Aplicando filtros…");
