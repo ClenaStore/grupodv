@@ -713,41 +713,35 @@ function drawGrid(){
   }
 
 async function carregarDados() {
-  try{
-      const resposta = await fetch(url);
-      let bruto = await resposta.json();
+  try {
+    const resposta = await fetch(url);
+    let bruto = await resposta.json();
 
-      const hoje = new Date();
-      const mesAtual = hoje.getMonth();   // 0=Jan ... 11=Dez
-      const anoAtual = hoje.getFullYear();
+    // Apenas normaliza o valor numérico
+    dados = bruto.map(item => ({
+      ...item,
+      Valor: parseFloat(item.Valor) || 0
+    }));
 
+    // Carrega empresas no select
+    const empresas = [...new Set(dados.map(item => item.Empresa))].sort();
+    const select = document.getElementById("empresaFiltro");
+    select.innerHTML = '<option value="">Todas</option>';
+    empresas.forEach(emp => {
+      const option = document.createElement("option");
+      option.value = emp;
+      option.textContent = emp;
+      select.appendChild(option);
+    });
 
-        // Se o registro for do mês vigente, mantém o valor original
-        if (data.getFullYear() === anoAtual && data.getMonth() === mesAtual) {
-          return { ...item, Valor: valorOriginal };
-        }
-
-        // Caso contrário divide por 2
-        return { ...item, Valor: valorOriginal / 2 };
-      });
-
-      const empresas = [...new Set(dados.map(item => item.Empresa))].sort();
-      const select = document.getElementById("empresaFiltro");
-      select.innerHTML = '<option value="">Todas</option>';
-      empresas.forEach(emp => {
-        const option = document.createElement("option");
-        option.value = emp;
-        option.textContent = emp;
-        select.appendChild(option);
-      });
-
-      await aplicarFiltro();
-  }catch(e){
-      console.error(e);
-      hideLoading();
-      alert('Não foi possível carregar os dados agora.');
+    await aplicarFiltro();
+  } catch (e) {
+    console.error(e);
+    hideLoading();
+    alert('Não foi possível carregar os dados agora.');
   }
 }
+
 
 
 async function aplicarFiltro() {
@@ -772,15 +766,15 @@ async function aplicarFiltro() {
     const dadosEmpresa = dadosFiltrados.filter(i => i.Empresa === emp);
     const agrupado = {};
 dadosEmpresa.forEach(item => {
-  // remove prefixos tipo "001 - "
   let cat = String(item.Categoria || "").replace(/^\d+\s*-\s*/, "").trim();
   let catNorm = normalize(cat);
 
   if (catNorm === 'PREJUIZO' || catNorm === 'DESPERDICIO') catNorm = 'ERROS DE GARCONS';
 
-  const valor = parseFloat(item.Valor) || 0;
-  agrupado[catNorm] = (agrupado[catNorm] || 0) + valor;
+  // aqui não precisa somar, apenas acumular no objeto
+  agrupado[catNorm] = (agrupado[catNorm] || 0) + (parseFloat(item.Valor) || 0);
 });
+
 
 
     const total = Object.values(agrupado).reduce((a, b) => a + b, 0);
