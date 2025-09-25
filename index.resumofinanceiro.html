@@ -721,9 +721,6 @@ async function carregarDados() {
       const mesAtual = hoje.getMonth();   // 0=Jan ... 11=Dez
       const anoAtual = hoje.getFullYear();
 
-      dados = bruto.map(item => {
-        const data = new Date(item.Data); 
-        const valorOriginal = parseFloat(item.Valor) || 0;
 
         // Se o registro for do mês vigente, mantém o valor original
         if (data.getFullYear() === anoAtual && data.getMonth() === mesAtual) {
