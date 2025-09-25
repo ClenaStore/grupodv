@@ -765,17 +765,12 @@ async function aplicarFiltro() {
   empresas.forEach(emp => {
     const dadosEmpresa = dadosFiltrados.filter(i => i.Empresa === emp);
     const agrupado = {};
-dadosEmpresa.forEach(item => {
-  let cat = String(item.Categoria || "").replace(/^\d+\s*-\s*/, "").trim();
-  let catNorm = normalize(cat);
 
-  if (catNorm === 'PREJUIZO' || catNorm === 'DESPERDICIO') catNorm = 'ERROS DE GARCONS';
-
-  // aqui não precisa somar, apenas acumular no objeto
-  agrupado[catNorm] = (agrupado[catNorm] || 0) + (parseFloat(item.Valor) || 0);
-});
-
-
+    // agora pega a categoria exatamente como está na planilha
+    dadosEmpresa.forEach(item => {
+      let cat = String(item.Categoria || "").trim();
+      agrupado[cat] = (agrupado[cat] || 0) + (parseFloat(item.Valor) || 0);
+    });
 
     const total = Object.values(agrupado).reduce((a, b) => a + b, 0);
     const box = document.createElement("div");
@@ -786,21 +781,20 @@ dadosEmpresa.forEach(item => {
 
     // Cabeçalho + lista
     let html = `<h2>${emp.toUpperCase()} — R$ ${BRL(total)}</h2><ul>`;
-    for (const catNorm in agrupado) {
-      const nomeExib = displayName(catNorm);
-      const emoji = emojis[nomeExib] || "📌";
-      const valor = BRL(agrupado[catNorm]);
-      html += `<li>${emoji} ${nomeExib}: R$ ${valor}</li>`;
+    for (const cat in agrupado) {
+      const emoji = emojis[normalize(cat)] || "📌";
+      const valor = BRL(agrupado[cat]);
+      html += `<li>${emoji} ${cat}: R$ ${valor}</li>`;
     }
     html += `</ul>`;
 
-    // 🔑 Se for o restaurante → soma consolidada
+    // 🔑 Consolidado Carneiro Mercatto
     if (normalize(emp) === "CARNEIRO MERCATTO RESTAURANTE") {
       const empresasSomadas = ["CARNEIRO MERCATTO RESTAURANTE", "CARNEIRO MERCATTO EMPORIO", "M.KIDS"];
       const dadosSomados = dados.filter(i => {
-  const dataOk = (!inicio || i.Data >= inicio) && (!fim || i.Data <= fim);
-  return dataOk && empresasSomadas.includes(normalize(i.Empresa));
-});
+        const dataOk = (!inicio || i.Data >= inicio) && (!fim || i.Data <= fim);
+        return dataOk && empresasSomadas.includes(normalize(i.Empresa));
+      });
 
       const totalSoma = dadosSomados.reduce((acc, i) => acc + (parseFloat(i.Valor) || 0), 0);
 
@@ -832,11 +826,11 @@ dadosEmpresa.forEach(item => {
 
     const legend = document.createElement("div");
     legend.className = "legend";
-    Object.keys(agrupado).forEach((catNorm, i) => {
+    Object.keys(agrupado).forEach((cat, i) => {
       const cor = `hsl(${i * 35}, 70%, 60%)`;
       const item = document.createElement("span");
       item.style.color = cor;
-      item.innerHTML = displayName(catNorm);
+      item.innerHTML = cat;
       legend.appendChild(item);
     });
 
