@@ -786,7 +786,11 @@ dadosEmpresa.forEach(item => {
     // 🔑 Se for o restaurante → soma consolidada
     if (normalize(emp) === "CARNEIRO MERCATTO RESTAURANTE") {
       const empresasSomadas = ["CARNEIRO MERCATTO RESTAURANTE", "CARNEIRO MERCATTO EMPORIO", "M.KIDS"];
-      const dadosSomados = dadosFiltrados.filter(i => empresasSomadas.includes(normalize(i.Empresa)));
+      const dadosSomados = dados.filter(i => {
+  const dataOk = (!inicio || i.Data >= inicio) && (!fim || i.Data <= fim);
+  return dataOk && empresasSomadas.includes(normalize(i.Empresa));
+});
+
       const totalSoma = dadosSomados.reduce((acc, i) => acc + (parseFloat(i.Valor) || 0), 0);
 
       html += `
