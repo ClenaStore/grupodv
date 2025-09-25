@@ -712,10 +712,17 @@ function drawGrid(){
     return new Date(y, m-1, d);
   }
 
-  async function carregarDados() {
-    try{
+async function carregarDados() {
+  try{
       const resposta = await fetch(url);
-      dados = await resposta.json();
+      let bruto = await resposta.json();
+
+      // 🔑 Corrige os valores dobrados
+      dados = bruto.map(item => ({
+        ...item,
+        Valor: (parseFloat(item.Valor) || 0) / 2
+      }));
+
       const empresas = [...new Set(dados.map(item => item.Empresa))].sort();
       const select = document.getElementById("empresaFiltro");
       select.innerHTML = '<option value="">Todas</option>';
