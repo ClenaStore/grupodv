@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR" data-theme="light">
 <head>
@@ -712,37 +713,26 @@ function drawGrid(){
     return new Date(y, m-1, d);
   }
 
-async function carregarDados() {
-  try {
-    const resposta = await fetch(url);
-    let bruto = await resposta.json();
-
-    // Apenas normaliza o valor numérico
-    dados = bruto.map(item => ({
-      ...item,
-      Valor: parseFloat(item.Valor) || 0
-    }));
-
-    // Carrega empresas no select
-    const empresas = [...new Set(dados.map(item => item.Empresa))].sort();
-    const select = document.getElementById("empresaFiltro");
-    select.innerHTML = '<option value="">Todas</option>';
-    empresas.forEach(emp => {
-      const option = document.createElement("option");
-      option.value = emp;
-      option.textContent = emp;
-      select.appendChild(option);
-    });
-
-    await aplicarFiltro();
-  } catch (e) {
-    console.error(e);
-    hideLoading();
-    alert('Não foi possível carregar os dados agora.');
+  async function carregarDados() {
+    try{
+      const resposta = await fetch(url);
+      dados = await resposta.json();
+      const empresas = [...new Set(dados.map(item => item.Empresa))].sort();
+      const select = document.getElementById("empresaFiltro");
+      select.innerHTML = '<option value="">Todas</option>';
+      empresas.forEach(emp => {
+        const option = document.createElement("option");
+        option.value = emp;
+        option.textContent = emp;
+        select.appendChild(option);
+      });
+      await aplicarFiltro();
+    }catch(e){
+      console.error(e);
+      hideLoading();
+      alert('Não foi possível carregar os dados agora.');
+    }
   }
-}
-
-
 
 async function aplicarFiltro() {
   showLoading("Aplicando filtros…");
@@ -765,38 +755,34 @@ async function aplicarFiltro() {
   empresas.forEach(emp => {
     const dadosEmpresa = dadosFiltrados.filter(i => i.Empresa === emp);
     const agrupado = {};
-
-    // 👉 usa a categoria exatamente como está na planilha
     dadosEmpresa.forEach(item => {
-      const cat = (item.Categoria || "OUTROS").trim();
-      const val = parseFloat(item.Valor) || 0;
-      agrupado[cat] = (agrupado[cat] || 0) + val;
+      let cat = normalize(item.Categoria);
+      if (cat === 'PREJUIZO' || cat === 'DESPERDICIO') cat = 'ERROS DE GARCONS';
+      const valor = parseFloat(item.Valor) || 0;
+      agrupado[cat] = (agrupado[cat] || 0) + valor;
     });
 
     const total = Object.values(agrupado).reduce((a, b) => a + b, 0);
-
     const box = document.createElement("div");
     box.className = "empresa-box";
 
     const conteudo = document.createElement("div");
     conteudo.className = "empresa-conteudo";
 
+    // Cabeçalho + lista
     let html = `<h2>${emp.toUpperCase()} — R$ ${BRL(total)}</h2><ul>`;
-    for (const cat of Object.keys(agrupado)) {
-      const emoji = emojis[normalize(cat)] || "📌";
-      html += `<li>${emoji} ${cat}: R$ ${BRL(agrupado[cat])}</li>`;
+    for (const catNorm in agrupado) {
+      const nomeExib = displayName(catNorm);
+      const emoji = emojis[nomeExib] || "📌";
+      const valor = BRL(agrupado[catNorm]);
+      html += `<li>${emoji} ${nomeExib}: R$ ${valor}</li>`;
     }
     html += `</ul>`;
 
-    conteudo.innerHTML = html;
-
-    // === Mantém seu consolidado Carneiro Mercatto ===
+    // 🔑 Se for o restaurante → soma consolidada
     if (normalize(emp) === "CARNEIRO MERCATTO RESTAURANTE") {
       const empresasSomadas = ["CARNEIRO MERCATTO RESTAURANTE", "CARNEIRO MERCATTO EMPORIO", "M.KIDS"];
-      const dadosSomados = dados.filter(i => {
-        const dataOk = (!inicio || i.Data >= inicio) && (!fim || i.Data <= fim);
-        return dataOk && empresasSomadas.includes(normalize(i.Empresa));
-      });
+      const dadosSomados = dadosFiltrados.filter(i => empresasSomadas.includes(normalize(i.Empresa)));
       const totalSoma = dadosSomados.reduce((acc, i) => acc + (parseFloat(i.Valor) || 0), 0);
 
       html += `
@@ -807,11 +793,14 @@ async function aplicarFiltro() {
           border-radius:10px;
           background:color-mix(in srgb, var(--surface) 92%, #fff)">
           <strong style="color:var(--brand)">🔹 Faturamento do Carneiro Mercatto</strong><br>
-          <span style="font-size:1.1rem; font-weight:700">R$ ${BRL(totalSoma)}</span>
+          <span style="font-size:1.1rem; font-weight:700">
+            R$ ${BRL(totalSoma)}
+          </span>
           <small style="display:block; margin-top:4px; color:var(--muted)">
             (Restaurante + Empório + M.Kids)
           </small>
-        </div>`;
+        </div>
+      `;
     }
 
     conteudo.innerHTML = html;
@@ -824,11 +813,11 @@ async function aplicarFiltro() {
 
     const legend = document.createElement("div");
     legend.className = "legend";
-    Object.keys(agrupado).forEach((cat, i) => {
+    Object.keys(agrupado).forEach((catNorm, i) => {
       const cor = `hsl(${i * 35}, 70%, 60%)`;
       const item = document.createElement("span");
       item.style.color = cor;
-      item.innerHTML = cat;
+      item.innerHTML = displayName(catNorm);
       legend.appendChild(item);
     });
 
@@ -847,7 +836,6 @@ async function aplicarFiltro() {
 
   hideLoading();
 }
-
 
 
   function displayName(catNorm){
