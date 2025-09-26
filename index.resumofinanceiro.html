@@ -647,14 +647,28 @@ function drawGrid(){
   Chart.defaults.events = ['mousemove','mouseout','click','touchstart','touchmove','touchend'];
 
   // Emojis
-  const emojis = {
-    "DINHEIRO": "💵", "CRÉDITO": "💳", "DÉBITO": "🏦", "PIX": "💲",
-    "ONLINE": "💻", "CREDIÁRIO": "📋", "VOUCHER": "🎫", "BONIFICAÇÃO": "🎁",
-    "CONSUMO INTERNO": "👔", "BOLETO": "📃", "MARKETING": "📣", "CONSUMO SÓCIO": "👔",
-    "CATÁLOGO DELIVERY": "🛒", "IFOOD": "🍱", "DELIVERY MUCH": "🍔",
-    "TRANSFERÊNCIA BANCÁRIA": "🏛️", "ERROS DE GARÇONS": "🧯", "OUTROS": "🗂",
-    "PREJUÍZO": "🧯", "DESPERDÍCIO": "🧯", "DESPERDICIO": "🧯"
-  };
+const emojis = {
+  "DINHEIRO": "💵",
+  "CRÉDITO": "💳",
+  "DÉBITO": "🏦",
+  "PIX": "💲",
+  "ONLINE": "💻",
+  "CREDIÁRIO": "📋",
+  "VOUCHER": "🎫",
+  "BONIFICAÇÃO": "🎁",
+  "CONSUMO INTERNO": "👔",
+  "CONSUMO SÓCIO": "🧑‍🤝‍🧑",
+  "BOLETO": "📃",
+  "MARKETING": "📣",
+  "CATÁLOGO DELIVERY": "🛒",
+  "IFOOD": "🍱",
+  "DELIVERY MUCH": "🍔",
+  "TRANSFERÊNCIA BANCÁRIA": "🏛️",
+  "ERROS DE GARÇONS": "🧯",
+  "SEM FATURAMENTO": "❌",
+  "OUTROS": "🗂"
+};
+
 
   let dados = [];
   let graficoAnualRef = null;
