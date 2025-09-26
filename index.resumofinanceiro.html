@@ -1029,51 +1029,54 @@ document.getElementById('btnCompareNone').onclick = ()=>{
           scales: { y: { beginAtZero:true } }
         }
       });
-    } else {
-      const datasets = marcas.map((emp, i)=>({
-        label: emp,
-        data: totaisMensaisPorEmpresa(emp, ano),
-        borderColor: colorFor(i),
-        backgroundColor: colorFor(i),
-        fill: false,
-        tension: .25,
-        pointRadius: POINT_RADIUS,
-        pointHoverRadius: HOVER_RADIUS,
-        pointHitRadius: HIT_RADIUS
-      }));
-     graficoAnualRef = new Chart(ctx, {
-  type: 'line',
-  data: { labels: MONTHS, datasets },
-  options: {
-    responsive:true, 
-    maintainAspectRatio:false,
-    interaction: { mode: 'nearest', axis: 'x', intersect: false },
-    elements: { point: { radius: POINT_RADIUS, hoverRadius: HOVER_RADIUS, hitRadius: HIT_RADIUS } },
-    events: ['mousemove','mouseout','click','touchstart','touchmove','touchend'],
-    plugins:{
-      legend:{ display:true },
-      title:{ display:true, text:`Evolução comparada por mês — ${ano}` },
-      tooltip:{
-        position: 'nearest',
-        callbacks:{
-          label: c => {
-            // cada empresa individual
-            const val = Number(c.parsed.y) || 0;
-            return `${c.dataset.label}: R$ ${val.toLocaleString('pt-BR',{minimumFractionDigits:2})}`;
-          },
-          afterBody: items => {
-            if (!items.length) return '';
-            // soma dos valores de todas as empresas nesse mês
-            const total = items.reduce((acc, it) => acc + (Number(it.parsed.y)||0), 0);
-            // 🔑 isso aparece embaixo, dentro do mesmo tooltip
-            return `💰 Total: R$ ${total.toLocaleString('pt-BR',{minimumFractionDigits:2})}`;
+   } else {
+  const datasets = marcas.map((emp, i) => ({
+    label: emp,
+    data: totaisMensaisPorEmpresa(emp, ano),
+    borderColor: colorFor(i),
+    backgroundColor: colorFor(i),
+    fill: false,
+    tension: .25,
+    pointRadius: POINT_RADIUS,
+    pointHoverRadius: HOVER_RADIUS,
+    pointHitRadius: HIT_RADIUS
+  }));
+
+  graficoAnualRef = new Chart(ctx, {
+    type: 'line',
+    data: { labels: MONTHS, datasets },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'nearest', axis: 'x', intersect: false },
+      elements: {
+        point: { radius: POINT_RADIUS, hoverRadius: HOVER_RADIUS, hitRadius: HIT_RADIUS }
+      },
+      events: ['mousemove','mouseout','click','touchstart','touchmove','touchend'],
+      plugins: {
+        legend: { display: true },
+        title: { display: true, text: `Evolução comparada por mês — ${ano}` },
+        tooltip: {
+          position: 'nearest',
+          callbacks: {
+            label: c => {
+              const val = Number(c.parsed.y) || 0;
+              return `${c.dataset.label}: R$ ${val.toLocaleString('pt-BR', {minimumFractionDigits:2})}`;
+            },
+            afterBody: items => {
+              if (!items.length) return '';
+              const total = items.reduce((acc, it) => acc + (Number(it.parsed.y)||0), 0);
+              // 🔑 Retorna como array -> cada string vira uma linha no mesmo card
+              return [``, `💰 Total: R$ ${total.toLocaleString('pt-BR',{minimumFractionDigits:2})}`];
+            }
           }
         }
-      }
-    },
-    scales: { y: { beginAtZero:true } }
-  }
-});
+      },
+      scales: { y: { beginAtZero: true } }
+    }
+  });
+}
+
 
 
   function fecharModal(){
