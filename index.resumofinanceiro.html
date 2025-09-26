@@ -445,12 +445,11 @@
           <p id="kpiSocioAno">R$ 0,00</p>
           <small id="kpiSocioMes">Mês atual: R$ 0,00</small>
         </div>
-<div class="kpi-badge kpi-erro">
-  <h4>Total Selecionado</h4>
-  <p id="kpiTotalAno">R$ 0,00</p>
-  <small id="kpiTotalMes">Mês atual: R$ 0,00</small>
-</div>
-
+        <div class="kpi-badge kpi-erro">
+          <h4>Erro de garçons</h4>
+          <p id="kpiErroAno">R$ 0,00</p>
+          <small id="kpiErroMes">Mês atual: R$ 0,00</small>
+        </div>
       </div>
 
     <div class="anual-grid">
@@ -893,42 +892,33 @@ async function aplicarFiltro() {
   }
 function atualizarKPIs(empresa, ano){
   const mesAtualIdx = new Date().getMonth();
-  const anoSel = String(ano);
+  const recs = dados.filter(r => r.Empresa === empresa && String(r.Data).startsWith(String(ano)));
 
-  // pega só os registros do ano selecionado
-  const recs = dados.filter(r => String(r.Data).startsWith(anoSel));
+  const isBonus = c => normalize(c) === 'BONIFICACAO';
+  const isSocio = c => normalize(c) === 'CONSUMO SOCIO';
+  const isErro  = c => ['ERROS DE GARCONS','PREJUIZO','DESPERDICIO'].includes(normalize(c));
 
-  // usa as empresas selecionadas ou só a de foco
-  const empresasAtivas = (selecionadas.size > 0 ? [...selecionadas] : [empresa]);
-
-  let bonusAno=0, socioAno=0, totalAno=0;
-  let bonusMes=0, socioMes=0, totalMes=0;
+  let bonusAno=0, socioAno=0, erroAno=0;
+  let bonusMes=0, socioMes=0, erroMes=0;
 
   recs.forEach(r=>{
-    if(!empresasAtivas.includes(r.Empresa)) return;
-
-    const v = parseFloat(r.Valor)||0;
+    const v = parseFloat(r.Valor) || 0;
     const cat = normalize(r.Categoria);
-    const m = parseInt(String(r.Data).split('-')[1],10)-1;
+    const m = parseInt(String(r.Data).split('-')[1], 10) - 1;
 
-    if(normalize(cat)==='BONIFICACAO'){ 
-      bonusAno += v; if(m===mesAtualIdx) bonusMes += v;
-    }
-    if(normalize(cat)==='CONSUMO SOCIO'){ 
-      socioAno += v; if(m===mesAtualIdx) socioMes += v;
-    }
-    // total sempre soma
-    totalAno += v; if(m===mesAtualIdx) totalMes += v;
+    if (isBonus(cat)) { bonusAno += v; if (m===mesAtualIdx) bonusMes += v; }
+    if (isSocio(cat)) { socioAno += v; if (m===mesAtualIdx) socioMes += v; }
+    if (isErro(cat))  { erroAno  += v; if (m===mesAtualIdx) erroMes  += v; }
   });
 
+  document.getElementById('tituloAnual').textContent = `Evolução Anual — ${empresa} (${ano})`;
   document.getElementById('kpiBonusAno').textContent = `R$ ${BRL(bonusAno)}`;
   document.getElementById('kpiBonusMes').textContent = `Mês atual (${MONTHS[mesAtualIdx]}): R$ ${BRL(bonusMes)}`;
   document.getElementById('kpiSocioAno').textContent = `R$ ${BRL(socioAno)}`;
   document.getElementById('kpiSocioMes').textContent = `Mês atual (${MONTHS[mesAtualIdx]}): R$ ${BRL(socioMes)}`;
-  document.getElementById('kpiTotalAno').textContent = `R$ ${BRL(totalAno)}`;
-  document.getElementById('kpiTotalMes').textContent = `Mês atual (${MONTHS[mesAtualIdx]}): R$ ${BRL(totalMes)}`;
+  document.getElementById('kpiErroAno').textContent  = `R$ ${BRL(erroAno)}`;
+  document.getElementById('kpiErroMes').textContent  = `Mês atual (${MONTHS[mesAtualIdx]}): R$ ${BRL(erroMes)}`;
 }
-
 
 function abrirEvolucaoAnual(empresa){
   empresaFoco = empresa;
