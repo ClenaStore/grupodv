@@ -456,7 +456,12 @@
         <div id="graficoAnualWrap">
           <canvas id="graficoAnual"></canvas>
         </div>
-
+<div style="margin:10px 0;">
+  <label for="anoSelect" style="font-weight:700; color:var(--muted); font-size:.9rem;">Ano</label>
+  <select id="anoSelect" style="padding:6px 10px; border:1px solid var(--line); border-radius:8px; background:var(--surface); color:var(--text); font-weight:600;">
+    <!-- opções serão preenchidas via JS -->
+  </select>
+</div>
         <aside class="compare-panel">
           <h4>Comparar empresas</h4>
           <div class="compare-actions">
@@ -654,6 +659,10 @@ function drawGrid(){
   let graficoAnualRef = null;
   let empresaFoco = null;
   let selecionadas = new Set();
+function anosDisponiveis(){
+  const anos = [...new Set(dados.map(d => String(d.Data).substring(0,4)))];
+  return anos.sort(); // ordem crescente
+}
 
   const BRL = n => (Number(n)||0).toLocaleString('pt-BR',{minimumFractionDigits:2, maximumFractionDigits:2});
   const MONTHS = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
@@ -880,56 +889,71 @@ async function aplicarFiltro() {
     });
     return arr;
   }
+function atualizarKPIs(empresa, ano){
+  const mesAtualIdx = new Date().getMonth();
+  const recs = dados.filter(r => r.Empresa === empresa && String(r.Data).startsWith(String(ano)));
 
-  /* ===== Evolução Anual ===== */
-  function abrirEvolucaoAnual(empresa){
-    empresaFoco = empresa;
-    selecionadas = new Set([empresa]);
+  const isBonus = c => normalize(c) === 'BONIFICACAO';
+  const isSocio = c => normalize(c) === 'CONSUMO SOCIO';
+  const isErro  = c => ['ERROS DE GARCONS','PREJUIZO','DESPERDICIO'].includes(normalize(c));
 
-    const ano = new Date().getFullYear();
-    const mesAtualIdx = new Date().getMonth();
+  let bonusAno=0, socioAno=0, erroAno=0;
+  let bonusMes=0, socioMes=0, erroMes=0;
 
-    const recs = dados.filter(r => r.Empresa === empresa && String(r.Data).startsWith(String(ano)));
-    const porMes = Array(12).fill(0);
-    recs.forEach(r=>{
-      const valor = parseFloat(r.Valor) || 0;
-      const m = parseInt(String(r.Data).split('-')[1], 10) - 1;
-      if (m>=0 && m<12) porMes[m] += valor;
-    });
+  recs.forEach(r=>{
+    const v = parseFloat(r.Valor) || 0;
+    const cat = normalize(r.Categoria);
+    const m = parseInt(String(r.Data).split('-')[1], 10) - 1;
 
-    const isBonus = c => normalize(c) === 'BONIFICACAO';
-    const isSocio = c => normalize(c) === 'CONSUMO SOCIO';
-    const isErro  = c => ['ERROS DE GARCONS','PREJUIZO','DESPERDICIO'].includes(normalize(c));
+    if (isBonus(cat)) { bonusAno += v; if (m===mesAtualIdx) bonusMes += v; }
+    if (isSocio(cat)) { socioAno += v; if (m===mesAtualIdx) socioMes += v; }
+    if (isErro(cat))  { erroAno  += v; if (m===mesAtualIdx) erroMes  += v; }
+  });
 
-    let bonusAno=0, socioAno=0, erroAno=0;
-    let bonusMes=0, socioMes=0, erroMes=0;
+  document.getElementById('tituloAnual').textContent = `Evolução Anual — ${empresa} (${ano})`;
+  document.getElementById('kpiBonusAno').textContent = `R$ ${BRL(bonusAno)}`;
+  document.getElementById('kpiBonusMes').textContent = `Mês atual (${MONTHS[mesAtualIdx]}): R$ ${BRL(bonusMes)}`;
+  document.getElementById('kpiSocioAno').textContent = `R$ ${BRL(socioAno)}`;
+  document.getElementById('kpiSocioMes').textContent = `Mês atual (${MONTHS[mesAtualIdx]}): R$ ${BRL(socioMes)}`;
+  document.getElementById('kpiErroAno').textContent  = `R$ ${BRL(erroAno)}`;
+  document.getElementById('kpiErroMes').textContent  = `Mês atual (${MONTHS[mesAtualIdx]}): R$ ${BRL(erroMes)}`;
+}
 
-    recs.forEach(r=>{
-      const v = parseFloat(r.Valor) || 0;
-      const cat = normalize(r.Categoria);
-      const m = parseInt(String(r.Data).split('-')[1], 10) - 1;
+function abrirEvolucaoAnual(empresa){
+  empresaFoco = empresa;
+  selecionadas = new Set([empresa]);
 
-      if (isBonus(cat)) { bonusAno += v; if (m===mesAtualIdx) bonusMes += v; }
-      if (isSocio(cat)) { socioAno += v; if (m===mesAtualIdx)  socioMes += v; }
-      if (isErro(cat))  { erroAno  += v; if (m===mesAtualIdx)  erroMes  += v; }
-    });
+  const anoAtual = new Date().getFullYear();
 
-    document.getElementById('tituloAnual').textContent = `Evolução Anual — ${empresa} (${ano})`;
-    document.getElementById('kpiBonusAno').textContent = `R$ ${BRL(bonusAno)}`;
-    document.getElementById('kpiBonusMes').textContent = `Mês atual (${MONTHS[mesAtualIdx]}): R$ ${BRL(bonusMes)}`;
-    document.getElementById('kpiSocioAno').textContent = `R$ ${BRL(socioAno)}`;
-    document.getElementById('kpiSocioMes').textContent = `Mês atual (${MONTHS[mesAtualIdx]}): R$ ${BRL(socioMes)}`;
-    document.getElementById('kpiErroAno').textContent  = `R$ ${BRL(erroAno)}`;
-    document.getElementById('kpiErroMes').textContent  = `R$ ${BRL(erroMes)}`;
+  // Preencher seletor de anos
+  const selectAno = document.getElementById("anoSelect");
+  selectAno.innerHTML = "";
+  anosDisponiveis().forEach(ano=>{
+    const opt = document.createElement("option");
+    opt.value = ano;
+    opt.textContent = ano;
+    if(ano == anoAtual) opt.selected = true;
+    selectAno.appendChild(opt);
+  });
 
-    montarChecklistComparacao(empresa);
-    renderGraficoComparacao(ano);
+  // Atualiza ao trocar ano
+  selectAno.onchange = ()=>{
+    const anoSel = selectAno.value;
+    atualizarKPIs(empresaFoco, anoSel);
+    renderGraficoComparacao(anoSel);
+  };
 
-    document.getElementById('modalAnual').classList.add('open');
+  // Primeiro carregamento
+  atualizarKPIs(empresa, anoAtual);
+  montarChecklistComparacao(empresa);
+  renderGraficoComparacao(anoAtual);
 
-    document.getElementById('fecharModal').onclick = fecharModal;
-    document.getElementById('modalAnual').addEventListener('click', (e)=>{ if(e.target.id === 'modalAnual') fecharModal(); }, { once:true });
-  }
+  document.getElementById('modalAnual').classList.add('open');
+
+  document.getElementById('fecharModal').onclick = fecharModal;
+  document.getElementById('modalAnual').addEventListener('click', (e)=>{ if(e.target.id === 'modalAnual') fecharModal(); }, { once:true });
+}
+
 
   function montarChecklistComparacao(){
     const list = document.getElementById('compareList');
@@ -946,23 +970,27 @@ async function aplicarFiltro() {
       `;
       wrap.querySelector('input').addEventListener('change', (e)=>{
         if(e.target.checked) selecionadas.add(emp); else selecionadas.delete(emp);
-        const ano = new Date().getFullYear();
-        renderGraficoComparacao(ano);
+const anoSel = document.getElementById("anoSelect").value || new Date().getFullYear();
+renderGraficoComparacao(anoSel);
+
       });
       list.appendChild(wrap);
     });
 
-    document.getElementById('btnCompareAll').onclick = ()=>{
-      todas.forEach(emp=>selecionadas.add(emp));
-      montarChecklistComparacao();
-      renderGraficoComparacao(new Date().getFullYear());
-    };
-    document.getElementById('btnCompareNone').onclick = ()=>{
-      selecionadas.clear();
-      selecionadas.add(empresaFoco);
-      montarChecklistComparacao();
-      renderGraficoComparacao(new Date().getFullYear());
-    };
+ document.getElementById('btnCompareAll').onclick = ()=>{
+  todas.forEach(emp=>selecionadas.add(emp));
+  montarChecklistComparacao();
+  const anoSel = document.getElementById("anoSelect").value || new Date().getFullYear();
+  renderGraficoComparacao(anoSel);
+};
+document.getElementById('btnCompareNone').onclick = ()=>{
+  selecionadas.clear();
+  selecionadas.add(empresaFoco);
+  montarChecklistComparacao();
+  const anoSel = document.getElementById("anoSelect").value || new Date().getFullYear();
+  renderGraficoComparacao(anoSel);
+};
+
   }
 
   function renderGraficoComparacao(ano){
