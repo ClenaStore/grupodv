@@ -452,24 +452,25 @@
         </div>
       </div>
 
-      <div class="anual-grid">
-        <div id="graficoAnualWrap">
-          <canvas id="graficoAnual"></canvas>
-        </div>
-<div style="margin:10px 0;">
-  <label for="anoSelect" style="font-weight:700; color:var(--muted); font-size:.9rem;">Ano</label>
-  <select id="anoSelect" style="padding:6px 10px; border:1px solid var(--line); border-radius:8px; background:var(--surface); color:var(--text); font-weight:600;">
-    <!-- opções serão preenchidas via JS -->
-  </select>
+    <div class="anual-grid">
+  <div id="graficoAnualWrap">
+    <canvas id="graficoAnual"></canvas>
+  </div>
+  <div style="margin:10px 0;">
+    <label for="anoSelect">Ano</label>
+    <select id="anoSelect"></select>
+  </div>
 </div>
-        <aside class="compare-panel">
-          <h4>Comparar empresas</h4>
-          <div class="compare-actions">
-            <button class="mini-btn" id="btnCompareAll">Marcar todas</button>
-            <button class="mini-btn" id="btnCompareNone">Limpar</button>
-          </div>
-          <div id="compareList" class="checklist"></div>
-        </aside>
+
+<!-- 🔽 Comparar empresas embaixo -->
+<aside class="compare-panel" style="margin-top:15px">
+  <h4>Comparar empresas</h4>
+  <div class="compare-actions">
+    <button class="mini-btn" id="btnCompareAll">Marcar todas</button>
+    <button class="mini-btn" id="btnCompareNone">Limpar</button>
+  </div>
+  <div id="compareList" class="checklist"></div>
+</aside>
       </div>
     </div>
   </div>
