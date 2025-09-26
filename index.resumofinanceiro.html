@@ -1053,22 +1053,15 @@ document.getElementById('btnCompareNone').onclick = ()=>{
             legend:{ display:true },
             title:{ display:true, text:`Evolução comparada por mês — ${ano}` },
             tooltip:{
-  position: 'nearest',
-  callbacks:{
-    label: c => {
-      // mantém cada empresa individual
-      const val = Number(c.parsed.y) || 0;
-      return `${c.dataset.label}: R$ ${val.toLocaleString('pt-BR',{minimumFractionDigits:2})}`;
-    },
-    afterBody: items => {
-      if (!items.length) return '';
-      const idx = items[0].dataIndex; // mês (0=Jan)
-      // soma todos os valores das empresas nesse mês
-      const total = items.reduce((acc, it) => acc + (Number(it.parsed.y)||0), 0);
-      return [``, `💰 Total: R$ ${total.toLocaleString('pt-BR',{minimumFractionDigits:2})}`];
+              position: 'nearest',
+              callbacks:{ label: c => `${c.dataset.label}: R$ ${(Number(c.parsed.y)||0).toLocaleString('pt-BR',{minimumFractionDigits:2})}` }
+            }
+          },
+          scales:{ y:{ beginAtZero:true } }
+        }
+      });
     }
   }
-}
 
   function fecharModal(){
     document.getElementById('modalAnual').classList.remove('open');
