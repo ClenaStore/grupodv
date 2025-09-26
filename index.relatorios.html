@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Relatórios</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/pt.js"></script>
+  <style>
+    :root {
+      --bg:#0b1220; --card:#101828; --ink:#e5f0ff; --muted:#9ca3af;
+      --brand:#3b82f6; --line:#1f2937;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin:0; padding:0; font-family:Inter, sans-serif;
+      background:var(--bg); color:var(--ink);
+    }
+
+    /* Cabeçalho fixo */
+    header {
+      position:sticky; top:0;
+      background:var(--bg);
+      z-index:1000;
+      border-bottom:1px solid var(--line);
+    }
+    header h1 {
+      text-align:center;
+      margin:0;
+      padding:15px 10px;
+    }
+    .filters {
+      display:flex; gap:10px;
+      padding:10px 20px;
+    }
+    .filters input {
+      flex:1;
+      padding:10px 14px;
+      border-radius:8px;
+      border:1px solid var(--line);
+      font-size:14px;
+      min-width:0;
+    }
+
+    /* Grid responsivo */
+    .grid {
+      display: grid;
+      gap: 20px;
+      padding: 20px;
+    }
+    @media (max-width: 768px) {
+      .grid { grid-template-columns: 1fr; }
+    }
+    @media (min-width: 769px) and (max-width: 1199px) {
+      .grid { grid-template-columns: repeat(3, 1fr); }
+    }
+    @media (min-width: 1200px) {
+      .grid { grid-template-columns: repeat(5, 1fr); }
+    }
+
+    /* Cards */
+    .card {
+      background: var(--card);
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      transition: .3s;
+      display: flex;
+      flex-direction: column;
+      cursor:pointer;
+    }
+    .card:hover { transform:translateY(-4px); }
+    .card img { width: 100%; height: 140px; object-fit: cover; }
+    .card-content { padding:15px; flex:1; }
+    .card h3 { margin:0 0 8px; font-size:16px; color:var(--brand); }
+    .card p { margin:0 0 6px; font-size:14px; }
+    .card .date { font-size:12px; color:var(--muted); }
+
+    /* Popup modal */
+    .modal {
+      display:none;
+      position:fixed;
+      top:0; left:0; right:0; bottom:0;
+      background:rgba(0,0,0,0.8);
+      z-index:2000;
+      justify-content:center;
+      align-items:center;
+      padding:20px;
+    }
+    .modal-content {
+      background:#fff;
+      border-radius:8px;
+      width:100%; max-width:1000px;
+      height:90vh;
+      display:flex;
+      flex-direction:column;
+    }
+    .modal-header {
+      display:flex; justify-content:space-between; align-items:center;
+      padding:10px; background:#f3f4f6;
+    }
+    .modal-header h2 {
+      margin:0; font-size:16px; color:#111;
+    }
+    .modal-header button {
+      border:none; background:red; color:#fff; padding:4px 10px;
+      border-radius:4px; cursor:pointer;
+    }
+    iframe {
+      flex:1;
+      border:none;
+      width:100%;
+    }
+  </style>
+</head>
+<body>
+  <!-- Cabeçalho fixo -->
+  <header>
+    <h1>Relatórios</h1>
+    <div class="filters">
+      <input type="text" id="search" placeholder="Pesquisar relatórios..." />
+      <input type="text" id="dateRange" placeholder="Período" />
+    </div>
+  </header>
+
+  <!-- === SEÇÃO 1 === -->
+  <h2 class="section-title">Financeiro</h2>
+  <div class="grid section">
+    <div class="card" data-date="2025-09-25" data-url="https://drive.google.com/file/d/1GbaVF_qbuNGMARAif3JzJlGc1pvqMrI9/preview">
+      <img src="https://github.com/ClenaStore/elasnaobra/blob/main/paste/Relat%C3%B3rio%20Financeiro%20Individual.png?raw=true" alt="Capa do relatório">
+      <div class="card-content">
+        <h3>Relatório Financeiro</h3>
+        <p>Evolução 2024 - 2025</p>
+        <p class="date">📅 25/09/2025</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- === SEÇÃO 2 === -->
+
+
+  <!-- Modal -->
+  <div class="modal" id="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="modalTitle">Visualizar Relatório</h2>
+        <button id="closeModal">X</button>
+      </div>
+      <iframe id="modalFrame" src=""></iframe>
+    </div>
+  </div>
+
+  <script>
+    const searchInput = document.getElementById("search");
+    const dateRangeInput = document.getElementById("dateRange");
+    const modal = document.getElementById("modal");
+    const modalFrame = document.getElementById("modalFrame");
+    const modalTitle = document.getElementById("modalTitle");
+    const closeModal = document.getElementById("closeModal");
+
+    // Flatpickr com mês atual
+    const now = new Date();
+    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    flatpickr("#dateRange", {
+      mode: "range",
+      dateFormat: "d/m/Y",
+      locale: "pt",
+      defaultDate: [firstDay, lastDay],
+      onClose: filtrar
+    });
+
+    // Filtro de pesquisa e data
+    function filtrar() {
+      const termo = searchInput.value.toLowerCase();
+      let fromDate = null, toDate = null;
+      const range = dateRangeInput.value.split(" até ");
+      if (range.length === 2) {
+        fromDate = new Date(range[0].split("/").reverse().join("-"));
+        toDate = new Date(range[1].split("/").reverse().join("-"));
+      }
+      document.querySelectorAll(".card").forEach(card => {
+        const text = card.innerText.toLowerCase();
+        const cardDate = new Date(card.getAttribute("data-date"));
+        let matchText = text.includes(termo);
+        let matchDate = true;
+        if (fromDate && cardDate < fromDate) matchDate = false;
+        if (toDate && cardDate > toDate) matchDate = false;
+        card.style.display = (matchText && matchDate) ? "flex" : "none";
+      });
+    }
+    searchInput.addEventListener("input", filtrar);
+    window.addEventListener("load", filtrar);
+
+    // Clique no card abre modal
+    document.querySelectorAll(".card").forEach(card => {
+      card.addEventListener("click", () => {
+        const url = card.getAttribute("data-url");
+        const title = card.querySelector("h3").innerText;
+        modalTitle.textContent = title;
+        modalFrame.src = url;
+        modal.style.display = "flex";
+      });
+    });
+
+    // Fechar modal
+    closeModal.addEventListener("click", () => {
+      modal.style.display = "none";
+      modalFrame.src = "";
+    });
+    modal.addEventListener("click", e => {
+      if (e.target === modal) {
+        modal.style.display = "none";
+        modalFrame.src = "";
+      }
+    });
+  </script>
+</body>
+</html>
