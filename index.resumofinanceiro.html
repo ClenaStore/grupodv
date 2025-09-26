@@ -1041,34 +1041,40 @@ document.getElementById('btnCompareNone').onclick = ()=>{
         pointHoverRadius: HOVER_RADIUS,
         pointHitRadius: HIT_RADIUS
       }));
-      graficoAnualRef = new Chart(ctx, {
-        type: 'line',
-        data: { labels: MONTHS, datasets },
-        options: {
-          responsive:true, maintainAspectRatio:false,
-          interaction: { mode: 'nearest', axis: 'x', intersect: false },
-          elements: { point: { radius: POINT_RADIUS, hoverRadius: HOVER_RADIUS, hitRadius: HIT_RADIUS } },
-          events: ['mousemove','mouseout','click','touchstart','touchmove','touchend'],
-          plugins:{
-            legend:{ display:true },
-            title:{ display:true, text:`Evolução comparada por mês — ${ano}` },
-            tooltip:{
-  position: 'nearest',
-  callbacks:{
-    label: c => {
-      // mantém cada empresa individual
-      const val = Number(c.parsed.y) || 0;
-      return `${c.dataset.label}: R$ ${val.toLocaleString('pt-BR',{minimumFractionDigits:2})}`;
+     graficoAnualRef = new Chart(ctx, {
+  type: 'line',
+  data: { labels: MONTHS, datasets },
+  options: {
+    responsive:true, 
+    maintainAspectRatio:false,
+    interaction: { mode: 'nearest', axis: 'x', intersect: false },
+    elements: { point: { radius: POINT_RADIUS, hoverRadius: HOVER_RADIUS, hitRadius: HIT_RADIUS } },
+    events: ['mousemove','mouseout','click','touchstart','touchmove','touchend'],
+    plugins:{
+      legend:{ display:true },
+      title:{ display:true, text:`Evolução comparada por mês — ${ano}` },
+      tooltip:{
+        position: 'nearest',
+        callbacks:{
+          label: c => {
+            // cada empresa individual
+            const val = Number(c.parsed.y) || 0;
+            return `${c.dataset.label}: R$ ${val.toLocaleString('pt-BR',{minimumFractionDigits:2})}`;
+          },
+          afterBody: items => {
+            if (!items.length) return '';
+            // soma dos valores de todas as empresas nesse mês
+            const total = items.reduce((acc, it) => acc + (Number(it.parsed.y)||0), 0);
+            // 🔑 isso aparece embaixo, dentro do mesmo tooltip
+            return `💰 Total: R$ ${total.toLocaleString('pt-BR',{minimumFractionDigits:2})}`;
+          }
+        }
+      }
     },
-    afterBody: items => {
-      if (!items.length) return '';
-      const idx = items[0].dataIndex; // mês (0=Jan)
-      // soma todos os valores das empresas nesse mês
-      const total = items.reduce((acc, it) => acc + (Number(it.parsed.y)||0), 0);
-      return [``, `💰 Total: R$ ${total.toLocaleString('pt-BR',{minimumFractionDigits:2})}`];
-    }
+    scales: { y: { beginAtZero:true } }
   }
-}
+});
+
 
   function fecharModal(){
     document.getElementById('modalAnual').classList.remove('open');
