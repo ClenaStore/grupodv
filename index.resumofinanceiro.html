@@ -1056,21 +1056,21 @@ document.getElementById('btnCompareNone').onclick = ()=>{
       plugins: {
         legend: { display: true },
         title: { display: true, text: `Evolução comparada por mês — ${ano}` },
-        tooltip: {
-          position: 'nearest',
-          callbacks: {
-            label: c => {
-              const val = Number(c.parsed.y) || 0;
-              return `${c.dataset.label}: R$ ${val.toLocaleString('pt-BR', {minimumFractionDigits:2})}`;
-            },
-            afterBody: items => {
-              if (!items.length) return '';
-              const total = items.reduce((acc, it) => acc + (Number(it.parsed.y)||0), 0);
-              // 🔑 Retorna como array -> cada string vira uma linha no mesmo card
-              return [``, `💰 Total: R$ ${total.toLocaleString('pt-BR',{minimumFractionDigits:2})}`];
-            }
-          }
-        }
+      tooltip: {
+  enabled: true,   // 🔑 garante que o tooltip exiba
+  position: 'nearest',
+  callbacks: {
+    label: c => {
+      const val = Number(c.parsed.y) || 0;
+      return `${c.dataset.label}: R$ ${val.toLocaleString('pt-BR',{minimumFractionDigits:2})}`;
+    },
+    afterBody: items => {
+      if (!items.length) return '';
+      const total = items.reduce((acc, it) => acc + (Number(it.parsed.y)||0), 0);
+      return [``, `💰 Total: R$ ${total.toLocaleString('pt-BR',{minimumFractionDigits:2})}`];
+    }
+  }
+}
       },
       scales: { y: { beginAtZero: true } }
     }
