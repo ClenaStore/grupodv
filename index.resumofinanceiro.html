@@ -63,6 +63,16 @@
       max-width: 1200px; margin: 0 auto; padding: 14px 18px;
       display:flex; align-items:center; gap:12px;
     }
+    .compare-panel {
+  grid-column: 1 / -1; /* ocupa linha inteira caso esteja dentro da grid */
+  margin-top: 15px;
+}
+@media (max-width: 768px){
+  .compare-panel {
+    margin-top: 20px;
+  }
+}
+
     .brand{
       display:flex; align-items:center; gap:10px; text-decoration:none; color:inherit;
     }
