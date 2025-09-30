@@ -359,7 +359,6 @@ function renderMods(){
 
       // Soma por modalidade
       soma.Total+=valor;
-      
       soma[meio]+=valor;
 
       // Soma por status
@@ -388,10 +387,7 @@ function renderLista(){
   const lista=$("lista");lista.innerHTML="";SELEC=[];$("master").checked=false;
   let totalItens=0;
   for(const emp of Object.keys(TITULOS)){
-  const sorted = [...(TITULOS[emp].__filtered||[])]
-    .sort((a,b)=> new Date(b.vencimento) - new Date(a.vencimento));
-
-  sorted.forEach((t)=>{
+    (TITULOS[emp].__filtered||[]).forEach((t)=>{
       totalItens++;
       const valor=parseValor(t.valor);
       const id=ID(emp,t.linha);
@@ -430,7 +426,7 @@ function renderLista(){
     });
   }
   $("contagem").textContent=`${totalItens} ${totalItens===1?"item":"itens"}`;
-  atualizarBubble();
+  renderMods();
 }
 
 function setPill(el,status){
@@ -440,41 +436,14 @@ function setPill(el,status){
   else el.textContent=status;
 }
 
-  function atualizarBubble(){
-  let totalAprovado = 0;
-  document.querySelectorAll(".titulo").forEach(card=>{
-    const status = card.querySelector("[data-status]").textContent;
-    const valor = Number(card.dataset.valor) || 0;
-    if(status === "Aprovado"){
-      totalAprovado += valor;
-    }
-  });
-
-  if(totalAprovado > 0){
-    $("bubble").style.display="block";
-    $("btnMassa").style.display="block";
-    $("bubble").textContent="Total aprovado: " + BRL(totalAprovado);
-  } else {
-    $("bubble").style.display="none";
-    $("btnMassa").style.display="none";
-  }
-}
-
-
 function toggleSel(chk){
   const card=chk.closest(".titulo");
   const id=card.dataset.id,emp=card.dataset.emp,linha=Number(card.dataset.linha),valor=Number(card.dataset.valor)||0;
   if(chk.checked)SELEC.push({id,emp,linha,valor}); else SELEC=SELEC.filter(x=>x.id!==id);
-// apenas mantém a lista de selecionados (se precisar do botão massa)
-if(SELEC.length){
-  $("btnMassa").style.display="block";
-} else {
-  $("btnMassa").style.display="none";
+  const total=SELEC.reduce((s,x)=>s+x.valor,0);
+  if(SELEC.length){$("bubble").style.display="block";$("btnMassa").style.display="block";$("bubble").textContent="Total selecionado: "+BRL(total)}
+  else{$("bubble").style.display="none";$("btnMassa").style.display="none"}
 }
-
-// o valor exibido no bubble passa a ser sempre o total aprovado
-atualizarBubble();
-
 
 // 🔹 Seleção em massa
 $("master").addEventListener("change",function(){
@@ -493,7 +462,6 @@ async function acaoStatus(btn,novo){
   addHistLocal(id,"Status alterado para "+novo);
   try{await fetch(`${endpointTitulos}?action=atualizar&empresa=${encodeURIComponent(emp)}&linha=${linha}&status=${encodeURIComponent(novo)}`);}catch(e){console.error(e)}
   setLoading(btn,false);
-atualizarBubble();
 }
 
 async function atualizarStatusMassa(novo="Aprovado"){
@@ -510,8 +478,8 @@ async function atualizarStatusMassa(novo="Aprovado"){
     card.querySelector(".ck input").checked=false;
   }
   SELEC=[];$("master").checked=false;
-setLoading(btn,false);
-atualizarBubble();
+  $("bubble").style.display="none";$("btnMassa").style.display="none";
+  setLoading(btn,false);
 }
 $("btnMassa").onclick=()=>atualizarStatusMassa("Aprovado");
 
