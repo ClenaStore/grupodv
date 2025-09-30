@@ -367,6 +367,22 @@ function renderMods(){
   mods.innerHTML+=card("boleto","Boleto",soma.Boleto);
   mods.innerHTML+=card("total","Total",soma.Total);
 }
+// 🔹 Soma apenas os valores aprovados no período
+function atualizarTotalAprovado() {
+  let totalAprovado = 0;
+  for (const emp of Object.keys(TITULOS)) {
+    (TITULOS[emp].__all || []).forEach(t => {
+      const valor = Number(String(t.valor).replace("R$","").replace(/\./g,"").replace(",",".")) || 0;
+      if ((t.status || "Pendente") === "Aprovado") {
+        totalAprovado += valor;
+      }
+    });
+  }
+
+  $("bubble").style.display = "block";
+  $("btnMassa").style.display = "none"; // não faz mais sentido exibir esse botão
+  $("bubble").textContent = "Total aprovado no período: " + BRL(totalAprovado);
+}
 
 
 function renderLista(){
@@ -411,9 +427,12 @@ function renderLista(){
       lista.appendChild(card);
     });
   }
-  $("contagem").textContent=`${totalItens} ${totalItens===1?"item":"itens"}`;
-  renderMods();
-}
+$("contagem").textContent=`${totalItens} ${totalItens===1?"item":"itens"}`;
+renderMods();
+
+// 🔹 Atualiza o total aprovado no período
+atualizarTotalAprovado();
+
 
 function setPill(el,status){
   el.className="pill";
@@ -423,12 +442,17 @@ function setPill(el,status){
 }
 
 function toggleSel(chk){
-  const card=chk.closest(".titulo");
-  const id=card.dataset.id,emp=card.dataset.emp,linha=Number(card.dataset.linha),valor=Number(card.dataset.valor)||0;
-  if(chk.checked)SELEC.push({id,emp,linha,valor}); else SELEC=SELEC.filter(x=>x.id!==id);
-  const total=SELEC.reduce((s,x)=>s+x.valor,0);
-  if(SELEC.length){$("bubble").style.display="block";$("btnMassa").style.display="block";$("bubble").textContent="Total selecionado: "+BRL(total)}
-  else{$("bubble").style.display="none";$("btnMassa").style.display="none"}
+  const card = chk.closest(".titulo");
+  const id = card.dataset.id, emp = card.dataset.emp, linha = Number(card.dataset.linha), valor = Number(card.dataset.valor)||0;
+
+  if(chk.checked) {
+    SELEC.push({id,emp,linha,valor}); 
+  } else {
+    SELEC = SELEC.filter(x=>x.id!==id);
+  }
+
+  // 🔹 Agora o bubble sempre mostra o total aprovado, ignorando os selecionados
+  atualizarTotalAprovado();
 }
 
 // 🔹 Seleção em massa
@@ -463,9 +487,10 @@ async function atualizarStatusMassa(novo="Aprovado"){
     }catch(e){console.error(e)}
     card.querySelector(".ck input").checked=false;
   }
-  SELEC=[];$("master").checked=false;
-  $("bubble").style.display="none";$("btnMassa").style.display="none";
-  setLoading(btn,false);
+SELEC=[];$("master").checked=false;
+setLoading(btn,false);
+// 🔹 mantém o bubble sempre mostrando o total aprovado
+atualizarTotalAprovado();
 }
 $("btnMassa").onclick=()=>atualizarStatusMassa("Aprovado");
 
