@@ -359,6 +359,7 @@ function renderMods(){
 
       // Soma por modalidade
       soma.Total+=valor;
+      
       soma[meio]+=valor;
 
       // Soma por status
@@ -387,7 +388,10 @@ function renderLista(){
   const lista=$("lista");lista.innerHTML="";SELEC=[];$("master").checked=false;
   let totalItens=0;
   for(const emp of Object.keys(TITULOS)){
-    (TITULOS[emp].__filtered||[]).forEach((t)=>{
+  const sorted = [...(TITULOS[emp].__filtered||[])]
+    .sort((a,b)=> new Date(b.vencimento) - new Date(a.vencimento));
+
+  sorted.forEach((t)=>{
       totalItens++;
       const valor=parseValor(t.valor);
       const id=ID(emp,t.linha);
@@ -436,6 +440,27 @@ function setPill(el,status){
   else el.textContent=status;
 }
 
+  function atualizarBubble(){
+  let totalAprovado = 0;
+  document.querySelectorAll(".titulo").forEach(card=>{
+    const status = card.querySelector("[data-status]").textContent;
+    const valor = Number(card.dataset.valor) || 0;
+    if(status === "Aprovado"){
+      totalAprovado += valor;
+    }
+  });
+
+  if(totalAprovado > 0){
+    $("bubble").style.display="block";
+    $("btnMassa").style.display="block";
+    $("bubble").textContent="Total aprovado: " + BRL(totalAprovado);
+  } else {
+    $("bubble").style.display="none";
+    $("btnMassa").style.display="none";
+  }
+}
+
+
 function toggleSel(chk){
   const card=chk.closest(".titulo");
   const id=card.dataset.id,emp=card.dataset.emp,linha=Number(card.dataset.linha),valor=Number(card.dataset.valor)||0;
@@ -462,6 +487,7 @@ async function acaoStatus(btn,novo){
   addHistLocal(id,"Status alterado para "+novo);
   try{await fetch(`${endpointTitulos}?action=atualizar&empresa=${encodeURIComponent(emp)}&linha=${linha}&status=${encodeURIComponent(novo)}`);}catch(e){console.error(e)}
   setLoading(btn,false);
+atualizarBubble();
 }
 
 async function atualizarStatusMassa(novo="Aprovado"){
@@ -478,8 +504,8 @@ async function atualizarStatusMassa(novo="Aprovado"){
     card.querySelector(".ck input").checked=false;
   }
   SELEC=[];$("master").checked=false;
-  $("bubble").style.display="none";$("btnMassa").style.display="none";
-  setLoading(btn,false);
+setLoading(btn,false);
+atualizarBubble();
 }
 $("btnMassa").onclick=()=>atualizarStatusMassa("Aprovado");
 
