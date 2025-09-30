@@ -430,7 +430,7 @@ function renderLista(){
     });
   }
   $("contagem").textContent=`${totalItens} ${totalItens===1?"item":"itens"}`;
-  renderMods();
+  atualizarBubble();
 }
 
 function setPill(el,status){
@@ -465,10 +465,16 @@ function toggleSel(chk){
   const card=chk.closest(".titulo");
   const id=card.dataset.id,emp=card.dataset.emp,linha=Number(card.dataset.linha),valor=Number(card.dataset.valor)||0;
   if(chk.checked)SELEC.push({id,emp,linha,valor}); else SELEC=SELEC.filter(x=>x.id!==id);
-  const total=SELEC.reduce((s,x)=>s+x.valor,0);
-  if(SELEC.length){$("bubble").style.display="block";$("btnMassa").style.display="block";$("bubble").textContent="Total selecionado: "+BRL(total)}
-  else{$("bubble").style.display="none";$("btnMassa").style.display="none"}
+// apenas mantém a lista de selecionados (se precisar do botão massa)
+if(SELEC.length){
+  $("btnMassa").style.display="block";
+} else {
+  $("btnMassa").style.display="none";
 }
+
+// o valor exibido no bubble passa a ser sempre o total aprovado
+atualizarBubble();
+
 
 // 🔹 Seleção em massa
 $("master").addEventListener("change",function(){
