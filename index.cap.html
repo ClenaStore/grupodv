@@ -312,8 +312,9 @@ const BRL=n=>(isNaN(n)?0:n).toLocaleString("pt-BR",{style:"currency",currency:"B
 function parseValor(v){
   if(!v) return 0;
   let str = String(v).trim();
-  str = str.replace(/[^\d,,-.]/g,""); // remove R$, espaços, etc
-  str = str.replace(/\./g,"").replace(",","."); // deixa só decimal
+  str = str.replace(/[^\d,.-]/g, "");   // remove R$, espaços e tudo que não for número . ou ,
+  str = str.replace(/\./g, "");         // remove pontos de milhar
+  str = str.replace(",", ".");          // troca vírgula por ponto decimal
   return parseFloat(str) || 0;
 }
 const iso = d => { const dt=new Date(d); dt.setMinutes(dt.getMinutes()-dt.getTimezoneOffset()); return dt.toISOString().slice(0,10); };
