@@ -340,13 +340,7 @@ function renderMods(){
   for(const emp of Object.keys(TITULOS)){
     (TITULOS[emp].__all||[]).forEach(t=>{
       const status=(t.status||"Pendente");
-     function parseValor(v){
-  if(!v) return 0;
-  let str = String(v).trim();
-  str = str.replace(/[^\d,.-]/g, ""); // remove R$, espaços e qualquer coisa não numérica
-  str = str.replace(/\./g, "").replace(",", "."); // trata separador decimal
-  return parseFloat(str) || 0;
-}
+      const valor=Number(String(t.valor).replace("R$","").replace(/\./g,"").replace(",","."))||0;
       const meio=normalizeMeio(t.meio_pagamento);
 
       // Soma por modalidade
@@ -381,7 +375,7 @@ function renderLista(){
   for(const emp of Object.keys(TITULOS)){
     (TITULOS[emp].__filtered||[]).forEach((t)=>{
       totalItens++;
-      const valor = parseValor(t.valor);
+      const valor=Number(String(t.valor).replace("R$","").replace(/\./g,"").replace(",","."))||0;
       const id=ID(emp,t.linha);
       const st=(t.status || "Pendente");
       const obs=(t.observacao || "");
