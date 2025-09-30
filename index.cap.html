@@ -640,21 +640,20 @@ async function refresh(){
 (function boot(){
   const hoje = new Date(); // objeto Date do dia atual
   flatpickr("#filtroPeriodo", {
-    mode: "range",
-    dateFormat: "d/m/Y", // formato brasileiro
-    locale: "pt",
-    defaultDate: [hoje, hoje], // agora pega o dia atual certo
- onClose: sel=>{
-  if(sel.length===2){
-    periodoInicio = iso(sel[0]); 
-    periodoFim = iso(sel[1]);
-    $("overlay").style.display="flex";   // ✅ mostra overlay só aqui
-    refresh();
+  mode: "range",
+  dateFormat: "d/m/Y", // formato brasileiro
+  locale: "pt",
+  defaultDate: [hoje, hoje],
+  onClose: sel => {
+    if (sel.length === 2) {
+      periodoInicio = iso(sel[0]);
+      periodoFim = iso(sel[1]);
+      $("overlay").style.display = "flex";
+      refresh();
+    }
   }
-}
+});
 
-
-  });
 
   const M=$("menuEmpresas");
 EMP_DEFAULT.forEach((emp,i)=>{
