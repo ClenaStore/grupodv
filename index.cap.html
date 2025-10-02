@@ -244,18 +244,19 @@ select,input{background:#0b1528;border:1px solid #22314b;color:var(--ink);
 }
 
 .menu {
-  position: absolute;   /* 🔹 fica preso ao botão */
-  top: 100%;            /* aparece logo abaixo */
-  right: 0;             /* alinhado à direita do botão */
+  position: absolute;
+  top: 100%;
+  right: 0;
   background: #0f172a;
   border: 1px solid var(--line);
   border-radius: 14px;
   padding: 14px;
   box-shadow: 0 10px 30px rgba(0,0,0,.4);
   display: none;
-  z-index: 9999;        /* 🔹 sobrepõe os status cards */
+  z-index: 2000;      /* 🔹 maior que os status cards */
   min-width: 220px;
 }
+
 
 
 
@@ -287,9 +288,10 @@ textarea{width:100%;min-height:90px;border-radius:8px;border:1px solid #22314b;b
     </div>
     <div class="row-linha">
       <input type="text" id="filtroPeriodo" placeholder="Selecione período" />
-      <div style="position:relative;flex:1">
-        <button class="btn icon" id="btnEmpresas"><span id="empresaSelecionada">CAP DELICIA</span> ▼</button>
-        <div id="menuEmpresas" class="menu"></div>
+<div style="position:relative;flex:1;z-index:2100">
+  <button class="btn icon" id="btnEmpresas"><span id="empresaSelecionada">CAP DELICIA</span> ▼</button>
+  <div id="menuEmpresas" class="menu"></div>
+</div>
       </div>
     </div>
   </div>
