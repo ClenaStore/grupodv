@@ -57,17 +57,12 @@ select,input{background:#0b1528;border:1px solid #22314b;color:var(--ink);
 
 
 .status-cards {
-  display: grid;
   grid-template-columns: 1fr;
-  gap: 12px;
-  margin: 16px 0;
+}
+@media(min-width:768px){
+  .status-cards { grid-template-columns: repeat(3,1fr); }
 }
 
-@media(min-width:768px){
-  .status-cards {
-    grid-template-columns: repeat(3,1fr); /* 3 colunas no desktop */
-  }
-}
 
 
 .status-card {
@@ -111,9 +106,10 @@ select,input{background:#0b1528;border:1px solid #22314b;color:var(--ink);
 
 .mods {
   display: grid;
-  grid-template-columns: 1fr 1fr; /* 🔹 Agora 2 cards por linha por padrão */
+  grid-template-columns: 1fr 1fr; /* 🔹 sempre 2 no mobile */
   gap: 12px;
 }
+
 
 @media(min-width:768px){
   .mods { grid-template-columns: 1fr 1fr; } /* mantém 2 no tablet */
