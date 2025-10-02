@@ -375,11 +375,11 @@ function renderMods(){
     });
   }
 
-  // 🔹 Render status cards
-  const cardStatus=(cls,label,val)=>`<div class="status-card ${cls}"><span>${label}</span><b>${BRL(val)}</b></div>`;
-  statusCards.innerHTML+=cardStatus("aprovado","Aprovado",somaStatus.Aprovado);
-  statusCards.innerHTML+=cardStatus("negado","Negado",somaStatus.Negado);
-  statusCards.innerHTML+=cardStatus("pendente","Pendente",somaStatus.Pendente);
+ // 🔹 Render status cards na ordem desejada
+const cardStatus=(cls,label,val)=>`<div class="status-card ${cls}"><span>${label}</span><b>${BRL(val)}</b></div>`;
+statusCards.innerHTML+=cardStatus("aprovado","Aprovado",somaStatus.Aprovado);
+statusCards.innerHTML+=cardStatus("pendente","Pendente",somaStatus.Pendente);
+statusCards.innerHTML+=cardStatus("negado","Negado",somaStatus.Negado);
 
   // 🔹 Render modalidade cards
   const card=(cls,label,val)=>`<div class="mod ${cls}"><span>${label}</span><b>${BRL(val)}</b></div>`;
