@@ -40,15 +40,19 @@ select,input{background:#0b1528;border:1px solid #22314b;color:var(--ink);
 
 .container{padding:16px;max-width:1250px;margin:0 auto}
 
+/* Status cards fixos logo abaixo do cabeçalho */
 .status-cards {
-  display: flex;                /* 🔹 flex para permitir rolagem */
-  gap: 12px;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
   margin: 12px 0;
-  overflow-x: auto;             /* 🔹 ativa carrossel horizontal */
-  scroll-snap-type: x mandatory;/* 🔹 efeito de snap */
-  -webkit-overflow-scrolling: touch;
-  padding-bottom: 6px;
+  position: sticky;
+  top: 80px;              /* distância abaixo do header */
+  z-index: 15;            /* fica acima dos outros cards */
+  background: var(--bg);  /* fundo sólido para não sobrepor */
+  padding: 8px 0;
 }
+
 
 .status-card {
   flex: 0 0 250px;              /* 🔹 largura fixa de cada card */
