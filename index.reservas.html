@@ -191,7 +191,20 @@
     const $$ = (s,el=document)=>Array.from(el.querySelectorAll(s));
     const toast = (msg, ms=3500) => { const el = $("#toast"); el.textContent = msg; el.classList.add("show"); setTimeout(()=>el.classList.remove("show"), ms); };
     const formatBRL = (num) => Number(num||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
-    const parseBRL = v => { if(!v) return 0; const s=v.toString().replace(/[^\d,.-]/g,'').replace(/\./g,'').replace(',', '.'); const n=Number(s); return isNaN(n)?0:n; };
+    const parseBRL = v => {
+  if (v == null) return 0;
+  if (typeof v === "number") return v; // já é número
+  let s = v.toString().trim();
+  // Remove espaços e símbolos
+  s = s.replace(/[^\d,,-.]/g, "");
+  // Se tiver vírgula, assume formato BR e troca
+  if (s.includes(",")) {
+    s = s.replace(/\./g, "").replace(",", ".");
+  }
+  const n = Number(s);
+  return isNaN(n) ? 0 : n;
+};
+
     const ymd = d=>{ const z=n=>String(n).padStart(2,'0'); return `${d.getFullYear()}-${z(d.getMonth()+1)}-${z(d.getDate())}`; };
 
     // ===== Estado =====
