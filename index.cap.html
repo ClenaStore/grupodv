@@ -40,12 +40,11 @@ select,input{background:#0b1528;border:1px solid #22314b;color:var(--ink);
 
 .container{padding:16px;max-width:1250px;margin:0 auto}
 
+/* Status cards fixos abaixo do cabeçalho */
 .status-cards {
-  position: sticky;
-  top: 140px;     /* aumenta o offset pra caber o header + filtros + botão empresas */
-  z-index: 25;    /* menor que o menu, maior que o conteúdo */
-}
-
+  display: flex;
+  gap: 12px;
+  margin: 12px 0;
 
   position: sticky;
   top: 70px;                /* fica logo abaixo do header */
