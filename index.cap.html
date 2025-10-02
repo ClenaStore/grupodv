@@ -283,7 +283,7 @@ textarea{width:100%;min-height:90px;border-radius:8px;border:1px solid #22314b;b
 </div>
 
 <div class="footer">
-  <div id="bubble" class="bubble" style="display:none"></div>
+  <div id="bubble" class="bubble" style="display:none">Total selecionado: R$ 0,00</div>
   <button id="btnMassa" class="btn-massa" style="display:none"><span>Aprovar selecionados</span><div class="spinner-btn"></div></button>
 </div>
 
@@ -309,20 +309,6 @@ let periodoFim = null;
 
 const $=id=>document.getElementById(id);
 const BRL=n=>(isNaN(n)?0:n).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
-function parseValor(v){
-  if (v === null || v === undefined) return 0;
-
-  // Se já for número, retorna direto
-  if (typeof v === "number") return v;
-
-  // Se for string, faz a limpeza
-  let str = v.trim();
-  str = str.replace(/[^\d,.-]/g, "");  // remove R$, espaços, etc
-  str = str.replace(/\.(?=\d{3}(,|$))/g, ""); // remove pontos de milhar (somente os corretos)
-  str = str.replace(",", ".");         // troca vírgula por ponto decimal
-  return parseFloat(str) || 0;
-}
-
 const iso = d => { const dt=new Date(d); dt.setMinutes(dt.getMinutes()-dt.getTimezoneOffset()); return dt.toISOString().slice(0,10); };
 const ID=(emp,linha)=>`${emp.replace(/\s+/g,'_')}__${linha}`;
 
@@ -354,7 +340,7 @@ function renderMods(){
   for(const emp of Object.keys(TITULOS)){
     (TITULOS[emp].__all||[]).forEach(t=>{
       const status=(t.status||"Pendente");
-      const valor=parseValor(t.valor);
+      const valor=Number(String(t.valor).replace("R$","").replace(/\./g,"").replace(",","."))||0;
       const meio=normalizeMeio(t.meio_pagamento);
 
       // Soma por modalidade
@@ -386,15 +372,10 @@ function renderMods(){
 function renderLista(){
   const lista=$("lista");lista.innerHTML="";SELEC=[];$("master").checked=false;
   let totalItens=0;
-
   for(const emp of Object.keys(TITULOS)){
-    // 🔹 agora ordena do mais recente (maior vencimento) para o mais antigo
-    const sorted = [...(TITULOS[emp].__filtered||[])]
-      .sort((a,b)=> new Date(b.vencimento) - new Date(a.vencimento));
-
-    sorted.forEach((t)=>{
+    (TITULOS[emp].__filtered||[]).forEach((t)=>{
       totalItens++;
-      const valor=parseValor(t.valor);
+      const valor=Number(String(t.valor).replace("R$","").replace(/\./g,"").replace(",","."))||0;
       const id=ID(emp,t.linha);
       const st=(t.status || "Pendente");
       const obs=(t.observacao || "");
@@ -432,9 +413,7 @@ function renderLista(){
   }
   $("contagem").textContent=`${totalItens} ${totalItens===1?"item":"itens"}`;
   renderMods();
-  atualizarBubble(); // 🔹 garante que o bubble sempre reflete o total aprovado
 }
-
 
 function setPill(el,status){
   el.className="pill";
@@ -446,11 +425,11 @@ function setPill(el,status){
 function toggleSel(chk){
   const card=chk.closest(".titulo");
   const id=card.dataset.id,emp=card.dataset.emp,linha=Number(card.dataset.linha),valor=Number(card.dataset.valor)||0;
-  if(chk.checked) SELEC.push({id,emp,linha,valor});
-  else SELEC=SELEC.filter(x=>x.id!==id);
-  $("btnMassa").style.display = SELEC.length ? "block" : "none";
+  if(chk.checked)SELEC.push({id,emp,linha,valor}); else SELEC=SELEC.filter(x=>x.id!==id);
+  const total=SELEC.reduce((s,x)=>s+x.valor,0);
+  if(SELEC.length){$("bubble").style.display="block";$("btnMassa").style.display="block";$("bubble").textContent="Total selecionado: "+BRL(total)}
+  else{$("bubble").style.display="none";$("btnMassa").style.display="none"}
 }
-
 
 // 🔹 Seleção em massa
 $("master").addEventListener("change",function(){
@@ -469,7 +448,6 @@ async function acaoStatus(btn,novo){
   addHistLocal(id,"Status alterado para "+novo);
   try{await fetch(`${endpointTitulos}?action=atualizar&empresa=${encodeURIComponent(emp)}&linha=${linha}&status=${encodeURIComponent(novo)}`);}catch(e){console.error(e)}
   setLoading(btn,false);
-  atualizarBubble();
 }
 
 async function atualizarStatusMassa(novo="Aprovado"){
@@ -488,27 +466,8 @@ async function atualizarStatusMassa(novo="Aprovado"){
   SELEC=[];$("master").checked=false;
   $("bubble").style.display="none";$("btnMassa").style.display="none";
   setLoading(btn,false);
-  atualizarBubble();
 }
 $("btnMassa").onclick=()=>atualizarStatusMassa("Aprovado");
-
-  function atualizarBubble(){
-  let totalAprovado = 0;
-  document.querySelectorAll(".titulo").forEach(card=>{
-    const status = card.querySelector("[data-status]").textContent;
-    const valor = Number(card.dataset.valor) || 0;
-    if(status === "Aprovado"){
-      totalAprovado += valor;
-    }
-  });
-
-  if(totalAprovado > 0){
-    $("bubble").style.display="block";
-    $("bubble").textContent="Total aprovado: " + BRL(totalAprovado);
-  } else {
-    $("bubble").style.display="none";
-  }
-}
 
 function abrirObs(id,emp,linha,txt,fornecedor){
   obsContext={id,emp,linha};
