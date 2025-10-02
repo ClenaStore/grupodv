@@ -12,228 +12,225 @@
   --bg:#0b1220;--card:#0f172a;--ink:#e5f0ff;--muted:#a8b3c7;--line:#243043;
   --teal:#06b6d4;--blue:#4f46e5;--green:#16a34a;--red:#ef4444;--amber:#f59e0b;
 }
-*{box-sizing:border-box;margin:0;padding:0}
-body{
-  margin:0;
-  font-family:Inter,system-ui,Arial,sans-serif;
-  background:var(--bg);
-  color:var(--ink);
-  font-size:15px;
-}
+*{box-sizing:border-box}
+body{margin:0;font-family:Inter,system-ui;background:var(--bg);color:var(--ink);font-size:15px}
 
-/* 🔹 Cabeçalho */
-header{
-  position:sticky;top:0;z-index:20;
-  background:linear-gradient(180deg,#0f172a,#0b1220);
-  border-bottom:1px solid var(--line);
-  padding:14px;
-  display:flex;flex-direction:column;gap:12px
-}
-header h1{font-size:18px;font-weight:800;color:var(--ink)}
+header{position:sticky;top:0;z-index:20;background:linear-gradient(180deg,#0f172a,#0b1220);
+  border-bottom:1px solid var(--line);padding:14px;display:flex;flex-direction:column;gap:10px}
+header h1{font-size:18px;margin:0;font-weight:800}
 
-/* 🔹 Controles (Filtros e Empresa) */
-.controls{
-  display:flex;
-  flex-direction:column;
-  gap:10px;
-  width:100%;
-}
-.row-filtros{
-  display:flex;
-  flex-direction:column;
-  gap:10px;
-  width:100%;
-}
-.row-filtros select,
-.row-filtros input{
-  flex:1;
-}
-.row-linha{
-  display:flex;
-  gap:10px;
-  width:100%;
-  align-items:center;
-}
+.controls{width:100%;display:flex;flex-direction:column;gap:8px}
+.row-filtros{display:flex;gap:8px;width:100%}
+.row-filtros select{flex:1}
+.row-linha{display:flex;gap:8px;width:100%}
+.row-linha input{flex:1}
 
-select,input{
-  background:#0b1528;
-  border:1px solid #22314b;
-  color:var(--ink);
-  padding:10px 14px;
-  border-radius:10px;
-  font-size:15px;
-  width:100%;
-}
-.btn{
-  border:1px solid #2a3955;
-  background:#0b1528;
-  color:var(--ink);
-  padding:10px 14px;
-  border-radius:10px;
-  cursor:pointer;
-  font-weight:700;
-  font-size:15px;
-  width:100%;
-}
+select,input{background:#0b1528;border:1px solid #22314b;color:var(--ink);
+  padding:10px 14px;border-radius:10px;font-size:15px;width:100%}
+.btn{border:1px solid #2a3955;background:#0b1528;color:var(--ink);padding:10px 14px;border-radius:10px;cursor:pointer;font-weight:700;font-size:15px;width:100%;position:relative;overflow:hidden}
 .btn.icon{display:flex;align-items:center;gap:6px;justify-content:center}
 
-/* 🔹 Desktop: filtros em linha */
-@media(min-width:1024px){
-  .controls{
-    flex-direction:row;
-    align-items:center;
-    justify-content:space-between;
-  }
-  .row-filtros{
-    flex-direction:row;
-    flex:2;
-  }
-  .row-linha{
-    flex:1;
-  }
-}
-
-/* 🔹 Overlay de loading */
-#overlay{
-  position:fixed;inset:0;
-  background:rgba(3,7,18,.55);
-  display:none;
-  align-items:center;
-  justify-content:center;
-  z-index:100
-}
-.spinner{
-  width:56px;height:56px;
-  border:6px solid var(--teal);
-  border-top-color:transparent;
-  border-radius:50%;
-  animation:spin 1s linear infinite
-}
+#overlay{position:fixed;inset:0;background:rgba(3,7,18,.55);display:none;align-items:center;justify-content:center;z-index:100}
+.spinner{width:56px;height:56px;border:6px solid var(--teal);border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 
-/* 🔹 Container principal */
-.container{
-  padding:20px;
-  width:100%;
-  max-width:1400px;
-  margin:0 auto;
-  display:flex;
-  flex-direction:column;
-  gap:20px;
+.spinner-btn{width:16px;height:16px;border:2px solid #fff;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite;position:absolute;top:50%;left:50%;margin:-8px 0 0 -8px;display:none}
+.loading .spinner-btn{display:block}
+.loading span,.loading b,.loading i{visibility:hidden}
+
+.container{padding:16px;max-width:1250px;margin:0 auto}
+
+.status-cards {
+  display: grid;
+  grid-template-columns: 1fr; /* 🔹 sempre 1 por linha */
+  gap: 10px;
+  margin: 12px 0;
 }
 
-/* 🔹 Cards de status */
-.status-cards{
-  display:grid;
-  grid-template-columns:1fr;
-  gap:14px;
+.status-card {
+  border-radius: 12px;
+  padding: 10px;
+  font-weight: 700;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: #fff;
+  font-size: 14px;
 }
-.status-card{
-  border-radius:16px;
-  padding:20px;
-  font-weight:700;
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  color:#fff;
-  font-size:16px;
-  box-shadow:0 4px 12px rgba(0,0,0,.3);
+.status-card span {
+  font-size: 13px;
 }
-.status-card span{font-size:15px}
-.status-card b{font-size:18px}
-.status-card.aprovado{background:linear-gradient(180deg,#19c37d,#16a34a)}
-.status-card.negado{background:linear-gradient(180deg,#fb6969,#ef4444)}
-.status-card.pendente{background:linear-gradient(180deg,#60a5fa,#1d4ed8)}
+.status-card b {
+  font-size: 14px;
+}
+
+.status-card.aprovado {
+  background: linear-gradient(180deg,#19c37d,#16a34a);
+}
+.status-card.negado {
+  background: linear-gradient(180deg,#fb6969,#ef4444);
+}
+.status-card.pendente {
+  background: linear-gradient(180deg,#60a5fa,#1d4ed8);
+}
+
+.mods-card{margin:16px 0;background:#0f172a;border:1px solid var(--line);border-radius:18px;padding:16px}
+.mods {
+  display: grid;
+  grid-template-columns: 1fr 1fr; /* 🔹 Agora 2 cards por linha por padrão */
+  gap: 12px;
+}
+
 @media(min-width:768px){
-  .status-cards{grid-template-columns:repeat(3,1fr)}
+  .mods { grid-template-columns: 1fr 1fr; } /* mantém 2 no tablet */
 }
 
-/* 🔹 Cards de modalidades */
-.mods{
-  display:grid;
-  grid-template-columns:1fr;
-  gap:14px;
-}
-.mod{
-  border-radius:16px;
-  padding:20px;
-  font-weight:700;
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  color:#fff;
-  font-size:16px;
-  box-shadow:0 4px 12px rgba(0,0,0,.3);
-}
-.mod span{font-size:15px}
-.mod b{font-size:18px}
-.mod.pix{background:linear-gradient(180deg,#3b82f6,#1e40af)}
-.mod.cartao{background:linear-gradient(180deg,#22c55e,#15803d)}
-.mod.boleto{background:linear-gradient(180deg,#9ca3af,#374151)}
-.mod.total{background:#0f172a;border:1px solid var(--line)}
 @media(min-width:1024px){
-  .mods{grid-template-columns:repeat(4,1fr)}
+  .mods { grid-template-columns: 1fr 1fr 1fr; } /* 3 no desktop */
 }
 
-/* 🔹 Lista de títulos */
-.lista{display:grid;gap:16px}
-.titulo{
-  background:#0f172a;
-  border:1px solid var(--line);
-  border-radius:16px;
-  padding:16px;
-  display:flex;
-  flex-direction:column;
-  gap:10px;
-  box-shadow:0 2px 8px rgba(0,0,0,.25);
+.mod{border-radius:16px;padding:14px;font-weight:700;display:flex;justify-content:space-between;align-items:center;color:#fff;font-size:16px}
+.mod.total{background:#0f172a;border:1px solid var(--line)}
+.mod.pix {
+  background: linear-gradient(180deg, #3b82f6, #1e40af);   /* Azul */
 }
-@media(min-width:768px){
-  .titulo{flex-direction:row;justify-content:space-between;align-items:center}
+
+.mod.cartao {
+  background: linear-gradient(180deg, #22c55e, #15803d);   /* Verde */
 }
-.row{display:flex;flex-wrap:wrap;gap:10px;font-size:14px;color:var(--muted)}
+
+.mod.boleto {
+  background: linear-gradient(180deg, #9ca3af, #374151);   /* Cinza */
+}
+
+
+.list-head{display:flex;align-items:center;justify-content:space-between;margin-top:10px;font-size:16px}
+.lista{display:grid;gap:14px;margin-top:14px}
+.titulo{background:linear-gradient(180deg,#101a2f,#0f172a);border:1px solid var(--line);
+  border-radius:18px;padding:12px;display:grid;grid-template-columns:1fr;gap:10px;position:relative}
+.ck input{width:22px;height:22px}
+.row{display:flex;gap:10px;flex-wrap:wrap;font-size:14px;color:var(--muted)}
 .row b{color:var(--ink);font-size:15px}
 .row.hist{color:#f59e0b;font-weight:600;font-size:13px}
 
-.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
-.mini{flex:1;padding:10px;border-radius:12px;border:1px solid #22314b;
-  background:#0b1528;color:#fff;font-weight:700;cursor:pointer;font-size:14px;text-align:center}
+.pill{padding:6px 12px;border-radius:999px;border:1px solid #2a3955;background:#0b1528;font-size:13px;font-weight:800;
+  position:absolute;top:8px;right:8px}
+.pill.ok{border-color:#155e32;color:#b6f3c5;background:#0e2a1b}
+.pill.warn{border-color:#7a1e1e;color:#ffb4b4;background:#2a0e0e}
+
+.actions{display:flex;gap:6px;flex-wrap:wrap}
+.mini{flex:1 1 calc(50% - 6px);padding:8px;border-radius:12px;border:1px solid #22314b;background:#0b1528;color:#fff;font-weight:700;cursor:pointer;font-size:14px;text-align:center;position:relative;overflow:hidden}
 .mini.aprovar{background:linear-gradient(180deg,#19c37d,#16a34a)}
 .mini.negar{background:linear-gradient(180deg,#fb6969,#ef4444)}
 .mini.obs{background:linear-gradient(180deg,#60a5fa,#1d4ed8)}
+.mini.loading{opacity:.75;pointer-events:none}
 
-/* 🔹 Menu de empresas */
-.menu{
-  position:absolute;
-  top:100%;right:0;
-  background:#0f172a;
-  border:1px solid var(--line);
-  border-radius:14px;
-  padding:14px;
-  box-shadow:0 10px 30px rgba(0,0,0,.4);
-  display:none;
-  z-index:30;
+.list-head label input {
+  width: 18px;
+  height: 18px;
 }
-.menu label{
-  display:flex;
-  align-items:center;
-  gap:8px;
-  cursor:pointer;
-  color:#fff; /* nomes brancos */
-  font-weight:600;
-  margin-bottom:6px;
+
+/* radios no menu */
+.menu label {
+  display: flex;
+  align-items: center;
+  gap: 8px;         /* espaço entre quadrado e texto */
+  cursor: pointer;
+  color: var(--ink);
 }
-.menu input[type="radio"]{
-  appearance:none;
-  -webkit-appearance:none;
-  width:18px;height:18px;
-  border:2px solid var(--blue);
-  border-radius:3px;
-  background:#0b1528;
-  cursor:pointer;
+
+.menu label input[type="radio"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 18px !important;     /* largura fixa */
+  height: 18px !important;    /* altura igual -> quadrado */
+  border: 2px solid var(--blue);
+  border-radius: 3px;         /* levemente arredondado */
+  background: #0b1528;
+  cursor: pointer;
+  flex: 0 0 18px;             /* impede de esticar no flex */
 }
-.menu input[type="radio"]:checked{background:var(--blue)}
+
+.menu label input[type="radio"]:checked {
+  background: var(--blue);    /* quadrado todo preenchido */
+}
 
 
+
+
+
+.menu label input[type="radio"]:checked::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 10px;
+  height: 10px;
+  background: var(--blue); /* quadradinho interno */
+  border-radius: 2px;      /* opcional: arredondar canto do "check" */
+}
+
+
+.footer {
+  position: fixed;
+  right: 12px;
+  bottom: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-end;
+  z-index: 15;
+}
+.bubble {
+  background: var(--blue);
+  color: #fff;
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-weight: 700;
+  font-size: 13px;
+  text-align: right;
+  display: none;
+  width: auto;
+  box-shadow: 0 2px 6px rgba(0,0,0,.3);
+}
+.btn-massa {
+  background: linear-gradient(180deg, var(--teal), #0796ad);
+  color: #002027;
+  border: 0;
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  display: none;
+  width: auto;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 2px 6px rgba(0,0,0,.3);
+}
+.btn-massa.loading {
+  opacity: .8;
+  pointer-events: none;
+}
+
+.menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: #0f172a;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 14px;
+  box-shadow: 0 10px 30px rgba(0,0,0,.4);
+  display: none;
+  z-index: 30;
+}
+
+.modal{position:fixed;inset:0;background:rgba(2,6,15,.65);display:none;align-items:center;justify-content:center;z-index:200}
+.modal .box{background:#0f172a;border:1px solid var(--line);border-radius:16px;max-width:95%;width:500px;padding:16px}
+.modal h3{margin:0 0 12px;font-size:18px}
+.modal .close{float:right;border:1px solid var(--line);background:#0b1528;border-radius:8px;color:#fff;padding:6px 12px;cursor:pointer;font-size:14px}
+textarea{width:100%;min-height:90px;border-radius:8px;border:1px solid #22314b;background:#0b1528;color:#fff;padding:10px;font-size:14px}
 </style>
 </head>
 <body>
@@ -286,7 +283,7 @@ select,input{
 </div>
 
 <div class="footer">
-  <div id="bubble" class="bubble" style="display:none">Total selecionado: R$ 0,00</div>
+  <div id="bubble" class="bubble" style="display:none"></div>
   <button id="btnMassa" class="btn-massa" style="display:none"><span>Aprovar selecionados</span><div class="spinner-btn"></div></button>
 </div>
 
@@ -312,6 +309,20 @@ let periodoFim = null;
 
 const $=id=>document.getElementById(id);
 const BRL=n=>(isNaN(n)?0:n).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
+function parseValor(v){
+  if (v === null || v === undefined) return 0;
+
+  // Se já for número, retorna direto
+  if (typeof v === "number") return v;
+
+  // Se for string, faz a limpeza
+  let str = v.trim();
+  str = str.replace(/[^\d,.-]/g, "");  // remove R$, espaços, etc
+  str = str.replace(/\.(?=\d{3}(,|$))/g, ""); // remove pontos de milhar (somente os corretos)
+  str = str.replace(",", ".");         // troca vírgula por ponto decimal
+  return parseFloat(str) || 0;
+}
+
 const iso = d => { const dt=new Date(d); dt.setMinutes(dt.getMinutes()-dt.getTimezoneOffset()); return dt.toISOString().slice(0,10); };
 const ID=(emp,linha)=>`${emp.replace(/\s+/g,'_')}__${linha}`;
 
@@ -343,7 +354,7 @@ function renderMods(){
   for(const emp of Object.keys(TITULOS)){
     (TITULOS[emp].__all||[]).forEach(t=>{
       const status=(t.status||"Pendente");
-      const valor=Number(String(t.valor).replace("R$","").replace(/\./g,"").replace(",","."))||0;
+      const valor=parseValor(t.valor);
       const meio=normalizeMeio(t.meio_pagamento);
 
       // Soma por modalidade
@@ -375,10 +386,15 @@ function renderMods(){
 function renderLista(){
   const lista=$("lista");lista.innerHTML="";SELEC=[];$("master").checked=false;
   let totalItens=0;
+
   for(const emp of Object.keys(TITULOS)){
-    (TITULOS[emp].__filtered||[]).forEach((t)=>{
+    // 🔹 agora ordena do mais recente (maior vencimento) para o mais antigo
+    const sorted = [...(TITULOS[emp].__filtered||[])]
+      .sort((a,b)=> new Date(b.vencimento) - new Date(a.vencimento));
+
+    sorted.forEach((t)=>{
       totalItens++;
-      const valor=Number(String(t.valor).replace("R$","").replace(/\./g,"").replace(",","."))||0;
+      const valor=parseValor(t.valor);
       const id=ID(emp,t.linha);
       const st=(t.status || "Pendente");
       const obs=(t.observacao || "");
@@ -416,7 +432,9 @@ function renderLista(){
   }
   $("contagem").textContent=`${totalItens} ${totalItens===1?"item":"itens"}`;
   renderMods();
+  atualizarBubble(); // 🔹 garante que o bubble sempre reflete o total aprovado
 }
+
 
 function setPill(el,status){
   el.className="pill";
@@ -428,11 +446,11 @@ function setPill(el,status){
 function toggleSel(chk){
   const card=chk.closest(".titulo");
   const id=card.dataset.id,emp=card.dataset.emp,linha=Number(card.dataset.linha),valor=Number(card.dataset.valor)||0;
-  if(chk.checked)SELEC.push({id,emp,linha,valor}); else SELEC=SELEC.filter(x=>x.id!==id);
-  const total=SELEC.reduce((s,x)=>s+x.valor,0);
-  if(SELEC.length){$("bubble").style.display="block";$("btnMassa").style.display="block";$("bubble").textContent="Total selecionado: "+BRL(total)}
-  else{$("bubble").style.display="none";$("btnMassa").style.display="none"}
+  if(chk.checked) SELEC.push({id,emp,linha,valor});
+  else SELEC=SELEC.filter(x=>x.id!==id);
+  $("btnMassa").style.display = SELEC.length ? "block" : "none";
 }
+
 
 // 🔹 Seleção em massa
 $("master").addEventListener("change",function(){
@@ -451,6 +469,7 @@ async function acaoStatus(btn,novo){
   addHistLocal(id,"Status alterado para "+novo);
   try{await fetch(`${endpointTitulos}?action=atualizar&empresa=${encodeURIComponent(emp)}&linha=${linha}&status=${encodeURIComponent(novo)}`);}catch(e){console.error(e)}
   setLoading(btn,false);
+  atualizarBubble();
 }
 
 async function atualizarStatusMassa(novo="Aprovado"){
@@ -469,8 +488,27 @@ async function atualizarStatusMassa(novo="Aprovado"){
   SELEC=[];$("master").checked=false;
   $("bubble").style.display="none";$("btnMassa").style.display="none";
   setLoading(btn,false);
+  atualizarBubble();
 }
 $("btnMassa").onclick=()=>atualizarStatusMassa("Aprovado");
+
+  function atualizarBubble(){
+  let totalAprovado = 0;
+  document.querySelectorAll(".titulo").forEach(card=>{
+    const status = card.querySelector("[data-status]").textContent;
+    const valor = Number(card.dataset.valor) || 0;
+    if(status === "Aprovado"){
+      totalAprovado += valor;
+    }
+  });
+
+  if(totalAprovado > 0){
+    $("bubble").style.display="block";
+    $("bubble").textContent="Total aprovado: " + BRL(totalAprovado);
+  } else {
+    $("bubble").style.display="none";
+  }
+}
 
 function abrirObs(id,emp,linha,txt,fornecedor){
   obsContext={id,emp,linha};
