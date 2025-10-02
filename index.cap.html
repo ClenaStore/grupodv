@@ -40,23 +40,29 @@ select,input{background:#0b1528;border:1px solid #22314b;color:var(--ink);
 
 .container{padding:16px;max-width:1250px;margin:0 auto}
 
-/* Container dos cards de status */
+/* Status cards fixos abaixo do cabeçalho */
 .status-cards {
-  display: flex;                 /* mantém lado a lado */
-  justify-content: space-between;/* distribui igualmente */
-  gap: 12px;                     /* espaço entre eles */
+  display: flex;
+  gap: 12px;
   margin: 12px 0;
 
-  position: sticky;              /* 🔹 fixa no scroll */
-  top: 70px;                     /* ajusta conforme altura do header */
-  z-index: 30;                   /* sobrepõe a lista */
-  background: var(--bg);         /* fundo sólido */
+  position: sticky;
+  top: 70px;                /* fica logo abaixo do header */
+  z-index: 30;
+  background: var(--bg);
   padding: 10px 0;
+  overflow-x: auto;         /* 🔹 ativa scroll lateral no mobile */
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Esconde barra de rolagem mas mantém o scroll */
+.status-cards::-webkit-scrollbar {
+  display: none;
 }
 
 /* Cada card */
 .status-card {
-  flex: 1;                       /* todos ocupam mesma largura */
+  flex: 1 0 200px;           /* 🔹 largura mínima p/ caber no carrossel */
   border-radius: 12px;
   padding: 14px;
   font-weight: 700;
@@ -66,7 +72,20 @@ select,input{background:#0b1528;border:1px solid #22314b;color:var(--ink);
   color: #fff;
   font-size: 16px;
   box-shadow: 0 2px 8px rgba(0,0,0,.25);
+  min-width: 200px;          /* garante tamanho fixo no mobile */
 }
+
+/* Desktop: cards ocupam lado a lado e não precisam scroll */
+@media (min-width: 768px) {
+  .status-cards {
+    overflow-x: hidden;      /* tira o scroll no desktop */
+  }
+  .status-card {
+    flex: 1;                 /* todos com mesma largura */
+    min-width: auto;         /* libera para expandir */
+  }
+}
+
 
 
 .status-card span { font-size: 14px; }
