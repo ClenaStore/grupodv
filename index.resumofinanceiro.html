@@ -776,7 +776,14 @@ async function aplicarFiltro() {
   const empresas = [...new Set(dadosFiltrados.map(item => item.Empresa))];
 
   empresas.forEach(emp => {
+
+    // 🔒 ignora o Almoço Mercatto, não cria card individual
+    if (normalize(emp) === "ALMOCO MERCATTO") {
+      return; 
+    }
+
     const dadosEmpresa = dadosFiltrados.filter(i => i.Empresa === emp);
+
     const agrupado = {};
     dadosEmpresa.forEach(item => {
       let cat = normalize(item.Categoria);
@@ -804,9 +811,14 @@ async function aplicarFiltro() {
 
     // 🔑 Se for o restaurante → soma consolidada
     if (normalize(emp) === "CARNEIRO MERCATTO RESTAURANTE") {
-      const empresasSomadas = ["CARNEIRO MERCATTO RESTAURANTE", "CARNEIRO MERCATTO EMPORIO", "M.KIDS"];
+      const empresasSomadas = ["CARNEIRO MERCATTO RESTAURANTE", "CARNEIRO MERCATTO EMPORIO"];
       const dadosSomados = dadosFiltrados.filter(i => empresasSomadas.includes(normalize(i.Empresa)));
       const totalSoma = dadosSomados.reduce((acc, i) => acc + (parseFloat(i.Valor) || 0), 0);
+
+      // pega o valor de "Almoço Mercatto"
+      const totalAlmoco = dadosFiltrados
+        .filter(i => normalize(i.Empresa) === "ALMOCO MERCATTO")
+        .reduce((acc, i) => acc + (parseFloat(i.Valor) || 0), 0);
 
       html += `
         <div style="
@@ -822,6 +834,10 @@ async function aplicarFiltro() {
           <small style="display:block; margin-top:4px; color:var(--muted)">
             (Restaurante + Empório)
           </small>
+          <hr style="margin:8px 0;border:0;border-top:1px dashed var(--line)">
+          <span style="font-size:.95rem; color:var(--muted)">
+            🍽️ Almoço Mercatto: <strong>R$ ${BRL(totalAlmoco)}</strong>
+          </span>
         </div>
       `;
     }
@@ -859,6 +875,7 @@ async function aplicarFiltro() {
 
   hideLoading();
 }
+
 
 
   function displayName(catNorm){
