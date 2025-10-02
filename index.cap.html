@@ -15,7 +15,19 @@
 *{box-sizing:border-box}
 body{margin:0;font-family:Inter,system-ui;background:var(--bg);color:var(--ink);font-size:15px}
 
-header{position:sticky;top:0;z-index:20;background:linear-gradient(180deg,#0f172a,#0b1220);
+header {
+  position:sticky;
+  top:0;
+  z-index:10000; /* ✅ maior que os status cards */
+  background:linear-gradient(180deg,#0f172a,#0b1220);
+  border-bottom:1px solid var(--line);
+  padding:14px;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+       
   border-bottom:1px solid var(--line);padding:14px;display:flex;flex-direction:column;gap:10px}
 header h1{font-size:18px;margin:0;font-weight:800}
 
