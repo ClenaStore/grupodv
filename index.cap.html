@@ -106,18 +106,36 @@ select,input{background:#0b1528;border:1px solid #22314b;color:var(--ink);
 
 .mods {
   display: grid;
-  grid-template-columns: 1fr 1fr; /* 🔹 sempre 2 no mobile */
-  gap: 12px;
+  grid-template-columns: 1fr; /* 1 card por linha no mobile */
+  gap: 10px;
 }
 
-
-@media(min-width:768px){
-  .mods { grid-template-columns: 1fr 1fr; } /* mantém 2 no tablet */
+@media(min-width:600px){
+  .mods { grid-template-columns: 1fr 1fr; } /* 2 no tablet */
 }
 
 @media(min-width:1024px){
   .mods { grid-template-columns: 1fr 1fr 1fr; } /* 3 no desktop */
 }
+
+.mod {
+  border-radius: 14px;
+  padding: 14px;        /* padding menor no mobile */
+  font-size: 15px;      /* texto menor no mobile */
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  color:#fff;
+  box-shadow:0 4px 12px rgba(0,0,0,.3);
+}
+
+@media(min-width:768px){
+  .mod {
+    padding:18px 20px;  /* volta maior em tablet/desktop */
+    font-size:18px;
+  }
+}
+
 
 .mod.total{background:#0f172a;border:1px solid var(--line)}
 .mod.pix {
