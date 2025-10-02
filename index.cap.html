@@ -42,38 +42,30 @@ select,input{background:#0b1528;border:1px solid #22314b;color:var(--ink);
 
 .status-cards {
   display: grid;
-  grid-template-columns: 1fr; /* 🔹 sempre 1 por linha */
-  gap: 10px;
+  grid-template-columns: repeat(3, 1fr); /* 🔹 sempre 3 colunas lado a lado */
+  gap: 12px;
   margin: 12px 0;
 }
 
 .status-card {
   border-radius: 12px;
-  padding: 10px;
+  padding: 14px;
   font-weight: 700;
   display: flex;
   justify-content: space-between;
   align-items: center;
   color: #fff;
-  font-size: 14px;
+  font-size: 16px;
+  pointer-events: none;   /* 🔒 bloqueia clique/hover */
+  user-select: none;      /* 🔒 impede seleção de texto */
+  opacity: 0.95;          /* 🔹 leve efeito "desativado" */
 }
-.status-card span {
-  font-size: 13px;
-}
-.status-card b {
-  font-size: 14px;
-}
+.status-card span { font-size: 14px; }
+.status-card b { font-size: 18px; }
 
-.status-card.aprovado {
-  background: linear-gradient(180deg,#19c37d,#16a34a);
-}
-.status-card.negado {
-  background: linear-gradient(180deg,#fb6969,#ef4444);
-}
-.status-card.pendente {
-  background: linear-gradient(180deg,#60a5fa,#1d4ed8);
-}
-
+.status-card.aprovado { background: linear-gradient(180deg,#19c37d,#16a34a); }
+.status-card.negado { background: linear-gradient(180deg,#fb6969,#ef4444); }
+.status-card.pendente { background: linear-gradient(180deg,#60a5fa,#1d4ed8); }
 .mods-card{margin:16px 0;background:#0f172a;border:1px solid var(--line);border-radius:18px;padding:16px}
 .mods {
   display: grid;
