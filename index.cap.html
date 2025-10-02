@@ -50,9 +50,11 @@ select,input{background:#0b1528;border:1px solid #22314b;color:var(--ink);
 
 .container {
   padding: 20px 30px;
-  max-width: 1400px;   /* mais largo em desktop */
-  margin: 0 auto;
+  width: 100%;         /* pega toda a largura disponível */
+  max-width: none;     /* remove limite fixo */
+  margin: 0;           /* remove centralização */
 }
+
 
 .status-cards {
   display: grid;
