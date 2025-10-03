@@ -777,10 +777,15 @@ async function aplicarFiltro() {
 
   empresas.forEach(emp => {
 
-    // 🔒 ignora o Almoço Mercatto, não cria card individual
-    if (normalize(emp) === "ALMOCO MERCATTO") {
-      return; 
-    }
+// 🔒 ignora os Almoços (para não criarem cards próprios)
+if (
+  normalize(emp) === "ALMOCO MERCATTO" ||
+  normalize(emp) === "ALMOCO DELICIA" ||
+  normalize(emp) === "ALMOCO VILLA"
+) {
+  return;
+}
+
 
     const dadosEmpresa = dadosFiltrados.filter(i => i.Empresa === emp);
 
@@ -809,38 +814,66 @@ async function aplicarFiltro() {
     }
     html += `</ul>`;
 
-    // 🔑 Se for o restaurante → soma consolidada
-    if (normalize(emp) === "CARNEIRO MERCATTO RESTAURANTE") {
-      const empresasSomadas = ["CARNEIRO MERCATTO RESTAURANTE", "CARNEIRO MERCATTO EMPORIO"];
-      const dadosSomados = dadosFiltrados.filter(i => empresasSomadas.includes(normalize(i.Empresa)));
-      const totalSoma = dadosSomados.reduce((acc, i) => acc + (parseFloat(i.Valor) || 0), 0);
+// 🔑 Se for o restaurante → soma consolidada
+if (normalize(emp) === "CARNEIRO MERCATTO RESTAURANTE") {
+  const empresasSomadas = ["CARNEIRO MERCATTO RESTAURANTE", "CARNEIRO MERCATTO EMPORIO"];
+  const dadosSomados = dadosFiltrados.filter(i => empresasSomadas.includes(normalize(i.Empresa)));
+  const totalSoma = dadosSomados.reduce((acc, i) => acc + (parseFloat(i.Valor) || 0), 0);
 
-      // pega o valor de "Almoço Mercatto"
-      const totalAlmoco = dadosFiltrados
-        .filter(i => normalize(i.Empresa) === "ALMOCO MERCATTO")
-        .reduce((acc, i) => acc + (parseFloat(i.Valor) || 0), 0);
+  const totalAlmoco = dadosFiltrados
+    .filter(i => normalize(i.Empresa) === "ALMOCO MERCATTO")
+    .reduce((acc, i) => acc + (parseFloat(i.Valor) || 0), 0);
 
-      html += `
-        <div style="
-          margin-top:12px;
-          padding:10px;
-          border:2px solid var(--brand);
-          border-radius:10px;
-          background:color-mix(in srgb, var(--surface) 92%, #fff)">
-          <strong style="color:var(--brand)">🔹 Faturamento do Carneiro Mercatto</strong><br>
-          <span style="font-size:1.1rem; font-weight:700">
-            R$ ${BRL(totalSoma)}
-          </span>
-          <small style="display:block; margin-top:4px; color:var(--muted)">
-            (Restaurante + Empório)
-          </small>
-          <hr style="margin:8px 0;border:0;border-top:1px dashed var(--line)">
-          <span style="font-size:.95rem; color:var(--muted)">
-            🍽️ Almoço Mercatto: <strong>R$ ${BRL(totalAlmoco)}</strong>
-          </span>
-        </div>
-      `;
-    }
+  html += `
+    <div style="
+      margin-top:12px;
+      padding:10px;
+      border:2px solid var(--brand);
+      border-radius:10px;
+      background:color-mix(in srgb, var(--surface) 92%, #fff)">
+      <strong style="color:var(--brand)">🔹 Faturamento do Carneiro Mercatto</strong><br>
+      <span style="font-size:1.1rem; font-weight:700">
+        R$ ${BRL(totalSoma)}
+      </span>
+      <small style="display:block; margin-top:4px; color:var(--muted)">
+        (Restaurante + Empório)
+      </small>
+      <hr style="margin:8px 0;border:0;border-top:1px dashed var(--line)">
+      <span style="font-size:.95rem; color:var(--muted)">
+        🍽️ Almoço Mercatto: <strong>R$ ${BRL(totalAlmoco)}</strong>
+      </span>
+    </div>
+  `;
+}
+
+// 🔑 Se for o Delícia Gourmet → incluir também "Almoço Delícia"
+if (normalize(emp) === "DELICIA GOURMET") {
+  const totalAlmocoDelicia = dadosFiltrados
+    .filter(i => normalize(i.Empresa) === "ALMOCO DELICIA")
+    .reduce((acc, i) => acc + (parseFloat(i.Valor) || 0), 0);
+
+  html += `
+    <hr style="margin:8px 0;border:0;border-top:1px dashed var(--line)">
+    <span style="font-size:.95rem; color:var(--muted)">
+      🍽️ Almoço Delícia: <strong>R$ ${BRL(totalAlmocoDelicia)}</strong>
+    </span>
+  `;
+}
+
+// 🔑 Se for o Villa Gourmet → incluir também "Almoço Villa"
+if (normalize(emp) === "VILLA GOURMET") {
+  const totalAlmocoVilla = dadosFiltrados
+    .filter(i => normalize(i.Empresa) === "ALMOCO VILLA")
+    .reduce((acc, i) => acc + (parseFloat(i.Valor) || 0), 0);
+
+  html += `
+    <hr style="margin:8px 0;border:0;border-top:1px dashed var(--line)">
+    <span style="font-size:.95rem; color:var(--muted)">
+      🍽️ Almoço Villa: <strong>R$ ${BRL(totalAlmocoVilla)}</strong>
+    </span>
+  `;
+}
+
 
     conteudo.innerHTML = html;
 
