@@ -740,15 +740,22 @@ function anosDisponiveis(){
     try{
       const resposta = await fetch(url);
       dados = await resposta.json();
-      const empresas = [...new Set(dados.map(item => item.Empresa))].sort();
-      const select = document.getElementById("empresaFiltro");
-      select.innerHTML = '<option value="">Todas</option>';
-      empresas.forEach(emp => {
-        const option = document.createElement("option");
-        option.value = emp;
-        option.textContent = emp;
-        select.appendChild(option);
-      });
+      const empresas = [...new Set(
+  dados
+    .map(item => item.Empresa)
+    // 🔒 filtra fora empresas que começam com "Almoço"
+    .filter(emp => !/^ALMOCO/i.test(normalize(emp)))
+)].sort();
+
+const select = document.getElementById("empresaFiltro");
+select.innerHTML = '<option value="">Todas</option>';
+empresas.forEach(emp => {
+  const option = document.createElement("option");
+  option.value = emp;
+  option.textContent = emp;
+  select.appendChild(option);
+});
+
       await aplicarFiltro();
     }catch(e){
       console.error(e);
