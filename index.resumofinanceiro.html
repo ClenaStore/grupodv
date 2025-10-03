@@ -1027,43 +1027,44 @@ function abrirEvolucaoAnual(empresa){
 }
 
 
-  function montarChecklistComparacao(){
-    const list = document.getElementById('compareList');
-    list.innerHTML = '';
-    const todas = empresasUnicas();
+function montarChecklistComparacao(){
+  const list = document.getElementById('compareList');
+  list.innerHTML = '';
 
-    todas.forEach((emp, idx)=>{
-      const id = `cmp_${idx}`;
-      const wrap = document.createElement('label');
-      wrap.className = 'check-item';
-      wrap.innerHTML = `
-        <input type="checkbox" id="${id}" value="${emp}" ${selecionadas.has(emp)?'checked':''}/>
-        <span>${emp}</span>
-      `;
-      wrap.querySelector('input').addEventListener('change', (e)=>{
-        if(e.target.checked) selecionadas.add(emp); else selecionadas.delete(emp);
-const anoSel = document.getElementById("anoSelect").value || new Date().getFullYear();
-renderGraficoComparacao(anoSel);
+  // 🔒 remove empresas que começam com "ALMOCO"
+  const todas = empresasUnicas().filter(emp => !/^ALMOCO/i.test(normalize(emp)));
 
-      });
-      list.appendChild(wrap);
+  todas.forEach((emp, idx)=>{
+    const id = `cmp_${idx}`;
+    const wrap = document.createElement('label');
+    wrap.className = 'check-item';
+    wrap.innerHTML = `
+      <input type="checkbox" id="${id}" value="${emp}" ${selecionadas.has(emp)?'checked':''}/>
+      <span>${emp}</span>
+    `;
+    wrap.querySelector('input').addEventListener('change', (e)=>{
+      if(e.target.checked) selecionadas.add(emp); else selecionadas.delete(emp);
+      const anoSel = document.getElementById("anoSelect").value || new Date().getFullYear();
+      renderGraficoComparacao(anoSel);
     });
+    list.appendChild(wrap);
+  });
 
- document.getElementById('btnCompareAll').onclick = ()=>{
-  todas.forEach(emp=>selecionadas.add(emp));
-  montarChecklistComparacao();
-  const anoSel = document.getElementById("anoSelect").value || new Date().getFullYear();
-  renderGraficoComparacao(anoSel);
-};
-document.getElementById('btnCompareNone').onclick = ()=>{
-  selecionadas.clear();
-  selecionadas.add(empresaFoco);
-  montarChecklistComparacao();
-  const anoSel = document.getElementById("anoSelect").value || new Date().getFullYear();
-  renderGraficoComparacao(anoSel);
-};
+  document.getElementById('btnCompareAll').onclick = ()=>{
+    todas.forEach(emp=>selecionadas.add(emp));
+    montarChecklistComparacao();
+    const anoSel = document.getElementById("anoSelect").value || new Date().getFullYear();
+    renderGraficoComparacao(anoSel);
+  };
+  document.getElementById('btnCompareNone').onclick = ()=>{
+    selecionadas.clear();
+    selecionadas.add(empresaFoco);
+    montarChecklistComparacao();
+    const anoSel = document.getElementById("anoSelect").value || new Date().getFullYear();
+    renderGraficoComparacao(anoSel);
+  };
+}
 
-  }
 
   function renderGraficoComparacao(ano){
     const ctx = document.getElementById('graficoAnual').getContext('2d');
