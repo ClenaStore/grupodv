@@ -50,7 +50,12 @@ select,input{background:#0b1528;border:1px solid #22314b;color:var(--ink);
 .loading .spinner-btn{display:block}
 .loading span,.loading b,.loading i{visibility:hidden}
 
-.container{padding:16px;max-width:1250px;margin:0 auto}
+.container{
+  padding:180px 16px 16px; /* 🔹 cria espaço para o header + cards fixos */
+  max-width:1250px;
+  margin:0 auto;
+}
+
 
 /* === Status cards fixos na tela (rolam lateralmente, mas não sobem) === */
 .status-cards {
