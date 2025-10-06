@@ -14,11 +14,17 @@
 }
 *{box-sizing:border-box}
 body{margin:0;font-family:Inter,system-ui;background:var(--bg);color:var(--ink);font-size:15px}
+  html, body {
+  height: 100%;
+  overflow-y: hidden; /* 🔒 Bloqueia rolagem vertical */
+  overflow-x: hidden; /* 🔒 Evita scroll lateral na tela */
+}
+
 
 header {
-  position:sticky;
-  top:0;
-  z-index:10000; /* ✅ maior que os status cards */
+  position: sticky;
+  top: 0;
+  z-index: 200; /* ✅ maior que os status cards */
   background:linear-gradient(180deg,#0f172a,#0b1220);
   border-bottom:1px solid var(--line);
   padding:14px;
@@ -65,6 +71,10 @@ select,input{background:#0b1528;border:1px solid #22314b;color:var(--ink);
   overflow-x: auto;                /* 🔹 scroll lateral mantido */
   -webkit-overflow-scrolling: touch;
 }
+  .status-cards {
+  z-index: 999; /* ✅ garante que os cards fiquem sempre visíveis */
+}
+
 
 .status-cards::-webkit-scrollbar {
   height: 6px;
