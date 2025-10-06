@@ -54,18 +54,19 @@ select,input{background:#0b1528;border:1px solid #22314b;color:var(--ink);
 
 /* === Status cards fixos na tela (rolam lateralmente, mas não sobem) === */
 .status-cards {
-  position: fixed;                 /* 🔹 fica fixo na tela */
-  top: 70px;                       /* 🔹 logo abaixo do header */
+  position: fixed;                 /* Fica fixo na tela */
+  top: 110px;                      /* 🔹 empurra para baixo do header */
   left: 0;
   right: 0;
-  z-index: 999;                    /* 🔹 sempre acima do conteúdo */
+  z-index: 900;                    /* 🔹 suficiente para ficar visível */
   background: var(--bg);
   display: flex;
   gap: 12px;
   padding: 10px 16px;
-  overflow-x: auto;                /* 🔹 rolagem lateral permitida */
+  overflow-x: auto;                /* 🔹 rolagem lateral */
   -webkit-overflow-scrolling: touch;
   box-shadow: 0 2px 8px rgba(0,0,0,.3);
+  border-bottom: 1px solid var(--line);
 }
 
 /* 🔹 Esconde a barra de rolagem mas mantém o scroll */
@@ -77,9 +78,9 @@ select,input{background:#0b1528;border:1px solid #22314b;color:var(--ink);
   border-radius: 4px;
 }
 
-/* Cada card */
+/* Cada card individual */
 .status-card {
-  flex: 0 0 200px;                 /* 🔹 largura fixa p/ scroll horizontal */
+  flex: 0 0 200px;
   min-width: 200px;
   border-radius: 12px;
   padding: 14px 10px;
@@ -94,10 +95,10 @@ select,input{background:#0b1528;border:1px solid #22314b;color:var(--ink);
   box-shadow: 0 2px 8px rgba(0,0,0,.25);
   word-break: break-word;
   overflow-wrap: break-word;
-  white-space: normal;             /* 🔹 permite quebra interna */
+  white-space: normal;
 }
 
-/* Título e valor dentro do card */
+/* Texto interno */
 .status-card span {
   font-size: 15px;
   opacity: .9;
@@ -118,8 +119,8 @@ select,input{background:#0b1528;border:1px solid #22314b;color:var(--ink);
 
 /* Cores */
 .status-card.aprovado { background: linear-gradient(180deg,#19c37d,#16a34a); }
-.status-card.negado   { background: linear-gradient(180deg,#fb6969,#ef4444); }
 .status-card.pendente { background: linear-gradient(180deg,#60a5fa,#1d4ed8); }
+.status-card.negado   { background: linear-gradient(180deg,#fb6969,#ef4444); }
 
 
 /* 🔹 Oculta scrollbar no desktop, mas permite arrastar no mobile */
