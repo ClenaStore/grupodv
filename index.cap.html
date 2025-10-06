@@ -28,14 +28,82 @@ header {
 }
 
        
-  border-bottom:1px solid var(--line);padding:14px;display:flex;flex-direction:column;gap:10px}
-header h1{font-size:18px;margin:0;font-weight:800}
 
-.controls{width:100%;display:flex;flex-direction:column;gap:8px}
-.row-filtros{display:flex;gap:8px;width:100%}
-.row-filtros select{flex:1}
-.row-linha{display:flex;gap:8px;width:100%}
-.row-linha input{flex:1}
+header h1 {
+  font-size: 20px;
+  font-weight: 800;
+  margin: 0 0 4px 0;
+  text-align: center;
+}
+
+/* 🔹 Linha de filtros */
+.filtros-linha {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.filtros-linha select,
+.filtros-linha input,
+.filtros-linha button {
+  flex: 1 1 25%;
+  background: #0b1528;
+  border: 1px solid #22314b;
+  color: var(--ink);
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 15px;
+}
+
+/* 🔹 Linha dos valores de status */
+.status-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.status-item {
+  flex: 1;
+  text-align: center;
+  border-radius: 10px;
+  padding: 10px 0;
+  color: #fff;
+  font-weight: 700;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+}
+
+.status-item span {
+  display: block;
+  font-size: 13px;
+  opacity: 0.9;
+}
+
+.status-item b {
+  font-size: 18px;
+  display: block;
+  margin-top: 2px;
+}
+
+.status-item.aprovado {
+  background: linear-gradient(180deg, #19c37d, #16a34a);
+}
+
+.status-item.pendente {
+  background: linear-gradient(180deg, #60a5fa, #1d4ed8);
+}
+
+.status-item.negado {
+  background: linear-gradient(180deg, #fb6969, #ef4444);
+}
+
+/* Responsivo */
+@media (max-width: 768px) {
+  .status-header {
+    flex-direction: column;
+  }
+}
+
 
 select,input{background:#0b1528;border:1px solid #22314b;color:var(--ink);
   padding:10px 14px;border-radius:10px;font-size:15px;width:100%}
@@ -284,34 +352,51 @@ textarea{width:100%;min-height:90px;border-radius:8px;border:1px solid #22314b;b
 <body>
 <header>
   <h1>CAP - Grupo DV</h1>
-  <div class="controls">
-    <div class="row-filtros">
-      <select id="filtroStatus">
-        <option value="Pendente" selected>Pendentes</option>
-        <option value="Aprovado">Aprovados</option>
-        <option value="Negado">Negados</option>
-        <option value="Todos">Todos</option>
-      </select>
-      <select id="filtroMeio">
-        <option value="Todos" selected>Todos</option>
-        <option value="Pix">Pix</option>
-        <option value="Cartão">Cartão</option>
-        <option value="Boleto">Boleto</option>
-        <option value="Outros">Outros</option>
-      </select>
+
+  <!-- 🔹 Linha de filtros -->
+  <div class="filtros-linha">
+    <select id="filtroStatus">
+      <option value="Pendente" selected>Pendentes</option>
+      <option value="Aprovado">Aprovados</option>
+      <option value="Negado">Negados</option>
+      <option value="Todos">Todos</option>
+    </select>
+
+    <select id="filtroMeio">
+      <option value="Todos" selected>Todos</option>
+      <option value="Pix">Pix</option>
+      <option value="Cartão">Cartão</option>
+      <option value="Boleto">Boleto</option>
+      <option value="Outros">Outros</option>
+    </select>
+
+    <input type="text" id="filtroPeriodo" placeholder="Período" />
+
+    <div style="position:relative;flex:1;z-index:9999">
+      <button class="btn icon" id="btnEmpresas">
+        <span id="empresaSelecionada">CAP DELICIA</span> ▼
+      </button>
+      <div id="menuEmpresas" class="menu"></div>
     </div>
-    <div class="row-linha">
-      <input type="text" id="filtroPeriodo" placeholder="Selecione período" />
-<div style="position:relative;flex:1;z-index:9999">
-  <button class="btn icon" id="btnEmpresas">
-    <span id="empresaSelecionada">CAP DELICIA</span> ▼
-  </button>
-  <div id="menuEmpresas" class="menu"></div>
-</div>
-      </div>
+  </div>
+
+  <!-- 🔹 Linha dos valores de status -->
+  <div class="status-header">
+    <div class="status-item aprovado">
+      <span>Aprovado</span>
+      <b id="valAprovado">R$ 0,00</b>
+    </div>
+    <div class="status-item pendente">
+      <span>Pendente</span>
+      <b id="valPendente">R$ 0,00</b>
+    </div>
+    <div class="status-item negado">
+      <span>Negado</span>
+      <b id="valNegado">R$ 0,00</b>
     </div>
   </div>
 </header>
+
 
 <div id="overlay"><div class="spinner"></div></div>
 
@@ -394,10 +479,9 @@ function addHistLocal(id,texto){
 }
 function getHistLocal(id){return JSON.parse(localStorage.getItem("hist_"+id)||"[]");}
 
-// 🔹 Soma usa __all (sempre considerando o período, ignorando Negados)
 function renderMods(){
   const mods=$("mods");mods.innerHTML="";
-  const statusCards=$("statusCards");statusCards.innerHTML="";
+  const statusCards=$("statusCards");if(statusCards) statusCards.innerHTML="";
 
   let soma={Pix:0,Cartão:0,Boleto:0,Outros:0,Total:0};
   let somaStatus={Aprovado:0,Negado:0,Pendente:0};
@@ -407,25 +491,18 @@ function renderMods(){
       const status=(t.status||"Pendente");
       const valor=parseValor(t.valor);
       const meio=normalizeMeio(t.meio_pagamento);
-
-      // Soma por modalidade
       soma.Total+=valor;
       soma[meio]+=valor;
-
-      // Soma por status
-      if(somaStatus[status]!==undefined){
-        somaStatus[status]+=valor;
-      }
+      if(somaStatus[status]!==undefined) somaStatus[status]+=valor;
     });
   }
 
- // 🔹 Render status cards na ordem desejada
-const cardStatus=(cls,label,val)=>`<div class="status-card ${cls}"><span>${label}</span><b>${BRL(val)}</b></div>`;
-statusCards.innerHTML+=cardStatus("aprovado","Aprovado",somaStatus.Aprovado);
-statusCards.innerHTML+=cardStatus("pendente","Pendente",somaStatus.Pendente);
-statusCards.innerHTML+=cardStatus("negado","Negado",somaStatus.Negado);
+  // ✅ Atualiza os valores do cabeçalho
+  $("valAprovado").textContent = BRL(somaStatus.Aprovado);
+  $("valPendente").textContent = BRL(somaStatus.Pendente);
+  $("valNegado").textContent   = BRL(somaStatus.Negado);
 
-  // 🔹 Render modalidade cards
+  // 🔹 Render modalidades (mantém o bloco existente)
   const card=(cls,label,val)=>`<div class="mod ${cls}"><span>${label}</span><b>${BRL(val)}</b></div>`;
   mods.innerHTML+=card("pix","Pix",soma.Pix);
   mods.innerHTML+=card("cartao","Cartão",soma["Cartão"]);
