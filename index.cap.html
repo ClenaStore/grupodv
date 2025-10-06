@@ -52,76 +52,57 @@ select,input{background:#0b1528;border:1px solid #22314b;color:var(--ink);
 
 .container{padding:16px;max-width:1250px;margin:0 auto}
 
-/* === Status cards fixos no topo === */
+/* Status cards fixos abaixo do cabeçalho */
 .status-cards {
   display: flex;
   gap: 12px;
-  position: fixed;           /* ✅ Fica fixo na tela */
-  top: 90px;                 /* 🔹 Ajuste conforme a altura do header */
-  left: 0;
-  right: 0;
-  z-index: 999;              /* 🔹 Sempre acima do conteúdo */
+  margin: 12px 0;
+
+  position: sticky;
+  top: 70px;                /* fica logo abaixo do header */
+  z-index: 30;
   background: var(--bg);
-  padding: 10px 16px;
-  overflow-x: auto;          /* 🔹 Mantém scroll lateral */
+  padding: 10px 0;
+  overflow-x: auto;         /* 🔹 ativa scroll lateral no mobile */
   -webkit-overflow-scrolling: touch;
-  box-shadow: 0 2px 8px rgba(0,0,0,.4);
-}
-.container {
-  padding-top: 140px; /* 🔹 Cria espaço para os cards fixos */
-}
-header {
-  background: linear-gradient(180deg, #0f172a 80%, #0b1220);
 }
 
-
+/* Esconde barra de rolagem mas mantém o scroll */
 .status-cards::-webkit-scrollbar {
-  height: 6px;
-}
-.status-cards::-webkit-scrollbar-thumb {
-  background: rgba(255,255,255,.2);
-  border-radius: 4px;
+  display: none;
 }
 
 /* Cada card */
 .status-card {
-  flex: 0 0 200px;                 /* 🔹 largura fixa p/ scroll */
-  min-width: 200px;
+  flex: 1 0 200px;           /* 🔹 largura mínima p/ caber no carrossel */
   border-radius: 12px;
-  padding: 14px 10px;
+  padding: 14px;
   font-weight: 700;
   display: flex;
-  flex-direction: column;          /* 🔹 texto um abaixo do outro */
-  justify-content: center;
+  justify-content: space-between;
   align-items: center;
-  text-align: center;
   color: #fff;
   font-size: 16px;
   box-shadow: 0 2px 8px rgba(0,0,0,.25);
-  word-break: break-word;
-  overflow-wrap: break-word;
-  white-space: normal;             /* ✅ permite quebra dentro do card */
+  min-width: 200px;          /* garante tamanho fixo no mobile */
 }
 
-.status-card span {
-  font-size: 15px;
-  opacity: .9;
-  margin-bottom: 6px;
-  line-height: 1.1;
-  text-align: center;
+/* Desktop: cards ocupam lado a lado e não precisam scroll */
+@media (min-width: 768px) {
+  .status-cards {
+    overflow-x: hidden;      /* tira o scroll no desktop */
+  }
+  .status-card {
+    flex: 1;                 /* todos com mesma largura */
+    min-width: auto;         /* libera para expandir */
+  }
 }
 
-.status-card b {
-  font-size: clamp(16px, 2vw, 22px); /* ✅ se adapta ao espaço */
-  font-weight: 800;
-  line-height: 1.2;
-  text-align: center;
-  max-width: 100%;
-  overflow-wrap: break-word;
-  word-break: break-word;
-}
 
-/* Cores */
+
+.status-card span { font-size: 14px; }
+.status-card b { font-size: 18px; }
+
 .status-card.aprovado { background: linear-gradient(180deg,#19c37d,#16a34a); }
 .status-card.negado   { background: linear-gradient(180deg,#fb6969,#ef4444); }
 .status-card.pendente { background: linear-gradient(180deg,#60a5fa,#1d4ed8); }
