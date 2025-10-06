@@ -52,19 +52,28 @@ select,input{background:#0b1528;border:1px solid #22314b;color:var(--ink);
 
 .container{padding:16px;max-width:1250px;margin:0 auto}
 
-/* === Status cards com rolagem horizontal e texto contido === */
+/* === Status cards fixos no topo === */
 .status-cards {
   display: flex;
   gap: 12px;
-  margin: 12px 0;
-  position: sticky;
-  top: 70px;
-  z-index: 30;
+  position: fixed;           /* ✅ Fica fixo na tela */
+  top: 90px;                 /* 🔹 Ajuste conforme a altura do header */
+  left: 0;
+  right: 0;
+  z-index: 999;              /* 🔹 Sempre acima do conteúdo */
   background: var(--bg);
-  padding: 10px 0;
-  overflow-x: auto;                /* 🔹 scroll lateral mantido */
+  padding: 10px 16px;
+  overflow-x: auto;          /* 🔹 Mantém scroll lateral */
   -webkit-overflow-scrolling: touch;
+  box-shadow: 0 2px 8px rgba(0,0,0,.4);
 }
+.container {
+  padding-top: 140px; /* 🔹 Cria espaço para os cards fixos */
+}
+header {
+  background: linear-gradient(180deg, #0f172a 80%, #0b1220);
+}
+
 
 .status-cards::-webkit-scrollbar {
   height: 6px;
