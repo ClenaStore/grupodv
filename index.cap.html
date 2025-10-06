@@ -50,28 +50,22 @@ select,input{background:#0b1528;border:1px solid #22314b;color:var(--ink);
 .loading .spinner-btn{display:block}
 .loading span,.loading b,.loading i{visibility:hidden}
 
-.container{
-  padding:180px 16px 16px; /* 🔹 cria espaço para o header + cards fixos */
-  max-width:1250px;
-  margin:0 auto;
-}
-
+.container{padding:16px;max-width:1250px;margin:0 auto}
 
 /* === Status cards fixos na tela (rolam lateralmente, mas não sobem) === */
 .status-cards {
-  position: fixed;                 /* Fica fixo na tela */
-  top: 110px;                      /* 🔹 empurra para baixo do header */
+  position: fixed;                 /* 🔹 fica fixo na tela */
+  top: 70px;                       /* 🔹 logo abaixo do header */
   left: 0;
   right: 0;
-  z-index: 900;                    /* 🔹 suficiente para ficar visível */
+  z-index: 999;                    /* 🔹 sempre acima do conteúdo */
   background: var(--bg);
   display: flex;
   gap: 12px;
   padding: 10px 16px;
-  overflow-x: auto;                /* 🔹 rolagem lateral */
+  overflow-x: auto;                /* 🔹 rolagem lateral permitida */
   -webkit-overflow-scrolling: touch;
   box-shadow: 0 2px 8px rgba(0,0,0,.3);
-  border-bottom: 1px solid var(--line);
 }
 
 /* 🔹 Esconde a barra de rolagem mas mantém o scroll */
@@ -83,9 +77,9 @@ select,input{background:#0b1528;border:1px solid #22314b;color:var(--ink);
   border-radius: 4px;
 }
 
-/* Cada card individual */
+/* Cada card */
 .status-card {
-  flex: 0 0 200px;
+  flex: 0 0 200px;                 /* 🔹 largura fixa p/ scroll horizontal */
   min-width: 200px;
   border-radius: 12px;
   padding: 14px 10px;
@@ -100,10 +94,10 @@ select,input{background:#0b1528;border:1px solid #22314b;color:var(--ink);
   box-shadow: 0 2px 8px rgba(0,0,0,.25);
   word-break: break-word;
   overflow-wrap: break-word;
-  white-space: normal;
+  white-space: normal;             /* 🔹 permite quebra interna */
 }
 
-/* Texto interno */
+/* Título e valor dentro do card */
 .status-card span {
   font-size: 15px;
   opacity: .9;
@@ -124,8 +118,8 @@ select,input{background:#0b1528;border:1px solid #22314b;color:var(--ink);
 
 /* Cores */
 .status-card.aprovado { background: linear-gradient(180deg,#19c37d,#16a34a); }
-.status-card.pendente { background: linear-gradient(180deg,#60a5fa,#1d4ed8); }
 .status-card.negado   { background: linear-gradient(180deg,#fb6969,#ef4444); }
+.status-card.pendente { background: linear-gradient(180deg,#60a5fa,#1d4ed8); }
 
 
 /* 🔹 Oculta scrollbar no desktop, mas permite arrastar no mobile */
