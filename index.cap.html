@@ -859,37 +859,6 @@ refresh();
 setInterval(() => {
   refresh();
 }, 15000);
-  /* === Ajuste de tema claro/escuro === */
-(function aplicarTema(){
-  const tema = localStorage.getItem("theme") || "dark"; // tema salvo pelo index.html
-
-  if(tema === "light"){
-    document.documentElement.style.setProperty("--bg", "#f9fafb");
-    document.documentElement.style.setProperty("--card", "#ffffff");
-    document.documentElement.style.setProperty("--ink", "#1f2937");
-    document.documentElement.style.setProperty("--muted", "#4b5563");
-    document.documentElement.style.setProperty("--line", "#d1d5db");
-    document.documentElement.style.setProperty("--teal", "#0891b2");
-    document.documentElement.style.setProperty("--blue", "#2563eb");
-    document.documentElement.style.setProperty("--green", "#16a34a");
-    document.documentElement.style.setProperty("--red", "#dc2626");
-    document.documentElement.style.setProperty("--amber", "#d97706");
-
-    // Ajusta fundos e bordas principais
-    document.body.style.background = "var(--bg)";
-    document.body.style.color = "var(--ink)";
-    document.querySelectorAll("header").forEach(h=>{
-      h.style.background = "linear-gradient(180deg,#f3f4f6,#e5e7eb)";
-      h.style.borderBottom = "1px solid var(--line)";
-    });
-    document.querySelectorAll("select,input,.btn,.titulo,.mod.total,.menu,.modal .box,textarea").forEach(el=>{
-      el.style.background = "#ffffff";
-      el.style.borderColor = "#d1d5db";
-      el.style.color = "var(--ink)";
-    });
-  }
-})();
-
 
 </script>
 </body>
