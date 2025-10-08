@@ -615,36 +615,64 @@ $("master").addEventListener("change",function(){
   });
 });
 
-async function acaoStatus(btn,novo){
-  const card=btn.closest(".titulo");
-  const emp=card.dataset.emp,linha=card.dataset.linha,id=card.dataset.id;
-  setLoading(btn,true);
-  setPill(card.querySelector("[data-status]"),novo);
-  addHistLocal(id,"Status alterado para "+novo);
-  try{await fetch(`${endpointTitulos}?action=atualizar&empresa=${encodeURIComponent(emp)}&linha=${linha}&status=${encodeURIComponent(novo)}`);}catch(e){console.error(e)}
-  setLoading(btn,false);
+// ✅ ação individual (não bloqueia nem trava)
+async function acaoStatus(btn, novo) {
+  const card = btn.closest(".titulo");
+  const emp = card.dataset.emp,
+        linha = card.dataset.linha,
+        id = card.dataset.id;
+
+  // muda status visual e remove da tela antes da chamada
+  setPill(card.querySelector("[data-status]"), novo);
+  addHistLocal(id, "Status alterado para " + novo);
+  card.style.opacity = "0.6";
+  card.style.transition = "opacity 0.3s ease";
+
+  // remove da tela logo após clique
+  setTimeout(() => card.remove(), 300);
+
+  // faz atualização em segundo plano
+  (async () => {
+    try {
+      await fetch(
+        `${endpointTitulos}?action=atualizar&empresa=${encodeURIComponent(emp)}&linha=${linha}&status=${encodeURIComponent(novo)}`
+      );
+    } catch (e) {
+      console.error("Erro ao atualizar status:", e);
+    }
+  })();
+
   atualizarBubble();
 }
 
-async function atualizarStatusMassa(novo="Aprovado"){
-  const btn=$("btnMassa");
-  setLoading(btn,true);
-  for(const s of SELEC){
-    const card=document.querySelector(`.titulo[data-id="${s.id}"]`);
-    if(!card) continue;
-    setPill(card.querySelector("[data-status]"),novo);
-    addHistLocal(s.id,"Status alterado para "+novo);
-    try{
-      await fetch(`${endpointTitulos}?action=atualizar&empresa=${encodeURIComponent(s.emp)}&linha=${s.linha}&status=${encodeURIComponent(novo)}`);
-    }catch(e){console.error(e)}
-    card.querySelector(".ck input").checked=false;
-  }
-  SELEC=[];$("master").checked=false;
-  $("bubble").style.display="none";$("btnMassa").style.display="none";
-  setLoading(btn,false);
+// ✅ atualização em massa em segundo plano
+async function atualizarStatusMassa(novo = "Aprovado") {
+  const btn = $("btnMassa");
+  setLoading(btn, true);
+
+  SELEC.forEach(s => {
+    const card = document.querySelector(`.titulo[data-id="${s.id}"]`);
+    if (!card) return;
+    setPill(card.querySelector("[data-status]"), novo);
+    addHistLocal(s.id, "Status alterado para " + novo);
+    card.style.opacity = "0.6";
+    card.style.transition = "opacity 0.3s ease";
+    setTimeout(() => card.remove(), 300);
+
+    // atualização em background
+    fetch(`${endpointTitulos}?action=atualizar&empresa=${encodeURIComponent(s.emp)}&linha=${s.linha}&status=${encodeURIComponent(novo)}`)
+      .catch(e => console.error("Erro ao aprovar massa:", e));
+  });
+
+  SELEC = [];
+  $("master").checked = false;
+  $("bubble").style.display = "none";
+  $("btnMassa").style.display = "none";
+  setLoading(btn, false);
   atualizarBubble();
 }
-$("btnMassa").onclick=()=>atualizarStatusMassa("Aprovado");
+
+
 
   function atualizarBubble(){
   let totalAprovado = 0;
@@ -813,11 +841,11 @@ EMP_DEFAULT.forEach((emp,i)=>{
   lbl.style.gap = "8px"; // espaço entre bolinha e texto
   lbl.innerHTML = `<input type="radio" name="empresaSel" value="${emp}" ${i===0?"checked":""}><span>${emp}</span>`;
 lbl.querySelector("input").onchange = ()=>{
-  $("overlay").style.display="flex";    // ✅ mostra overlay só aqui
-  refresh();
+  $("empresaSelecionada").textContent = emp; // ✅ troca o nome exibido
+  $("overlay").style.display="flex";
+  refresh();                                 // ✅ carrega só a empresa atual
   M.style.display="none";
 };
-
   M.appendChild(lbl);
 });
 
