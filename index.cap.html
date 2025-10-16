@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -400,7 +401,7 @@ textarea{width:100%;min-height:90px;border-radius:8px;border:1px solid #22314b;b
 
     <div style="position:relative;flex:1;z-index:9999">
       <button class="btn icon" id="btnEmpresas">
-        <span id="empresaSelecionada">CAP DELICIA</span> ▼
+        <span id="empresaSelecionada">CAP DELÍCIA</span> ▼
       </button>
       <div id="menuEmpresas" class="menu"></div>
     </div>
@@ -644,12 +645,14 @@ async function acaoStatus(btn, novo) {
   atualizarBubble();
 }
 
-// ✅ atualização em massa em segundo plano
+// ✅ atualização em massa com execução garantida
 async function atualizarStatusMassa(novo = "Aprovado") {
+  if (SELEC.length === 0) return;
   const btn = $("btnMassa");
   setLoading(btn, true);
 
-  SELEC.forEach(s => {
+  // Executa todas as atualizações em paralelo
+  await Promise.all(SELEC.map(async (s) => {
     const card = document.querySelector(`.titulo[data-id="${s.id}"]`);
     if (!card) return;
     setPill(card.querySelector("[data-status]"), novo);
@@ -658,11 +661,14 @@ async function atualizarStatusMassa(novo = "Aprovado") {
     card.style.transition = "opacity 0.3s ease";
     setTimeout(() => card.remove(), 300);
 
-    // atualização em background
-    fetch(`${endpointTitulos}?action=atualizar&empresa=${encodeURIComponent(s.emp)}&linha=${s.linha}&status=${encodeURIComponent(novo)}`)
-      .catch(e => console.error("Erro ao aprovar massa:", e));
-  });
+    try {
+      await fetch(`${endpointTitulos}?action=atualizar&empresa=${encodeURIComponent(s.emp)}&linha=${s.linha}&status=${encodeURIComponent(novo)}`);
+    } catch (e) {
+      console.error("Erro ao aprovar massa:", e);
+    }
+  }));
 
+  // Limpa seleção e atualiza interface
   SELEC = [];
   $("master").checked = false;
   $("bubble").style.display = "none";
@@ -670,6 +676,11 @@ async function atualizarStatusMassa(novo = "Aprovado") {
   setLoading(btn, false);
   atualizarBubble();
 }
+  
+// ✅ Garante que o botão "Aprovar selecionados" funcione sempre
+$("btnMassa").onclick = () => atualizarStatusMassa("Aprovado");
+
+
 
 
 
