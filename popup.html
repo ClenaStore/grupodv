@@ -1,25 +1,30 @@
-async function abrirPopupTabela(){
+<script>
+async function abrirPopupTabela() {
   const overlay = document.getElementById("popupOverlay");
   const content = document.getElementById("popupContent");
-  overlay.style.display="flex";
-  content.innerHTML = `<div style="color:#fff;text-align:center;padding:20px">⏳ Carregando dados...</div>`;
+  overlay.style.display = "flex";
 
-  // Empresa atual
   const empresaSel = document.querySelector("#menuEmpresas input:checked")?.value || "CAP DELICIA";
+  content.innerHTML = `
+    <div style="color:#fff;text-align:center;padding:20px;font-size:15px;">
+      ⏳ Carregando dados de <b>${empresaSel}</b>...
+    </div>
+  `;
 
-  // 🔹 Busca dados do GAS
   try {
     const url = `${endpointTitulos}?action=listar&empresa=${encodeURIComponent(empresaSel)}`;
     const resp = await fetch(url);
     const json = await resp.json();
     const titulos = json.titulos || [];
 
-    // 🔹 Monta a tabela dentro do popup
-    content.innerHTML = `
-      <h3 style="margin-top:0;font-size:18px;color:#fff;">📋 Tabela Completa - ${empresaSel}</h3>
-      <table id="tblPopup" style="width:100%;border-collapse:collapse;font-size:14px;margin-top:10px;">
-        <thead>
-          <tr style="background:#1e293b;color:#fff">
+    // Monta estrutura HTML do popup
+    let html = `
+      <h3 style="margin-top:0;font-size:18px;color:#fff;">
+        📋 Tabela Completa - ${empresaSel}
+      </h3>
+      <table style="width:100%;border-collapse:collapse;font-size:14px;margin-top:10px;">
+        <thead style="background:#1e293b;color:#fff;">
+          <tr>
             <th style="padding:8px;border:1px solid #334155;">Fornecedor</th>
             <th style="padding:8px;border:1px solid #334155;">Vencimento</th>
             <th style="padding:8px;border:1px solid #334155;">Valor</th>
@@ -29,54 +34,68 @@ async function abrirPopupTabela(){
             <th style="padding:8px;border:1px solid #334155;text-align:center;">Ações</th>
           </tr>
         </thead>
-        <tbody style="color:#e2e8f0;background:#0f172a"></tbody>
-      </table>
+        <tbody style="color:#e2e8f0;background:#0f172a;">
     `;
 
-    const tbody = content.querySelector("tbody");
     if (!titulos.length) {
-      tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:10px;color:#94a3b8;">Nenhum registro encontrado</td></tr>`;
-      return;
+      html += `
+        <tr>
+          <td colspan="7" style="text-align:center;padding:10px;color:#94a3b8;">
+            Nenhum registro encontrado
+          </td>
+        </tr>`;
+    } else {
+      titulos.forEach(t => {
+        const venc = t.vencimento ? new Date(t.vencimento).toLocaleDateString("pt-BR") : "-";
+        const valor = parseFloat(t.valor || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+        const meio = t.meio_pagamento || "Outros";
+        const status = t.status || "Pendente";
+        const hist = t.historico || "-";
+        const obs = t.observacao ? `<div style='color:#60a5fa;font-size:13px;'>Obs: ${t.observacao}</div>` : "";
+
+        html += `
+          <tr>
+            <td style="border:1px solid #334155;padding:6px;">${t.fornecedor || "-"}</td>
+            <td style="border:1px solid #334155;padding:6px;">${venc}</td>
+            <td style="border:1px solid #334155;padding:6px;">${valor}</td>
+            <td style="border:1px solid #334155;padding:6px;">${meio}</td>
+            <td style="border:1px solid #334155;padding:6px;">${status}</td>
+            <td style="border:1px solid #334155;padding:6px;">${hist}${obs}</td>
+            <td style="border:1px solid #334155;padding:6px;text-align:center;">
+              <button style="background:#16a34a;color:#fff;border:0;padding:5px 10px;border-radius:6px;cursor:pointer;margin-right:4px;"
+                onclick="atualizarStatusPopup('${empresaSel}',${t.linha},'Aprovado')">✓</button>
+              <button style="background:#ef4444;color:#fff;border:0;padding:5px 10px;border-radius:6px;cursor:pointer;"
+                onclick="atualizarStatusPopup('${empresaSel}',${t.linha},'Negado')">✗</button>
+            </td>
+          </tr>`;
+      });
     }
 
-    titulos.forEach(t => {
-      const venc = t.vencimento ? new Date(t.vencimento).toLocaleDateString("pt-BR") : "-";
-      const valor = parseFloat(t.valor || 0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
-      const meio = t.meio_pagamento || "Outros";
-      const status = t.status || "Pendente";
-      const hist = t.historico || "-";
-      const obs = t.observacao ? `<div style="color:#60a5fa">Obs: ${t.observacao}</div>` : "";
+    html += `</tbody></table>`;
+    content.innerHTML = html;
 
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
-        <td style="border:1px solid #334155;padding:6px;">${t.fornecedor||"-"}</td>
-        <td style="border:1px solid #334155;padding:6px;">${venc}</td>
-        <td style="border:1px solid #334155;padding:6px;">${valor}</td>
-        <td style="border:1px solid #334155;padding:6px;">${meio}</td>
-        <td style="border:1px solid #334155;padding:6px;">${status}</td>
-        <td style="border:1px solid #334155;padding:6px;">${hist}${obs}</td>
-        <td style="border:1px solid #334155;padding:6px;text-align:center;">
-          <button style="background:#16a34a;color:#fff;border:0;padding:5px 10px;border-radius:6px;cursor:pointer;margin-right:4px"
-            onclick="atualizarStatusPopup('${empresaSel}',${t.linha},'Aprovado')">✓</button>
-          <button style="background:#ef4444;color:#fff;border:0;padding:5px 10px;border-radius:6px;cursor:pointer"
-            onclick="atualizarStatusPopup('${empresaSel}',${t.linha},'Negado')">✗</button>
-        </td>`;
-      tbody.appendChild(tr);
-    });
   } catch (e) {
-    content.innerHTML = `<p style="color:#f87171">❌ Erro ao buscar dados do GAS</p>`;
     console.error(e);
+    content.innerHTML = `
+      <div style="color:#f87171;text-align:center;padding:20px;">
+        ❌ Erro ao buscar dados do GAS<br><small>${e.message}</small>
+      </div>`;
   }
 }
 
-// 🔹 Atualiza status direto da tabela
-async function atualizarStatusPopup(emp,linha,status){
-  try{
+// Atualiza status no GAS e recarrega tabela
+async function atualizarStatusPopup(emp, linha, status) {
+  try {
     const url = `${endpointTitulos}?action=atualizar&empresa=${encodeURIComponent(emp)}&linha=${linha}&status=${encodeURIComponent(status)}`;
     await fetch(url);
-    alert(`✅ ${emp} linha ${linha} atualizada para ${status}`);
-    abrirPopupTabela(); // recarrega tabela após atualizar
-  }catch(e){
-    alert("Erro ao atualizar: "+e);
+    alert(`✅ ${emp} - linha ${linha} atualizada para ${status}`);
+    abrirPopupTabela(); // recarrega automaticamente após ação
+  } catch (e) {
+    alert("Erro ao atualizar: " + e);
   }
 }
+
+function fecharPopupTabela() {
+  document.getElementById("popupOverlay").style.display = "none";
+}
+</script>
