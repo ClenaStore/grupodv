@@ -138,6 +138,12 @@ select,input{background:#0b1528;border:1px solid #22314b;color:var(--ink);
   padding:10px 14px;border-radius:10px;font-size:15px;width:100%}
 .btn{border:1px solid #2a3955;background:#0b1528;color:var(--ink);padding:10px 14px;border-radius:10px;cursor:pointer;font-weight:700;font-size:15px;width:100%;position:relative;overflow:hidden}
 .btn.icon{display:flex;align-items:center;gap:6px;justify-content:center}
+.btn-filtro-data .btn.active {
+  background: var(--blue);
+  color: #fff;
+  font-weight: 800;
+  border-color: var(--blue);
+}
 
 #overlay{position:fixed;inset:0;background:rgba(3,7,18,.55);display:none;align-items:center;justify-content:center;z-index:100}
 .spinner{width:56px;height:56px;border:6px solid var(--teal);border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite}
@@ -399,7 +405,11 @@ textarea{width:100%;min-height:90px;border-radius:8px;border:1px solid #22314b;b
       <option value="Outros">Outros</option>
     </select>
 
-    <input type="text" id="filtroPeriodo" placeholder="Período" />
+    <div class="btn-filtro-data" style="display:flex;gap:6px;">
+  <button id="btnAtuais" class="btn active">Atuais</button>
+  <button id="btnAtrasadas" class="btn">Atrasadas</button>
+</div>
+
 
     <div style="position:relative;flex:1;z-index:9999">
       <button class="btn icon" id="btnEmpresas">
@@ -876,6 +886,35 @@ lbl.querySelector("input").onchange = ()=>{
 $("filtroMeio").onchange=()=>refresh();
 refresh();
 })();
+// 🔹 Controle de filtros de vencimento (Atuais / Atrasadas)
+let modoData = "atuais"; // padrão
+
+document.getElementById("btnAtuais").onclick = () => {
+  modoData = "atuais";
+  document.getElementById("btnAtuais").classList.add("active");
+  document.getElementById("btnAtrasadas").classList.remove("active");
+  refresh();
+};
+
+document.getElementById("btnAtrasadas").onclick = () => {
+  modoData = "atrasadas";
+  document.getElementById("btnAtrasadas").classList.add("active");
+  document.getElementById("btnAtuais").classList.remove("active");
+  refresh();
+};
+
+// 🔹 Ajuste na função processarEmpresa
+const _processarEmpresa = processarEmpresa;
+processarEmpresa = function(emp, data, inicio, fim, filtroStatus, filtroMeio) {
+  const hoje = iso(new Date());
+  const filtradoPorData = data.filter(t => {
+    const venc = iso(t.vencimento);
+    if (modoData === "atuais") return venc === hoje;
+    if (modoData === "atrasadas") return venc < hoje;
+    return true;
+  });
+  _processarEmpresa(emp, filtradoPorData, inicio, fim, filtroStatus, filtroMeio);
+};
 
 
 // 🔄 Atualização automática a cada 15 segundos
