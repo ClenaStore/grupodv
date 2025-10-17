@@ -882,42 +882,38 @@ setInterval(() => {
 }, 15000);
 
 </script>
-<!-- 🔹 POPUP MODAL (Horizontal + Observações + Correções) -->
-<div id="popupOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.9);
-  z-index:9999;align-items:center;justify-content:center;overflow:hidden;">
-  <div id="popupBox" style="
-      background:#0f172a;
-      border:1px solid #334155;
-      border-radius:16px;
-      width:90%;
-      max-width:950px;
-      max-height:90vh;
-      overflow:auto;
-      padding:20px;
-      color:#fff;
-      transform:rotate(90deg);
-      transform-origin:center;
-      display:flex;
-      flex-direction:column;
-      justify-content:flex-start;
-      align-items:center;
-      text-align:left;">
-    <button onclick="fecharPopupTabela()" 
-      style="position:absolute;top:10px;right:10px;background:#1e293b;color:#fff;border:0;
-      border-radius:8px;padding:6px 10px;cursor:pointer;">✖ Fechar</button>
-    <div id="popupContent" style="width:100%;transform:rotate(-90deg);transform-origin:center;"></div>
-  </div>
+<!-- 🔹 POPUP TELA CHEIA ORGANIZADO -->
+<div id="popupOverlay" style="
+  display:none;position:fixed;inset:0;
+  background:rgba(3,6,15,0.96);
+  z-index:99999;
+  backdrop-filter:blur(3px);
+  color:#fff;
+  overflow:auto;
+  font-family:Inter,system-ui,sans-serif;
+  padding:0;
+  margin:0;
+">
+  <!-- Botão Fechar -->
+  <button onclick="fecharPopupTabela()" 
+    style="position:fixed;top:16px;right:16px;background:#1e293b;
+    border:1px solid #334155;color:#fff;padding:8px 12px;
+    border-radius:8px;font-size:14px;cursor:pointer;
+    z-index:100000;">✖ Fechar</button>
+
+  <!-- Conteúdo -->
+  <div id="popupContent" style="padding:80px 16px 40px;max-width:1200px;margin:0 auto;"></div>
 </div>
 
 <script>
-/***************************************************
- 📊 POPUP HORIZONTAL COM OBSERVAÇÃO E VALOR CORRIGIDO
+/****************************************************
+ 📊 POPUP TELA CHEIA - ORGANIZADO E FUNCIONAL
 ****************************************************/
 function parseValorSeguro(v) {
   if (!v) return 0;
   if (typeof v === "number") return v;
   if (typeof v === "string") {
-    let str = v.replace(/[^\d,.-]/g, "").replace(/\./g, "").replace(",", ".");
+    let str = v.replace(/[^\d,,-]/g, "").replace(/\./g, "").replace(",", ".");
     const num = parseFloat(str);
     return isNaN(num) ? 0 : num;
   }
@@ -932,15 +928,17 @@ function dataHojeBR() {
 async function abrirPopupTabela() {
   const overlay = document.getElementById("popupOverlay");
   const content = document.getElementById("popupContent");
-  overlay.style.display = "flex";
+  overlay.style.display = "block";
 
   const empresaSel = document.querySelector("#menuEmpresas input:checked")?.value || "CAP DELICIA";
   const hoje = dataHojeBR();
 
   content.innerHTML = `
-    <div style="color:#fff;text-align:center;padding:20px;font-size:15px;">
-      ⏳ Buscando dados de <b>${empresaSel}</b> em ${hoje}...
+    <div style="text-align:center;margin-bottom:20px;">
+      <h2 style="margin:0;font-size:24px;color:#60a5fa;">${empresaSel}</h2>
+      <p style="color:#94a3b8;margin:6px 0;">Relatório completo — ${hoje}</p>
     </div>
+    <div style="color:#94a3b8;text-align:center;">⏳ Carregando dados...</div>
   `;
 
   try {
@@ -949,29 +947,28 @@ async function abrirPopupTabela() {
     const titulos = json.titulos || [];
 
     if (!titulos.length) {
-      content.innerHTML = `<div style="color:#94a3b8;padding:20px;">Nenhum registro encontrado.</div>`;
+      content.innerHTML = `<div style="color:#94a3b8;padding:20px;text-align:center;">Nenhum registro encontrado.</div>`;
       return;
     }
 
+    // Monta tabela
     let html = `
-      <div style="margin-bottom:15px;text-align:center;">
-        <h2 style="margin:0;font-size:20px;color:#60a5fa;">${empresaSel}</h2>
-        <p style="color:#9ca3af;margin:4px 0;">Relatório de ${hoje}</p>
-      </div>
+      <div style="overflow-x:auto;">
       <table style="width:100%;border-collapse:collapse;font-size:14px;margin-top:10px;">
-        <thead style="background:#1e293b;color:#fff;position:sticky;top:0;z-index:5;">
+        <thead style="background:#1e293b;color:#fff;">
           <tr>
-            <th style="padding:8px;border:1px solid #334155;">Fornecedor</th>
-            <th style="padding:8px;border:1px solid #334155;">Vencimento</th>
-            <th style="padding:8px;border:1px solid #334155;">Valor</th>
-            <th style="padding:8px;border:1px solid #334155;">Meio</th>
-            <th style="padding:8px;border:1px solid #334155;">Status</th>
-            <th style="padding:8px;border:1px solid #334155;">Histórico</th>
-            <th style="padding:8px;border:1px solid #334155;">Obs</th>
-            <th style="padding:8px;border:1px solid #334155;text-align:center;">Ações</th>
+            <th style="padding:10px;border:1px solid #334155;">Fornecedor</th>
+            <th style="padding:10px;border:1px solid #334155;">Vencimento</th>
+            <th style="padding:10px;border:1px solid #334155;">Valor</th>
+            <th style="padding:10px;border:1px solid #334155;">Meio</th>
+            <th style="padding:10px;border:1px solid #334155;">Status</th>
+            <th style="padding:10px;border:1px solid #334155;">Histórico</th>
+            <th style="padding:10px;border:1px solid #334155;">Observação</th>
+            <th style="padding:10px;border:1px solid #334155;text-align:center;">Ações</th>
           </tr>
         </thead>
-        <tbody style="color:#e2e8f0;background:#0f172a;">`;
+        <tbody style="background:#0f172a;color:#e2e8f0;">
+    `;
 
     titulos.forEach(t => {
       const venc = t.vencimento ? new Date(t.vencimento).toLocaleDateString("pt-BR") : "-";
@@ -984,33 +981,33 @@ async function abrirPopupTabela() {
 
       html += `
         <tr>
-          <td style="border:1px solid #334155;padding:6px;">${t.fornecedor || "-"}</td>
-          <td style="border:1px solid #334155;padding:6px;">${venc}</td>
-          <td style="border:1px solid #334155;padding:6px;">${valor}</td>
-          <td style="border:1px solid #334155;padding:6px;">${meio}</td>
-          <td style="border:1px solid #334155;padding:6px;">${status}</td>
-          <td style="border:1px solid #334155;padding:6px;">${hist}</td>
-          <td style="border:1px solid #334155;padding:6px;">
+          <td style="border:1px solid #334155;padding:8px;">${t.fornecedor || "-"}</td>
+          <td style="border:1px solid #334155;padding:8px;">${venc}</td>
+          <td style="border:1px solid #334155;padding:8px;text-align:right;">${valor}</td>
+          <td style="border:1px solid #334155;padding:8px;">${meio}</td>
+          <td style="border:1px solid #334155;padding:8px;">${status}</td>
+          <td style="border:1px solid #334155;padding:8px;">${hist}</td>
+          <td style="border:1px solid #334155;padding:8px;">
             <input type="text" id="obs_${t.linha}" value="${obsAtual}" 
-              placeholder="Adicionar observação..." 
-              style="width:100%;background:#1e293b;border:1px solid #334155;color:#fff;
-                     padding:4px;border-radius:6px;font-size:13px;">
+              placeholder="Adicionar observação..."
+              style="width:100%;background:#1e293b;border:1px solid #334155;
+              color:#fff;padding:6px;border-radius:6px;font-size:13px;">
           </td>
-          <td style="border:1px solid #334155;padding:6px;text-align:center;">
-            <button style="background:#06b6d4;color:#002027;border:0;padding:5px 10px;border-radius:6px;
-              cursor:pointer;margin-right:4px;"
+          <td style="border:1px solid #334155;padding:8px;text-align:center;">
+            <button style="background:#06b6d4;color:#002027;border:0;padding:5px 8px;
+              border-radius:6px;cursor:pointer;margin-right:6px;font-weight:700;"
               onclick="salvarObsPopup('${empresaSel}',${t.linha})">💬</button>
-            <button style="background:#16a34a;color:#fff;border:0;padding:5px 10px;border-radius:6px;
-              cursor:pointer;margin-right:4px;"
+            <button style="background:#16a34a;color:#fff;border:0;padding:5px 10px;
+              border-radius:6px;cursor:pointer;margin-right:4px;font-weight:700;"
               onclick="atualizarStatusPopup('${empresaSel}',${t.linha},'Aprovado')">✓</button>
-            <button style="background:#ef4444;color:#fff;border:0;padding:5px 10px;border-radius:6px;
-              cursor:pointer;"
+            <button style="background:#ef4444;color:#fff;border:0;padding:5px 10px;
+              border-radius:6px;cursor:pointer;font-weight:700;"
               onclick="atualizarStatusPopup('${empresaSel}',${t.linha},'Negado')">✗</button>
           </td>
         </tr>`;
     });
 
-    html += `</tbody></table>`;
+    html += `</tbody></table></div>`;
     content.innerHTML = html;
 
   } catch (e) {
@@ -1019,7 +1016,7 @@ async function abrirPopupTabela() {
   }
 }
 
-// ✅ Salva observação direto na planilha
+// ✅ Salvar observação direto no GAS
 async function salvarObsPopup(emp, linha) {
   const obs = document.getElementById(`obs_${linha}`)?.value.trim() || "";
   if (!obs) { alert("Digite uma observação antes de salvar."); return; }
@@ -1033,13 +1030,13 @@ async function salvarObsPopup(emp, linha) {
   }
 }
 
-// ✅ Atualiza status (aprovado / negado)
+// ✅ Atualiza status (Aprovado / Negado)
 async function atualizarStatusPopup(emp, linha, status) {
   try {
     const url = `${endpointTitulos}?action=atualizar&empresa=${encodeURIComponent(emp)}&linha=${linha}&status=${encodeURIComponent(status)}`;
     await fetch(url);
     alert(`✅ ${emp} linha ${linha} atualizada para ${status}`);
-    abrirPopupTabela(); // recarrega
+    abrirPopupTabela(); // Recarrega
   } catch (e) {
     alert("Erro ao atualizar: " + e);
   }
@@ -1050,7 +1047,6 @@ function fecharPopupTabela() {
   document.getElementById("popupOverlay").style.display = "none";
 }
 </script>
-
 
 </body>
 </html>
