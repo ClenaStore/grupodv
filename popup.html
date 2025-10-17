@@ -1,0 +1,59 @@
+<!-- popup.html -->
+<style>
+table{width:100%;border-collapse:collapse;font-size:14px;margin-top:10px}
+th,td{border:1px solid #334155;padding:8px 10px;text-align:left}
+th{background:#1e293b;color:#fff;position:sticky;top:0}
+.flag{width:32px;height:32px;border-radius:50%;display:inline-flex;align-items:center;
+  justify-content:center;color:#fff;font-size:18px;margin:4px;cursor:pointer}
+.flag.verde{background:#16a34a}
+.flag.vermelha{background:#ef4444}
+</style>
+
+<h3 style="margin-top:0;font-size:18px">📋 Tabela Completa CAP</h3>
+<table id="tabelaCAP">
+  <thead>
+    <tr>
+      <th>Fornecedor</th>
+      <th>Vencimento</th>
+      <th>Valor Bruto</th>
+      <th>Meio de Pagamento</th>
+      <th>Histórico</th>
+      <th style="text-align:center">Ações</th>
+    </tr>
+  </thead>
+  <tbody></tbody>
+</table>
+
+<script>
+// Preenche a tabela com os dados do index.html
+function preencherTabelaPopup(TITULOS){
+  const tbody = document.querySelector("#tabelaCAP tbody");
+  tbody.innerHTML = "";
+  Object.keys(TITULOS).forEach(emp=>{
+    (TITULOS[emp].__filtered||[]).forEach(t=>{
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${t.fornecedor||"-"}</td>
+        <td>${t.vencimento||"-"}</td>
+        <td>${t.valor||"-"}</td>
+        <td>${t.meio_pagamento||"-"}</td>
+        <td>${t.historico||"-"}</td>
+        <td style="text-align:center">
+          <span class="flag verde" title="Aprovar" onclick="acaoTabelaPopup('${emp}',${t.linha},'Aprovado')">✅</span>
+          <span class="flag vermelha" title="Negar" onclick="acaoTabelaPopup('${emp}',${t.linha},'Negado')">✖</span>
+        </td>`;
+      tbody.appendChild(tr);
+    });
+  });
+}
+
+async function acaoTabelaPopup(emp,linha,status){
+  try{
+    const url = `https://script.google.com/macros/s/AKfycbzUfUXj5b9QB6v02RhshJCFeIzDT_DwihSYDdtgctANVpqFZol6dDe4WXfuYu7b9CKB/exec?action=atualizar&empresa=${encodeURIComponent(emp)}&linha=${linha}&status=${encodeURIComponent(status)}`;
+    await fetch(url);
+    alert(`Status de ${emp} atualizado para ${status}`);
+  }catch(e){
+    alert("Erro ao atualizar: "+e);
+  }
+}
+</script>
