@@ -882,7 +882,7 @@ setInterval(() => {
 }, 15000);
 
 </script>
-<!-- 🔹 POPUP MODAL -->
+<!-- 🔹 POPUP MODAL + Orientação Horizontal -->
 <div id="popupOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);
   z-index:9999;align-items:center;justify-content:center;">
   <div id="popupBox" style="background:#0f172a;border:1px solid #334155;border-radius:12px;
@@ -894,47 +894,61 @@ setInterval(() => {
   </div>
 </div>
 
+<!-- 🔹 Aviso de rotação -->
+<div id="rotateNotice" style="
+  position:fixed;inset:0;background:#0b1220;display:none;
+  flex-direction:column;align-items:center;justify-content:center;
+  z-index:10000;color:#fff;text-align:center;padding:20px;">
+  <div style="font-size:50px;opacity:.6;">📱↩️</div>
+  <h2 style="margin:20px 0 8px;">Gire o celular</h2>
+  <p style="color:#9ca3af;max-width:300px;">
+    Para melhor visualização da tabela, use o modo horizontal.
+  </p>
+</div>
+
 <script>
+/* -----------------------------------------------------
+   📱 Orientação e Popup de Tabela
+------------------------------------------------------ */
+function isMobileDevice() {
+  return /Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i.test(navigator.userAgent);
+}
+
+function checkOrientation() {
+  const notice = document.getElementById("rotateNotice");
+  if (!isMobileDevice()) { notice.style.display = "none"; return; }
+  if (window.innerHeight > window.innerWidth) notice.style.display = "flex";
+  else notice.style.display = "none";
+}
+
+window.addEventListener("resize", checkOrientation);
+window.addEventListener("orientationchange", checkOrientation);
+
 async function abrirPopupTabela() {
+  checkOrientation();
   const overlay = document.getElementById("popupOverlay");
   const content = document.getElementById("popupContent");
   overlay.style.display = "flex";
 
-  // Empresa selecionada
   const empresaSel = document.querySelector("#menuEmpresas input:checked")?.value || "CAP DELICIA";
-
-  content.innerHTML = `
-    <div style="color:#fff;text-align:center;padding:20px;font-size:15px;">
-      ⏳ Buscando dados de <b>${empresaSel}</b>...
-    </div>
-  `;
+  content.innerHTML = `<div style="color:#fff;text-align:center;padding:20px;font-size:15px;">
+    ⏳ Buscando dados de <b>${empresaSel}</b>...
+  </div>`;
 
   try {
-    // ✅ Endpoint do GAS igual ao usado no painel
-    const url = `${endpointTitulos}?action=listar&empresa=${encodeURIComponent(empresaSel)}`;
-    console.log("Buscando:", url);
-    const resp = await fetch(url);
+    const resp = await fetch(`${endpointTitulos}?action=listar&empresa=${encodeURIComponent(empresaSel)}`);
     const json = await resp.json();
-    console.log("Retorno GAS:", json);
+    const titulos = json.titulos || [];
 
-    if (!json || !json.titulos) {
-      content.innerHTML = `<div style="color:#f87171;padding:20px;">❌ Nenhum dado retornado do GAS.</div>`;
-      return;
-    }
-
-    const titulos = json.titulos;
     if (!titulos.length) {
       content.innerHTML = `<div style="color:#94a3b8;padding:20px;">Nenhum registro encontrado.</div>`;
       return;
     }
 
-    // Monta tabela
     let html = `
-      <h3 style="margin-top:0;font-size:18px;color:#fff;">
-        📋 Tabela Completa - ${empresaSel}
-      </h3>
+      <h3 style="margin-top:0;font-size:18px;color:#fff;">📋 Tabela Completa - ${empresaSel}</h3>
       <table style="width:100%;border-collapse:collapse;font-size:14px;margin-top:10px;">
-        <thead style="background:#1e293b;color:#fff;">
+        <thead style="background:#1e293b;color:#fff;position:sticky;top:0;">
           <tr>
             <th style="padding:8px;border:1px solid #334155;">Fornecedor</th>
             <th style="padding:8px;border:1px solid #334155;">Vencimento</th>
@@ -945,8 +959,7 @@ async function abrirPopupTabela() {
             <th style="padding:8px;border:1px solid #334155;text-align:center;">Ações</th>
           </tr>
         </thead>
-        <tbody style="color:#e2e8f0;background:#0f172a;">
-    `;
+        <tbody style="color:#e2e8f0;background:#0f172a;">`;
 
     titulos.forEach(t => {
       const venc = t.vencimento ? new Date(t.vencimento).toLocaleDateString("pt-BR") : "-";
@@ -976,13 +989,7 @@ async function abrirPopupTabela() {
     html += `</tbody></table>`;
     content.innerHTML = html;
   } catch (e) {
-    console.error("Erro:", e);
-    content.innerHTML = `
-      <div style="color:#f87171;padding:20px;text-align:center;">
-        ❌ Erro ao buscar dados do GAS<br>
-        <small>${e.message}</small>
-      </div>
-    `;
+    content.innerHTML = `<div style="color:#f87171;text-align:center;padding:20px;">❌ Erro ao buscar dados<br>${e.message}</div>`;
   }
 }
 
@@ -991,7 +998,7 @@ async function atualizarStatusPopup(emp, linha, status) {
     const url = `${endpointTitulos}?action=atualizar&empresa=${encodeURIComponent(emp)}&linha=${linha}&status=${encodeURIComponent(status)}`;
     await fetch(url);
     alert(`✅ ${emp} linha ${linha} atualizada para ${status}`);
-    abrirPopupTabela(); // recarrega a tabela
+    abrirPopupTabela();
   } catch (e) {
     alert("Erro ao atualizar: " + e);
   }
