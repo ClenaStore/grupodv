@@ -881,152 +881,250 @@ setInterval(() => {
   refresh();
 }, 15000);
 
-</script>
-<!-- 🔹 POPUP MODAL - Tela cheia com topo fixo e rolagem horizontal -->
-<div id="popupOverlay" style="
-  display:none;
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,0.95);
-  backdrop-filter:blur(4px);
-  z-index:9999;
-  color:#fff;
-  overflow:hidden;
-">
-  <div style="position:relative;width:100%;height:100%;display:flex;flex-direction:column;">
-    
-    <!-- 🔹 Cabeçalho fixo -->
-    <div id="popupHeader" style="
-      flex:0 0 auto;
-      background:linear-gradient(180deg,#1e293b,#0f172a);
-      border-bottom:1px solid #334155;
-      padding:16px 20px;
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      position:sticky;
-      top:0;
-      z-index:100;
-      box-shadow:0 2px 10px rgba(0,0,0,0.5);
-    ">
-      <h2 id="popupTitulo" style="margin:0;font-size:20px;color:#60a5fa;">📋 Resumo Completo</h2>
-      <button onclick="fecharPopupTabela()" 
-        style="background:#1e293b;border:1px solid #475569;color:#fff;
-        padding:8px 14px;border-radius:10px;font-weight:700;cursor:pointer;">
-        ✖ Fechar
-      </button>
-    </div>
+<style>
+  /* Estilos do popup em CSS pra não “piscar” nem balançar */
+  #capPopupOverlay {
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,.95);
+    backdrop-filter: blur(4px);
+    z-index:2147483000;     /* acima de tudo */
+    color:#fff;
+  }
+  #capPopupShell{
+    position:relative;
+    width:100%;
+    height:100%;
+    display:flex;
+    flex-direction:column;
+  }
+  #capPopupHeader{
+    flex:0 0 auto;
+    background:linear-gradient(180deg,#1e293b,#0f172a);
+    border-bottom:1px solid #334155;
+    padding:14px 18px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    position:sticky;
+    top:0;
+    z-index:10;
+    box-shadow:0 2px 12px rgba(0,0,0,.55);
+  }
+  #capPopupHeader h2{
+    margin:0;
+    font-size:18px;
+    font-weight:800;
+    color:#a5b4fc;
+    letter-spacing:.2px;
+  }
+  #capPopupClose{
+    background:#1e293b;
+    border:1px solid #475569;
+    color:#fff;
+    padding:8px 14px;
+    border-radius:10px;
+    font-weight:700;
+    cursor:pointer;
+  }
+  #capPopupBody{
+    flex:1 1 auto;
+    background:#0b1220;
+    padding:14px 16px 18px;
+    overflow:auto;                 /* rola vertical e horizontal */
+  }
+  /* 🔹 wrapper pra rolar p/ o lado sem quebrar linha */
+  .cap-table-wrap{
+    overflow-x:auto;
+    overflow-y:hidden;
+    width:100%;
+  }
+  /* 🔹 tabela com colunas largas e conteúdo sem quebra */
+  .cap-table{
+    border-collapse:collapse;
+    min-width:1300px;              /* força rolagem lateral em telas pequenas */
+    width:100%;
+    font-size:15px;
+  }
+  .cap-table th,
+  .cap-table td{
+    border:1px solid #334155;
+    padding:10px 10px;
+    white-space:nowrap;            /* NÃO quebra linha */
+  }
+  .cap-table thead{
+    background:#1e293b;
+    position:sticky;
+    top:0;
+    z-index:5;
+  }
+  .cap-table tbody{
+    background:#0f172a;
+    color:#e2e8f0;
+  }
+  .cap-col-forn{min-width:260px;}
+  .cap-col-hist{min-width:360px;}
+  .cap-col-obs {min-width:280px;}
+  .cap-col-valor{text-align:right;}
+  .cap-col-ctr  {text-align:center;min-width:220px;}
+  .cap-btn{
+    border:0;border-radius:8px;cursor:pointer;font-weight:800;
+    padding:6px 10px;
+  }
+  .cap-btn-ok{background:#16a34a;color:#fff;}
+  .cap-btn-no{background:#ef4444;color:#fff;}
+  .cap-btn-obs{background:#06b6d4;color:#002027;margin-right:6px;}
+</style>
 
-    <!-- 🔹 Conteúdo com rolagem horizontal -->
-    <div id="popupContent" style="
-      flex:1 1 auto;
-      overflow:auto;
-      padding:20px;
-      background:#0b1220;
-      scrollbar-color:#334155 transparent;
-    "></div>
+<div id="capPopupOverlay" role="dialog" aria-modal="true">
+  <div id="capPopupShell">
+    <div id="capPopupHeader">
+      <h2 id="capPopupTitle">📋 Resumo</h2>
+      <button id="capPopupClose" onclick="capFecharPopup()">✖ Fechar</button>
+    </div>
+    <div id="capPopupBody">
+      <div id="capPopupContent" style="color:#94a3b8;text-align:center;padding:30px;">
+        <!-- aqui entram os dados -->
+      </div>
+    </div>
   </div>
 </div>
 
 <script>
-async function abrirPopupTabela() {
-  const overlay = document.getElementById("popupOverlay");
-  const content = document.getElementById("popupContent");
-  const titulo = document.getElementById("popupTitulo");
-  overlay.style.display = "flex";
-  document.body.style.overflow = "hidden"; // impede rolagem do index
+/* ====== Helpers robustos ====== */
+function capParseValor(v){
+  if (v == null) return 0;
+  if (typeof v === 'number') return v;
+  if (typeof v === 'string'){
+    // remove R$, espaços, separadores de milhar e troca vírgula por ponto
+    let s = v.replace(/[^\d,.-]/g,'').replace(/\.(?=\d{3}(,|$))/g,'').replace(',','.');
+    const n = parseFloat(s);
+    return isNaN(n) ? 0 : n;
+  }
+  return 0;
+}
+const capBRL = n => (isNaN(n)?0:n).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+
+/* ====== Abre popup e carrega dados do GAS ====== */
+async function abrirPopupTabela(){
+  const overlay  = document.getElementById('capPopupOverlay');
+  const content  = document.getElementById('capPopupContent');
+  const titleEl  = document.getElementById('capPopupTitle');
+
+  // trava o scroll do index
+  document.body.style.overflow = 'hidden';
+  overlay.style.display = 'block';
 
   const empresaSel = document.querySelector("#menuEmpresas input:checked")?.value || "CAP DELICIA";
-  titulo.innerHTML = `📋 Resumo Completo — <span style='color:#a5b4fc;'>${empresaSel}</span>`;
-  content.innerHTML = `<div style="text-align:center;color:#94a3b8;padding:40px;">⏳ Carregando dados...</div>`;
+  titleEl.innerHTML = `📋 Resumo — <span style="color:#60a5fa">${empresaSel}</span>`;
 
-  try {
-    const url = `${endpointTitulos}?action=listar&empresa=${encodeURIComponent(empresaSel)}`;
+  content.innerHTML = `<div style="padding:24px;color:#94a3b8;">⏳ Carregando dados...</div>`;
+
+  try{
+    const url  = `${endpointTitulos}?action=listar&empresa=${encodeURIComponent(empresaSel)}`;
     const resp = await fetch(url);
     const json = await resp.json();
     const titulos = json?.titulos || [];
 
-    if (!titulos.length) {
-      content.innerHTML = `<div style="text-align:center;color:#94a3b8;padding:20px;">Nenhum registro encontrado.</div>`;
+    if (!titulos.length){
+      content.innerHTML = `<div style="padding:24px;color:#94a3b8;">Nenhum registro encontrado.</div>`;
       return;
     }
 
-    // 🔹 Montagem da tabela completa
-    let html = `
-      <div style="overflow-x:auto;overflow-y:hidden;width:100%;">
-      <table style="border-collapse:collapse;min-width:1100px;width:100%;font-size:15px;">
-        <thead style="background:#1e293b;color:#fff;position:sticky;top:0;z-index:10;">
-          <tr>
-            <th style="padding:10px 8px;border:1px solid #334155;">Fornecedor</th>
-            <th style="padding:10px 8px;border:1px solid #334155;">Vencimento</th>
-            <th style="padding:10px 8px;border:1px solid #334155;">Valor</th>
-            <th style="padding:10px 8px;border:1px solid #334155;">Meio</th>
-            <th style="padding:10px 8px;border:1px solid #334155;">Status</th>
-            <th style="padding:10px 8px;border:1px solid #334155;">Histórico</th>
-            <th style="padding:10px 8px;border:1px solid #334155;">Observação</th>
-            <th style="padding:10px 8px;border:1px solid #334155;text-align:center;">Ações</th>
-          </tr>
-        </thead>
-        <tbody style="background:#0f172a;color:#e2e8f0;">
-    `;
+    let rows = '';
+    titulos.forEach(t=>{
+      const venc   = t.vencimento ? new Date(t.vencimento).toLocaleDateString('pt-BR') : '-';
+      const valNum = capParseValor(t.valor);
+      const valor  = capBRL(valNum);
+      const meio   = t.meio_pagamento || 'Outros';
+      const status = t.status || 'Pendente';
+      const hist   = t.historico || '-';
+      const obs    = t.observacao || '-';
 
-    titulos.forEach(t => {
-      const venc = t.vencimento ? new Date(t.vencimento).toLocaleDateString("pt-BR") : "-";
-      const valorNum = parseValor(t.valor);
-      const valorFmt = isNaN(valorNum) ? "R$ 0,00" :
-        valorNum.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-      const meio = t.meio_pagamento || "Outros";
-      const status = t.status || "Pendente";
-      const hist = t.historico || "-";
-      const obs = t.observacao || "-";
-
-      html += `
-        <tr style="border-bottom:1px solid #22314b;">
-          <td style="padding:8px 10px;border:1px solid #334155;">${t.fornecedor || "-"}</td>
-          <td style="padding:8px 10px;border:1px solid #334155;text-align:center;">${venc}</td>
-          <td style="padding:8px 10px;border:1px solid #334155;text-align:right;">${valorFmt}</td>
-          <td style="padding:8px 10px;border:1px solid #334155;text-align:center;">${meio}</td>
-          <td style="padding:8px 10px;border:1px solid #334155;text-align:center;">${status}</td>
-          <td style="padding:8px 10px;border:1px solid #334155;">${hist}</td>
-          <td style="padding:8px 10px;border:1px solid #334155;">${obs}</td>
-          <td style="padding:8px 10px;border:1px solid #334155;text-align:center;">
-            <button style="background:#16a34a;color:#fff;border:0;padding:6px 12px;
-              border-radius:8px;font-weight:700;cursor:pointer;margin-right:6px;"
-              onclick="atualizarStatusPopup('${empresaSel}',${t.linha},'Aprovado')">✓ Aprovar</button>
-            <button style="background:#ef4444;color:#fff;border:0;padding:6px 12px;
-              border-radius:8px;font-weight:700;cursor:pointer;"
-              onclick="atualizarStatusPopup('${empresaSel}',${t.linha},'Negado')">✗ Negar</button>
+      rows += `
+        <tr>
+          <td class="cap-col-forn">${t.fornecedor || '-'}</td>
+          <td style="text-align:center;">${venc}</td>
+          <td class="cap-col-valor">${valor}</td>
+          <td style="text-align:center;">${meio}</td>
+          <td style="text-align:center;">${status}</td>
+          <td class="cap-col-hist">${hist}</td>
+          <td class="cap-col-obs">${obs}</td>
+          <td class="cap-col-ctr">
+            <button class="cap-btn cap-btn-obs" onclick="capEditarObs('${empresaSel}',${t.linha}, ${JSON.stringify(obs)})">💬 Obs</button>
+            <button class="cap-btn cap-btn-ok"  onclick="capAtualizarStatus('${empresaSel}',${t.linha},'Aprovado')">✓ Aprovar</button>
+            <button class="cap-btn cap-btn-no"  onclick="capAtualizarStatus('${empresaSel}',${t.linha},'Negado')">✗ Negar</button>
           </td>
         </tr>`;
     });
 
-    html += `
-        </tbody>
-      </table>
-      </div>
-    `;
-    content.innerHTML = html;
-  } catch (e) {
-    content.innerHTML = `<div style="color:#f87171;text-align:center;padding:20px;">
-      ❌ Erro ao carregar dados<br>${e.message}
-    </div>`;
+    content.innerHTML = `
+      <div class="cap-table-wrap">
+        <table class="cap-table">
+          <thead>
+            <tr>
+              <th class="cap-col-forn">Fornecedor</th>
+              <th>Vencimento</th>
+              <th class="cap-col-valor">Valor</th>
+              <th>Meio</th>
+              <th>Status</th>
+              <th class="cap-col-hist">Histórico</th>
+              <th class="cap-col-obs">Observação</th>
+              <th class="cap-col-ctr">Ações</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>`;
+  }catch(e){
+    content.innerHTML = `<div style="padding:24px;color:#f87171;">❌ Erro ao carregar: ${e.message}</div>`;
   }
 }
 
-async function atualizarStatusPopup(emp, linha, status) {
-  try {
+/* ====== Ações ====== */
+async function capAtualizarStatus(emp, linha, status){
+  try{
     const url = `${endpointTitulos}?action=atualizar&empresa=${encodeURIComponent(emp)}&linha=${linha}&status=${encodeURIComponent(status)}`;
     await fetch(url);
-    abrirPopupTabela();
-  } catch (e) {
-    alert("Erro ao atualizar: " + e.message);
-  }
+    abrirPopupTabela(); // recarrega
+  }catch(e){ alert('Erro ao atualizar: ' + e.message); }
 }
 
-function fecharPopupTabela() {
-  const overlay = document.getElementById("popupOverlay");
-  overlay.style.display = "none";
-  document.body.style.overflow = "auto"; // volta rolagem do index
+function capEditarObs(emp, linha, obsAtual){
+  // mini modal simples
+  const id = 'capObsMini';
+  document.getElementById(id)?.remove();
+  const box = document.createElement('div');
+  box.id = id;
+  box.style = `position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:2147483001;display:flex;align-items:center;justify-content:center;`;
+  box.innerHTML = `
+    <div style="background:#0f172a;border:1px solid #334155;border-radius:12px;padding:16px;max-width:420px;width:92%;color:#fff;">
+      <h3 style="margin:0 0 10px;">Observação</h3>
+      <textarea id="capObsTxt" style="width:100%;min-height:90px;background:#1e293b;color:#fff;border:1px solid #334155;border-radius:8px;padding:8px;">${(obsAtual&&obsAtual!=='-')?obsAtual:''}</textarea>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px;">
+        <button class="cap-btn" style="background:#334155;color:#fff;" onclick="document.getElementById('${id}').remove()">Cancelar</button>
+        <button class="cap-btn cap-btn-obs" onclick="capSalvarObs('${emp}',${linha})">Salvar</button>
+      </div>
+    </div>`;
+  document.body.appendChild(box);
+}
+
+async function capSalvarObs(emp, linha){
+  const txt = document.getElementById('capObsTxt').value.trim();
+  if (!txt) { alert('Digite uma observação.'); return; }
+  try{
+    const url = `${endpointTitulos}?action=atualizarObservacao&empresa=${encodeURIComponent(emp)}&linha=${linha}&texto=${encodeURIComponent(txt)}`;
+    await fetch(url);
+    document.getElementById('capObsMini')?.remove();
+    abrirPopupTabela();
+  }catch(e){ alert('Erro ao salvar observação: ' + e.message); }
+}
+
+/* ====== Fechar ====== */
+function capFecharPopup(){
+  document.getElementById('capPopupOverlay').style.display = 'none';
+  document.body.style.overflow = 'auto';
 }
 </script>
 
