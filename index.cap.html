@@ -882,40 +882,32 @@ setInterval(() => {
 }, 15000);
 
 </script>
-<!-- 🔹 POPUP HORIZONTAL FORÇADO -->
+<!-- 🔹 POPUP HORIZONTAL TELA CHEIA -->
 <div id="popupOverlay" style="
-  display:none;position:fixed;inset:0;background:#000;
-  color:#fff;z-index:99999;overflow:hidden;
-  transform:rotate(90deg);
-  transform-origin:center;
-  width:100vh;
-  height:100vw;
-  left:0;top:0;
-  background:linear-gradient(180deg,#0b1220,#0f172a);
-  font-family:Inter,system-ui,sans-serif;
+  display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;
+  background:rgba(0,0,0,0.95);color:#fff;z-index:99999;
+  overflow:hidden;transform:rotate(90deg);transform-origin:center;
 ">
   <div id="popupInner" style="
-    transform:rotate(-90deg);
-    transform-origin:center;
-    width:100vw;
-    height:100vh;
-    overflow:auto;
-    padding:60px 14px 40px;
-    box-sizing:border-box;
+    position:absolute;top:0;left:0;width:100vh;height:100vw;
+    transform:rotate(-90deg) translateY(-100vh);
+    transform-origin:top left;overflow:auto;
+    background:linear-gradient(180deg,#0b1220,#0f172a);
+    padding:80px 20px 40px;box-sizing:border-box;
   ">
     <button onclick="fecharPopupTabela()" 
-      style="position:fixed;top:16px;right:20px;background:#1e293b;
-      border:1px solid #334155;color:#fff;padding:8px 12px;
-      border-radius:8px;font-size:15px;cursor:pointer;
-      z-index:100000;">✖ Fechar</button>
+      style="position:fixed;top:20px;right:20px;z-index:100000;
+      background:#1e293b;border:1px solid #334155;color:#fff;
+      padding:8px 12px;border-radius:8px;font-size:15px;
+      cursor:pointer;">✖ Fechar</button>
 
-    <div id="popupContent" style="max-width:1300px;margin:0 auto;"></div>
+    <div id="popupContent" style="max-width:1200px;margin:0 auto;"></div>
   </div>
 </div>
 
 <script>
 /****************************************************
- 📊 POPUP HORIZONTAL - VISUAL ROTATION LOCK
+ 📊 POPUP HORIZONTAL COMPLETO
 ****************************************************/
 function parseValorSeguro(v) {
   if (!v) return 0;
@@ -927,7 +919,6 @@ function parseValorSeguro(v) {
   }
   return 0;
 }
-
 function dataHojeBR() {
   const hoje = new Date();
   return hoje.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" });
@@ -944,7 +935,7 @@ async function abrirPopupTabela() {
   content.innerHTML = `
     <div style="text-align:center;margin-bottom:20px;">
       <h2 style="margin:0;font-size:22px;color:#60a5fa;">${empresaSel}</h2>
-      <p style="color:#9ca3af;margin:6px 0;">Relatório completo — ${hoje}</p>
+      <p style="color:#9ca3af;margin:6px 0;">Relatório — ${hoje}</p>
     </div>
     <div style="color:#94a3b8;text-align:center;">⏳ Carregando dados...</div>
   `;
@@ -962,7 +953,7 @@ async function abrirPopupTabela() {
     let html = `
       <div style="overflow-x:auto;">
       <table style="width:100%;border-collapse:collapse;font-size:14px;">
-        <thead style="background:#1e293b;color:#fff;position:sticky;top:0;">
+        <thead style="background:#1e293b;color:#fff;">
           <tr>
             <th style="padding:8px;border:1px solid #334155;">Fornecedor</th>
             <th style="padding:8px;border:1px solid #334155;">Vencimento</th>
@@ -1016,7 +1007,7 @@ async function abrirPopupTabela() {
   }
 }
 
-// ✅ Mini-popup de observação dentro do overlay
+// ✅ Mini-popup de observação sobreposto
 function abrirObsPopup(emp, linha, obsAtual) {
   const old = document.getElementById("miniObsBox");
   if (old) old.remove();
@@ -1031,7 +1022,7 @@ function abrirObsPopup(emp, linha, obsAtual) {
   box.innerHTML = `
     <div style="background:#0f172a;border:1px solid #334155;border-radius:12px;
         padding:20px;max-width:400px;width:90%;color:#fff;">
-      <h3 style="margin-top:0;margin-bottom:12px;">Adicionar Observação</h3>
+      <h3 style="margin-top:0;margin-bottom:12px;">Observação</h3>
       <textarea id="campoObs" style="width:100%;min-height:80px;background:#1e293b;
         color:#fff;border:1px solid #334155;border-radius:8px;padding:8px;
         font-size:14px;">${obsAtual || ""}</textarea>
@@ -1048,7 +1039,7 @@ function abrirObsPopup(emp, linha, obsAtual) {
   document.body.appendChild(box);
 }
 
-// ✅ Salva observação direto no GAS
+// ✅ Salva observação
 async function salvarObsPopup(emp, linha) {
   const obs = document.getElementById("campoObs")?.value.trim() || "";
   if (!obs) { alert("Digite uma observação antes de salvar."); return; }
@@ -1058,29 +1049,28 @@ async function salvarObsPopup(emp, linha) {
     await fetch(url);
     alert(`💾 Observação salva para linha ${linha}`);
     document.getElementById("miniObsBox")?.remove();
-    abrirPopupTabela(); // recarrega a tabela
+    abrirPopupTabela();
   } catch (e) {
     alert("Erro ao salvar observação: " + e.message);
   }
 }
 
-// ✅ Atualiza status (Aprovado / Negado)
+// ✅ Atualiza status
 async function atualizarStatusPopup(emp, linha, status) {
   try {
     const url = `${endpointTitulos}?action=atualizar&empresa=${encodeURIComponent(emp)}&linha=${linha}&status=${encodeURIComponent(status)}`;
     await fetch(url);
     alert(`✅ ${emp} linha ${linha} atualizada para ${status}`);
-    abrirPopupTabela(); // Recarrega
+    abrirPopupTabela();
   } catch (e) {
     alert("Erro ao atualizar: " + e);
   }
 }
 
-// ✅ Fecha popup principal
+// ✅ Fecha popup
 function fecharPopupTabela() {
   document.getElementById("popupOverlay").style.display = "none";
 }
 </script>
-
 </body>
 </html>
