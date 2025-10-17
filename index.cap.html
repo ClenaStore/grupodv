@@ -874,18 +874,44 @@ lbl.querySelector("input").onchange = ()=>{
 $("filtroMeio").onchange=()=>refresh();
 refresh();
 })();
-  // 🔹 Abre popup.html em uma janela modal
-function abrirPopupTabela() {
-  const popup = window.open('popup.html', 'popupCAP',
-    'width=950,height=700,scrollbars=yes,resizable=yes');
-  if (popup) popup.focus();
-}
+
 
 // 🔄 Atualização automática a cada 15 segundos
 setInterval(() => {
   refresh();
 }, 15000);
 
+</script>
+  <!-- 🔹 POPUP MODAL (Resumo em Tabela) -->
+<div id="popupOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);
+  z-index:9999;align-items:center;justify-content:center;">
+  <div id="popupBox" style="background:#0f172a;border:1px solid #334155;border-radius:12px;
+      width:90%;max-width:950px;max-height:80vh;overflow:auto;padding:20px;color:#fff;position:relative;">
+    <button onclick="fecharPopupTabela()" 
+      style="position:absolute;top:10px;right:10px;background:#1e293b;color:#fff;border:0;
+      border-radius:8px;padding:6px 10px;cursor:pointer;">✖ Fechar</button>
+    <div id="popupContent"></div>
+  </div>
+</div>
+
+<script>
+async function abrirPopupTabela(){
+  const overlay = document.getElementById("popupOverlay");
+  const content = document.getElementById("popupContent");
+  overlay.style.display="flex";
+
+  // Carrega popup.html dentro do modal
+  const resp = await fetch("popup.html");
+  const html = await resp.text();
+  content.innerHTML = html;
+
+  // Preenche a tabela com os dados do index (TITULOS)
+  if(typeof TITULOS!=="undefined") preencherTabelaPopup(TITULOS);
+}
+
+function fecharPopupTabela(){
+  document.getElementById("popupOverlay").style.display="none";
+}
 </script>
 </body>
 </html>
