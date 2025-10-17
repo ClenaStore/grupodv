@@ -900,14 +900,28 @@ async function abrirPopupTabela(){
   const content = document.getElementById("popupContent");
   overlay.style.display="flex";
 
-  // Carrega popup.html dentro do modal
+  // Carrega o layout do popup
   const resp = await fetch("popup.html");
   const html = await resp.text();
   content.innerHTML = html;
 
-  // Preenche a tabela com os dados do index (TITULOS)
-  if(typeof TITULOS!=="undefined") preencherTabelaPopup(TITULOS);
+  // 🔹 Identifica a empresa selecionada no menu
+  const empresaSel = document.querySelector("#menuEmpresas input:checked")?.value || "CAP DELICIA";
+
+  // 🔹 Busca os dados direto do GAS
+  try {
+    const req = await fetch(`${endpointTitulos}?action=listar&empresa=${encodeURIComponent(empresaSel)}`);
+    const data = await req.json();
+    const titulos = data.titulos || [];
+
+    // ✅ Passa os dados para preencher a tabela no popup
+    if (typeof preencherTabelaPopup === "function") preencherTabelaPopup(titulos);
+  } catch (e) {
+    content.innerHTML = `<p style="color:#f87171">❌ Erro ao carregar dados do GAS</p>`;
+    console.error(e);
+  }
 }
+
 
 function fecharPopupTabela(){
   document.getElementById("popupOverlay").style.display="none";
