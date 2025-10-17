@@ -930,13 +930,14 @@ setInterval(() => {
   </div>
 </div>
 
+<!-- ✅ Função do botão Aprovar/Negar dentro do popup RESUMO -->
 <script>
 async function abrirPopupTabela() {
   const overlay = document.getElementById("popupOverlay");
   const content = document.getElementById("popupContent");
   const titulo = document.getElementById("popupTitulo");
   overlay.style.display = "flex";
-  document.body.style.overflow = "hidden"; // impede rolagem do index
+  document.body.style.overflow = "hidden";
 
   const empresaSel = document.querySelector("#menuEmpresas input:checked")?.value || "CAP DELICIA";
   titulo.innerHTML = `📋 Resumo Completo — <span style='color:#a5b4fc;'>${empresaSel}</span>`;
@@ -953,84 +954,87 @@ async function abrirPopupTabela() {
       return;
     }
 
-    // 🔹 Montagem da tabela completa
     let html = `
-      <div style="overflow-x:auto;overflow-y:hidden;width:100%;">
+      <div style="overflow-x:auto;width:100%;">
       <table style="border-collapse:collapse;min-width:1100px;width:100%;font-size:15px;">
         <thead style="background:#1e293b;color:#fff;position:sticky;top:0;z-index:10;">
           <tr>
-            <th style="padding:10px 8px;border:1px solid #334155;">Fornecedor</th>
-            <th style="padding:10px 8px;border:1px solid #334155;">Vencimento</th>
-            <th style="padding:10px 8px;border:1px solid #334155;">Valor</th>
-            <th style="padding:10px 8px;border:1px solid #334155;">Meio</th>
-            <th style="padding:10px 8px;border:1px solid #334155;">Status</th>
-            <th style="padding:10px 8px;border:1px solid #334155;">Histórico</th>
-            <th style="padding:10px 8px;border:1px solid #334155;">Observação</th>
-            <th style="padding:10px 8px;border:1px solid #334155;text-align:center;">Ações</th>
+            <th>Fornecedor</th><th>Vencimento</th><th>Valor</th><th>Meio</th><th>Status</th>
+            <th>Histórico</th><th>Observação</th><th style="text-align:center;">Ações</th>
           </tr>
         </thead>
         <tbody style="background:#0f172a;color:#e2e8f0;">
     `;
 
     titulos.forEach(t => {
-      const venc = t.vencimento ? new Date(t.vencimento).toLocaleDateString("pt-BR") : "-";
-      const valorNum = parseValor(t.valor);
-      const valorFmt = isNaN(valorNum) ? "R$ 0,00" :
-        valorNum.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-      const meio = t.meio_pagamento || "Outros";
-      const status = t.status || "Pendente";
-      const hist = t.historico || "-";
-      const obs = t.observacao || "-";
-
       html += `
-        <tr style="border-bottom:1px solid #22314b;">
-          <td style="padding:8px 10px;border:1px solid #334155;">${t.fornecedor || "-"}</td>
-          <td style="padding:8px 10px;border:1px solid #334155;text-align:center;">${venc}</td>
-          <td style="padding:8px 10px;border:1px solid #334155;text-align:right;">${valorFmt}</td>
-          <td style="padding:8px 10px;border:1px solid #334155;text-align:center;">${meio}</td>
-          <td style="padding:8px 10px;border:1px solid #334155;text-align:center;">${status}</td>
-          <td style="padding:8px 10px;border:1px solid #334155;">${hist}</td>
-          <td style="padding:8px 10px;border:1px solid #334155;">${obs}</td>
-          <td style="padding:8px 10px;border:1px solid #334155;text-align:center;">
-            <button style="background:#16a34a;color:#fff;border:0;padding:6px 12px;
-              border-radius:8px;font-weight:700;cursor:pointer;margin-right:6px;"
-              onclick="atualizarStatusPopup('${empresaSel}',${t.linha},'Aprovado')">✓ Aprovar</button>
-            <button style="background:#ef4444;color:#fff;border:0;padding:6px 12px;
-              border-radius:8px;font-weight:700;cursor:pointer;"
-              onclick="atualizarStatusPopup('${empresaSel}',${t.linha},'Negado')">✗ Negar</button>
+        <tr id="popup-row-${t.linha}" style="border-bottom:1px solid #22314b;transition:0.3s;">
+          <td>${t.fornecedor||"-"}</td>
+          <td style="text-align:center;">${new Date(t.vencimento).toLocaleDateString("pt-BR")}</td>
+          <td style="text-align:right;">${BRL(parseValor(t.valor))}</td>
+          <td style="text-align:center;">${t.meio_pagamento||"Outros"}</td>
+          <td style="text-align:center;" class="status-cell">${t.status||"Pendente"}</td>
+          <td>${t.historico||"-"}</td>
+          <td>${t.observacao||"-"}</td>
+          <td style="text-align:center;">
+            <button onclick="atualizarStatusPopup('${empresaSel}',${t.linha},'Aprovado')" 
+              style="background:#16a34a;color:white;border:0;padding:6px 12px;border-radius:8px;cursor:pointer;font-weight:700;">
+              ✓ Aprovar
+            </button>
+            <button onclick="atualizarStatusPopup('${empresaSel}',${t.linha},'Negado')" 
+              style="background:#ef4444;color:white;border:0;padding:6px 12px;border-radius:8px;cursor:pointer;font-weight:700;">
+              ✗ Negar
+            </button>
           </td>
         </tr>`;
     });
 
-    html += `
-        </tbody>
-      </table>
-      </div>
-    `;
+    html += `</tbody></table></div>`;
     content.innerHTML = html;
+
   } catch (e) {
-    content.innerHTML = `<div style="color:#f87171;text-align:center;padding:20px;">
-      ❌ Erro ao carregar dados<br>${e.message}
-    </div>`;
+    content.innerHTML = `<div style="color:#f87171;padding:20px;text-align:center;">Erro ao carregar: ${e.message}</div>`;
   }
 }
 
 async function atualizarStatusPopup(emp, linha, status) {
+  const row = document.getElementById(`popup-row-${linha}`);
+  const statusCell = row.querySelector(".status-cell");
+
+  // 🔄 loading visual
+  row.style.opacity = "0.5";
+
   try {
-    const url = `${endpointTitulos}?action=atualizar&empresa=${encodeURIComponent(emp)}&linha=${linha}&status=${encodeURIComponent(status)}`;
-    await fetch(url);
-    abrirPopupTabela();
+    const url = `${endpointTitulos}?action=atualizar&empresa=${encodeURIComponent(emp)}&linha=${linha}&status=${status}`;
+    const resp = await fetch(url);
+
+    if (resp.ok) {
+      statusCell.textContent = status;
+      row.style.opacity = "1";
+
+      // ✅ muda cor da linha conforme status
+      if (status === "Aprovado") {
+        row.style.background = "#064e3b"; // verde escuro
+      } else if (status === "Negado") {
+        row.style.background = "#7f1d1d"; // vermelho escuro
+      }
+    } else {
+      alert("⚠️ Erro ao atualizar no servidor");
+      row.style.opacity = "1";
+    }
+
   } catch (e) {
-    alert("Erro ao atualizar: " + e.message);
+    alert("❌ Falha ao atualizar: " + e.message);
+    row.style.opacity = "1";
   }
 }
 
 function fecharPopupTabela() {
-  const overlay = document.getElementById("popupOverlay");
-  overlay.style.display = "none";
-  document.body.style.overflow = "auto"; // volta rolagem do index
+  document.getElementById("popupOverlay").style.display = "none";
+  document.body.style.overflow = "auto";
 }
 </script>
+
 
 </body>
 </html>
