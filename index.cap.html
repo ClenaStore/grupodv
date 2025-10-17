@@ -882,58 +882,66 @@ setInterval(() => {
 }, 15000);
 
 </script>
-<!-- 🔹 POPUP MODAL + Orientação Horizontal -->
-<div id="popupOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);
-  z-index:9999;align-items:center;justify-content:center;">
-  <div id="popupBox" style="background:#0f172a;border:1px solid #334155;border-radius:12px;
-      width:90%;max-width:950px;max-height:80vh;overflow:auto;padding:20px;color:#fff;position:relative;">
+<!-- 🔹 POPUP MODAL (Horizontal + Observações + Correções) -->
+<div id="popupOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.9);
+  z-index:9999;align-items:center;justify-content:center;overflow:hidden;">
+  <div id="popupBox" style="
+      background:#0f172a;
+      border:1px solid #334155;
+      border-radius:16px;
+      width:90%;
+      max-width:950px;
+      max-height:90vh;
+      overflow:auto;
+      padding:20px;
+      color:#fff;
+      transform:rotate(90deg);
+      transform-origin:center;
+      display:flex;
+      flex-direction:column;
+      justify-content:flex-start;
+      align-items:center;
+      text-align:left;">
     <button onclick="fecharPopupTabela()" 
       style="position:absolute;top:10px;right:10px;background:#1e293b;color:#fff;border:0;
       border-radius:8px;padding:6px 10px;cursor:pointer;">✖ Fechar</button>
-    <div id="popupContent"></div>
+    <div id="popupContent" style="width:100%;transform:rotate(-90deg);transform-origin:center;"></div>
   </div>
 </div>
 
-<!-- 🔹 Aviso de rotação -->
-<div id="rotateNotice" style="
-  position:fixed;inset:0;background:#0b1220;display:none;
-  flex-direction:column;align-items:center;justify-content:center;
-  z-index:10000;color:#fff;text-align:center;padding:20px;">
-  <div style="font-size:50px;opacity:.6;">📱↩️</div>
-  <h2 style="margin:20px 0 8px;">Gire o celular</h2>
-  <p style="color:#9ca3af;max-width:300px;">
-    Para melhor visualização da tabela, use o modo horizontal.
-  </p>
-</div>
-
 <script>
-/* -----------------------------------------------------
-   📱 Orientação e Popup de Tabela
------------------------------------------------------- */
-function isMobileDevice() {
-  return /Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i.test(navigator.userAgent);
+/***************************************************
+ 📊 POPUP HORIZONTAL COM OBSERVAÇÃO E VALOR CORRIGIDO
+****************************************************/
+function parseValorSeguro(v) {
+  if (!v) return 0;
+  if (typeof v === "number") return v;
+  if (typeof v === "string") {
+    let str = v.replace(/[^\d,.-]/g, "").replace(/\./g, "").replace(",", ".");
+    const num = parseFloat(str);
+    return isNaN(num) ? 0 : num;
+  }
+  return 0;
 }
 
-function checkOrientation() {
-  const notice = document.getElementById("rotateNotice");
-  if (!isMobileDevice()) { notice.style.display = "none"; return; }
-  if (window.innerHeight > window.innerWidth) notice.style.display = "flex";
-  else notice.style.display = "none";
+function dataHojeBR() {
+  const hoje = new Date();
+  return hoje.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" });
 }
-
-window.addEventListener("resize", checkOrientation);
-window.addEventListener("orientationchange", checkOrientation);
 
 async function abrirPopupTabela() {
-  checkOrientation();
   const overlay = document.getElementById("popupOverlay");
   const content = document.getElementById("popupContent");
   overlay.style.display = "flex";
 
   const empresaSel = document.querySelector("#menuEmpresas input:checked")?.value || "CAP DELICIA";
-  content.innerHTML = `<div style="color:#fff;text-align:center;padding:20px;font-size:15px;">
-    ⏳ Buscando dados de <b>${empresaSel}</b>...
-  </div>`;
+  const hoje = dataHojeBR();
+
+  content.innerHTML = `
+    <div style="color:#fff;text-align:center;padding:20px;font-size:15px;">
+      ⏳ Buscando dados de <b>${empresaSel}</b> em ${hoje}...
+    </div>
+  `;
 
   try {
     const resp = await fetch(`${endpointTitulos}?action=listar&empresa=${encodeURIComponent(empresaSel)}`);
@@ -946,9 +954,12 @@ async function abrirPopupTabela() {
     }
 
     let html = `
-      <h3 style="margin-top:0;font-size:18px;color:#fff;">📋 Tabela Completa - ${empresaSel}</h3>
+      <div style="margin-bottom:15px;text-align:center;">
+        <h2 style="margin:0;font-size:20px;color:#60a5fa;">${empresaSel}</h2>
+        <p style="color:#9ca3af;margin:4px 0;">Relatório de ${hoje}</p>
+      </div>
       <table style="width:100%;border-collapse:collapse;font-size:14px;margin-top:10px;">
-        <thead style="background:#1e293b;color:#fff;position:sticky;top:0;">
+        <thead style="background:#1e293b;color:#fff;position:sticky;top:0;z-index:5;">
           <tr>
             <th style="padding:8px;border:1px solid #334155;">Fornecedor</th>
             <th style="padding:8px;border:1px solid #334155;">Vencimento</th>
@@ -956,6 +967,7 @@ async function abrirPopupTabela() {
             <th style="padding:8px;border:1px solid #334155;">Meio</th>
             <th style="padding:8px;border:1px solid #334155;">Status</th>
             <th style="padding:8px;border:1px solid #334155;">Histórico</th>
+            <th style="padding:8px;border:1px solid #334155;">Obs</th>
             <th style="padding:8px;border:1px solid #334155;text-align:center;">Ações</th>
           </tr>
         </thead>
@@ -963,11 +975,12 @@ async function abrirPopupTabela() {
 
     titulos.forEach(t => {
       const venc = t.vencimento ? new Date(t.vencimento).toLocaleDateString("pt-BR") : "-";
-      const valor = parseFloat(t.valor || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+      const valorNum = parseValorSeguro(t.valor);
+      const valor = valorNum.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
       const meio = t.meio_pagamento || "Outros";
       const status = t.status || "Pendente";
       const hist = t.historico || "-";
-      const obs = t.observacao ? `<div style='color:#60a5fa;font-size:13px;'>Obs: ${t.observacao}</div>` : "";
+      const obsAtual = t.observacao || "";
 
       html += `
         <tr>
@@ -976,11 +989,22 @@ async function abrirPopupTabela() {
           <td style="border:1px solid #334155;padding:6px;">${valor}</td>
           <td style="border:1px solid #334155;padding:6px;">${meio}</td>
           <td style="border:1px solid #334155;padding:6px;">${status}</td>
-          <td style="border:1px solid #334155;padding:6px;">${hist}${obs}</td>
+          <td style="border:1px solid #334155;padding:6px;">${hist}</td>
+          <td style="border:1px solid #334155;padding:6px;">
+            <input type="text" id="obs_${t.linha}" value="${obsAtual}" 
+              placeholder="Adicionar observação..." 
+              style="width:100%;background:#1e293b;border:1px solid #334155;color:#fff;
+                     padding:4px;border-radius:6px;font-size:13px;">
+          </td>
           <td style="border:1px solid #334155;padding:6px;text-align:center;">
-            <button style="background:#16a34a;color:#fff;border:0;padding:5px 10px;border-radius:6px;cursor:pointer;margin-right:4px;"
+            <button style="background:#06b6d4;color:#002027;border:0;padding:5px 10px;border-radius:6px;
+              cursor:pointer;margin-right:4px;"
+              onclick="salvarObsPopup('${empresaSel}',${t.linha})">💬</button>
+            <button style="background:#16a34a;color:#fff;border:0;padding:5px 10px;border-radius:6px;
+              cursor:pointer;margin-right:4px;"
               onclick="atualizarStatusPopup('${empresaSel}',${t.linha},'Aprovado')">✓</button>
-            <button style="background:#ef4444;color:#fff;border:0;padding:5px 10px;border-radius:6px;cursor:pointer;"
+            <button style="background:#ef4444;color:#fff;border:0;padding:5px 10px;border-radius:6px;
+              cursor:pointer;"
               onclick="atualizarStatusPopup('${empresaSel}',${t.linha},'Negado')">✗</button>
           </td>
         </tr>`;
@@ -988,26 +1012,45 @@ async function abrirPopupTabela() {
 
     html += `</tbody></table>`;
     content.innerHTML = html;
+
   } catch (e) {
-    content.innerHTML = `<div style="color:#f87171;text-align:center;padding:20px;">❌ Erro ao buscar dados<br>${e.message}</div>`;
+    content.innerHTML = `<div style="color:#f87171;text-align:center;padding:20px;">
+      ❌ Erro ao buscar dados<br>${e.message}</div>`;
   }
 }
 
+// ✅ Salva observação direto na planilha
+async function salvarObsPopup(emp, linha) {
+  const obs = document.getElementById(`obs_${linha}`)?.value.trim() || "";
+  if (!obs) { alert("Digite uma observação antes de salvar."); return; }
+
+  try {
+    const url = `${endpointTitulos}?action=atualizarObservacao&empresa=${encodeURIComponent(emp)}&linha=${linha}&texto=${encodeURIComponent(obs)}`;
+    await fetch(url);
+    alert(`💾 Observação salva para linha ${linha}`);
+  } catch (e) {
+    alert("Erro ao salvar observação: " + e.message);
+  }
+}
+
+// ✅ Atualiza status (aprovado / negado)
 async function atualizarStatusPopup(emp, linha, status) {
   try {
     const url = `${endpointTitulos}?action=atualizar&empresa=${encodeURIComponent(emp)}&linha=${linha}&status=${encodeURIComponent(status)}`;
     await fetch(url);
     alert(`✅ ${emp} linha ${linha} atualizada para ${status}`);
-    abrirPopupTabela();
+    abrirPopupTabela(); // recarrega
   } catch (e) {
     alert("Erro ao atualizar: " + e);
   }
 }
 
+// ✅ Fecha popup
 function fecharPopupTabela() {
   document.getElementById("popupOverlay").style.display = "none";
 }
 </script>
+
 
 </body>
 </html>
