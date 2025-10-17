@@ -882,20 +882,28 @@ setInterval(() => {
 }, 15000);
 
 </script>
-<!-- 🔹 POPUP MODAL -->
+<!-- 🔹 POPUP MODAL - Tela Cheia Bonita -->
 <div id="popupOverlay" style="
-  display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);
-  z-index:9999;align-items:center;justify-content:center;">
-  <div id="popupBox" style="
-      background:#0f172a;border:1px solid #334155;border-radius:12px;
-      width:95%;max-width:1100px;max-height:85vh;overflow:auto;
-      padding:20px;color:#fff;position:relative;">
-    <button onclick="fecharPopupTabela()" 
-      style="position:absolute;top:10px;right:10px;background:#1e293b;
-      color:#fff;border:0;border-radius:8px;padding:6px 10px;cursor:pointer;">
-      ✖ Fechar
-    </button>
-    <div id="popupContent"></div>
+  display:none;
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,0.92);
+  backdrop-filter:blur(4px);
+  color:#fff;
+  z-index:9999;
+  overflow-y:auto;
+  padding:30px 20px;
+">
+  <div style="max-width:1200px;margin:0 auto;background:#0f172a;border:1px solid #334155;border-radius:18px;padding:24px;box-shadow:0 10px 40px rgba(0,0,0,0.7);">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+      <h2 id="popupTitulo" style="margin:0;font-size:22px;color:#60a5fa;">📋 Resumo Completo</h2>
+      <button onclick="fecharPopupTabela()" 
+        style="background:#1e293b;border:1px solid #334155;color:#fff;
+        padding:8px 14px;border-radius:10px;cursor:pointer;font-weight:700;">
+        ✖ Fechar
+      </button>
+    </div>
+    <div id="popupContent" style="overflow-x:auto;scrollbar-color:#334155 transparent;"></div>
   </div>
 </div>
 
@@ -903,14 +911,13 @@ setInterval(() => {
 async function abrirPopupTabela() {
   const overlay = document.getElementById("popupOverlay");
   const content = document.getElementById("popupContent");
-  overlay.style.display = "flex";
+  const titulo = document.getElementById("popupTitulo");
+  overlay.style.display = "block";
+  document.body.style.overflow = "hidden"; // trava rolagem da página principal
 
   const empresaSel = document.querySelector("#menuEmpresas input:checked")?.value || "CAP DELICIA";
-  content.innerHTML = `
-    <div style="color:#94a3b8;text-align:center;padding:20px;">
-      ⏳ Buscando dados de <b>${empresaSel}</b>...
-    </div>
-  `;
+  titulo.innerHTML = `📋 Resumo Completo — <span style='color:#a5b4fc;'>${empresaSel}</span>`;
+  content.innerHTML = `<div style="color:#94a3b8;text-align:center;padding:30px;">⏳ Carregando dados...</div>`;
 
   try {
     const url = `${endpointTitulos}?action=listar&empresa=${encodeURIComponent(empresaSel)}`;
@@ -919,81 +926,60 @@ async function abrirPopupTabela() {
     const titulos = json?.titulos || [];
 
     if (!titulos.length) {
-      content.innerHTML = `<div style="color:#94a3b8;padding:20px;text-align:center;">
-        Nenhum registro encontrado para ${empresaSel}.
-      </div>`;
+      content.innerHTML = `<div style="color:#94a3b8;text-align:center;padding:20px;">Nenhum registro encontrado.</div>`;
       return;
     }
 
     let html = `
-      <h3 style="margin:0 0 10px;font-size:18px;color:#60a5fa;">
-        📋 ${empresaSel} — Resumo Completo
-      </h3>
-      <table style="width:100%;border-collapse:collapse;font-size:14px;">
-        <thead style="background:#1e293b;color:#fff;">
+      <table style="width:100%;border-collapse:collapse;font-size:15px;">
+        <thead style="background:#1e293b;color:#fff;position:sticky;top:0;z-index:10;">
           <tr>
-            <th style="padding:8px;border:1px solid #334155;white-space:nowrap;">Fornecedor</th>
-            <th style="padding:8px;border:1px solid #334155;white-space:nowrap;">Vencimento</th>
-            <th style="padding:8px;border:1px solid #334155;white-space:nowrap;">Valor</th>
-            <th style="padding:8px;border:1px solid #334155;white-space:nowrap;">Meio</th>
-            <th style="padding:8px;border:1px solid #334155;white-space:nowrap;">Status</th>
-            <th style="padding:8px;border:1px solid #334155;white-space:nowrap;">Histórico</th>
-            <th style="padding:8px;border:1px solid #334155;text-align:center;white-space:nowrap;">Ações</th>
+            <th style="padding:10px;border:1px solid #334155;text-align:left;">Fornecedor</th>
+            <th style="padding:10px;border:1px solid #334155;">Vencimento</th>
+            <th style="padding:10px;border:1px solid #334155;text-align:right;">Valor</th>
+            <th style="padding:10px;border:1px solid #334155;">Meio</th>
+            <th style="padding:10px;border:1px solid #334155;">Status</th>
+            <th style="padding:10px;border:1px solid #334155;">Histórico</th>
+            <th style="padding:10px;border:1px solid #334155;text-align:center;">Ações</th>
           </tr>
         </thead>
-        <tbody style="background:#0b1220;color:#e5e7eb;">
+        <tbody style="background:#0b1220;color:#e2e8f0;">
     `;
 
     titulos.forEach(t => {
-      const venc = t.vencimento
-        ? new Date(t.vencimento).toLocaleDateString("pt-BR")
-        : "-";
-      const valorNum = parseValor(t.valor);
-      const valorFmt = isNaN(valorNum)
-        ? "R$ 0,00"
-        : valorNum.toLocaleString("pt-BR", {
-            style: "currency",
-            currency: "BRL",
-            minimumFractionDigits: 2
-          });
+      const venc = t.vencimento ? new Date(t.vencimento).toLocaleDateString("pt-BR") : "-";
+      const valor = parseValor(t.valor);
+      const valorFmt = isNaN(valor) ? "R$ 0,00" : valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
       const meio = t.meio_pagamento || "Outros";
       const status = t.status || "Pendente";
       const hist = t.historico || "-";
-      const obs = t.observacao
-        ? `<span style='color:#60a5fa;font-size:13px;'>Obs: ${t.observacao}</span>`
-        : "";
+      const obs = t.observacao ? `<div style='color:#60a5fa;margin-top:4px;'>Obs: ${t.observacao}</div>` : "";
 
       html += `
-        <tr style="border-top:1px solid #22314b;">
-          <td style="padding:6px 8px;border:1px solid #334155;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px;">${t.fornecedor || "-"}</td>
-          <td style="padding:6px 8px;border:1px solid #334155;white-space:nowrap;">${venc}</td>
-          <td style="padding:6px 8px;border:1px solid #334155;text-align:right;white-space:nowrap;">${valorFmt}</td>
-          <td style="padding:6px 8px;border:1px solid #334155;white-space:nowrap;">${meio}</td>
-          <td style="padding:6px 8px;border:1px solid #334155;white-space:nowrap;">${status}</td>
-          <td style="padding:6px 8px;border:1px solid #334155;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px;">${hist} ${obs}</td>
-          <td style="padding:6px;border:1px solid #334155;text-align:center;white-space:nowrap;">
-            <button style="background:#16a34a;color:#fff;border:0;padding:5px 10px;border-radius:6px;cursor:pointer;margin-right:4px;"
-              onclick="atualizarStatusPopup('${empresaSel}',${t.linha},'Aprovado')">✓</button>
-            <button style="background:#ef4444;color:#fff;border:0;padding:5px 10px;border-radius:6px;cursor:pointer;"
-              onclick="atualizarStatusPopup('${empresaSel}',${t.linha},'Negado')">✗</button>
+        <tr style="border-bottom:1px solid #22314b;">
+          <td style="padding:8px 10px;border:1px solid #334155;vertical-align:top;">${t.fornecedor || "-"}</td>
+          <td style="padding:8px 10px;border:1px solid #334155;text-align:center;vertical-align:top;">${venc}</td>
+          <td style="padding:8px 10px;border:1px solid #334155;text-align:right;vertical-align:top;">${valorFmt}</td>
+          <td style="padding:8px 10px;border:1px solid #334155;text-align:center;vertical-align:top;">${meio}</td>
+          <td style="padding:8px 10px;border:1px solid #334155;text-align:center;vertical-align:top;">${status}</td>
+          <td style="padding:8px 10px;border:1px solid #334155;vertical-align:top;">${hist}${obs}</td>
+          <td style="padding:8px 10px;border:1px solid #334155;text-align:center;vertical-align:middle;">
+            <button style="background:#16a34a;color:#fff;border:0;padding:6px 12px;border-radius:8px;
+              font-weight:700;cursor:pointer;margin-right:6px;" 
+              onclick="atualizarStatusPopup('${empresaSel}',${t.linha},'Aprovado')">✓ Aprovar</button>
+            <button style="background:#ef4444;color:#fff;border:0;padding:6px 12px;border-radius:8px;
+              font-weight:700;cursor:pointer;"
+              onclick="atualizarStatusPopup('${empresaSel}',${t.linha},'Negado')">✗ Negar</button>
           </td>
-        </tr>
-      `;
+        </tr>`;
     });
 
-    html += `
-        </tbody>
-      </table>
-    `;
-
+    html += `</tbody></table>`;
     content.innerHTML = html;
   } catch (e) {
-    content.innerHTML = `
-      <div style="color:#f87171;padding:20px;text-align:center;">
-        ❌ Erro ao carregar os dados.<br>
-        <small>${e.message}</small>
-      </div>
-    `;
+    content.innerHTML = `<div style="color:#f87171;padding:20px;text-align:center;">
+      ❌ Erro ao carregar dados<br>${e.message}
+    </div>`;
   }
 }
 
@@ -1001,8 +987,7 @@ async function atualizarStatusPopup(emp, linha, status) {
   try {
     const url = `${endpointTitulos}?action=atualizar&empresa=${encodeURIComponent(emp)}&linha=${linha}&status=${encodeURIComponent(status)}`;
     await fetch(url);
-    alert(`✅ ${emp} linha ${linha} atualizada para ${status}`);
-    abrirPopupTabela(); // recarrega
+    abrirPopupTabela(); // recarrega a tabela
   } catch (e) {
     alert("Erro ao atualizar: " + e.message);
   }
@@ -1010,6 +995,7 @@ async function atualizarStatusPopup(emp, linha, status) {
 
 function fecharPopupTabela() {
   document.getElementById("popupOverlay").style.display = "none";
+  document.body.style.overflow = "auto"; // restaura rolagem da página principal
 }
 </script>
 
