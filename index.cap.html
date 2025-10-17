@@ -874,6 +874,13 @@ lbl.querySelector("input").onchange = ()=>{
 $("filtroMeio").onchange=()=>refresh();
 refresh();
 })();
+  // 🔹 Abre popup.html em uma janela modal
+function abrirPopupTabela() {
+  const popup = window.open('popup.html', 'popupCAP',
+    'width=950,height=700,scrollbars=yes,resizable=yes');
+  if (popup) popup.focus();
+}
+
 // 🔄 Atualização automática a cada 15 segundos
 setInterval(() => {
   refresh();
