@@ -955,42 +955,46 @@ async function abrirPopupTabela() {
       return;
     }
 
-let html = `
-  <div style="overflow-x:auto;width:100%;">
-  <table style="border-collapse:collapse;min-width:900px;width:100%;font-size:15px;">
-    <thead style="background:#1e293b;color:#fff;position:sticky;top:0;z-index:10;">
-      <tr>
-        <th>Fornecedor</th>
-        <th>Vencimento</th>
-        <th>Valor</th>
-        <th>Meio</th>
-        <th>Histórico</th>
-        <th style="text-align:center;">Ações</th>
-      </tr>
-    </thead>
-    <tbody style="background:#0f172a;color:#e2e8f0;">
-`;
+    let html = `
+      <div style="overflow-x:auto;width:100%;">
+      <table style="border-collapse:collapse;min-width:900px;width:100%;font-size:15px;">
+        <thead style="background:#1e293b;color:#fff;position:sticky;top:0;z-index:10;">
+          <tr>
+            <th>Fornecedor</th>
+            <th>Vencimento</th>
+            <th>Valor</th>
+            <th>Meio</th>
+            <th>Histórico</th>
+            <th style="text-align:center;">Ações</th>
+          </tr>
+        </thead>
+        <tbody style="background:#0f172a;color:#e2e8f0;">
+    `;
 
-titulos.forEach(t => {
-  html += `
-    <tr id="popup-row-${t.linha}" style="border-bottom:1px solid #22314b;transition:0.3s;">
-      <td>${t.fornecedor||"-"}</td>
-      <td style="text-align:center;">${new Date(t.vencimento).toLocaleDateString("pt-BR")}</td>
-      <td style="text-align:right;">${BRL(parseValor(t.valor))}</td>
-      <td style="text-align:center;">${t.meio_pagamento||"Outros"}</td>
-      <td>${t.historico||"-"}</td>
-      <td style="text-align:center;">
-        <button onclick="atualizarStatusPopup('${empresaSel}',${t.linha},'Aprovado')" 
-          style="background:#16a34a;color:white;border:0;padding:6px 12px;border-radius:8px;cursor:pointer;font-weight:700;">
-          ✓ Aprovar
-        </button>
-        <button onclick="atualizarStatusPopup('${empresaSel}',${t.linha},'Negado')" 
-          style="background:#ef4444;color:white;border:0;padding:6px 12px;border-radius:8px;cursor:pointer;font-weight:700;">
-          ✗ Negar
-        </button>
-      </td>
-    </tr>`;
-});
+    titulos.forEach(t => {
+      let bg = "";
+      if (t.status === "Aprovado") bg = "background:#064e3b;";
+      else if (t.status === "Negado") bg = "background:#7f1d1d;";
+
+      html += `
+        <tr id="popup-row-${t.linha}" style="${bg} border-bottom:1px solid #22314b;transition:0.3s;">
+          <td>${t.fornecedor||"-"}</td>
+          <td style="text-align:center;">${new Date(t.vencimento).toLocaleDateString("pt-BR")}</td>
+          <td style="text-align:right;">${BRL(parseValor(t.valor))}</td>
+          <td style="text-align:center;">${t.meio_pagamento||"Outros"}</td>
+          <td>${t.historico||"-"}</td>
+          <td style="text-align:center;">
+            <button onclick="atualizarStatusPopup('${empresaSel}',${t.linha},'Aprovado')" 
+              style="background:#16a34a;color:white;border:0;padding:6px 12px;border-radius:8px;cursor:pointer;font-weight:700;">
+              ✓ Aprovar
+            </button>
+            <button onclick="atualizarStatusPopup('${empresaSel}',${t.linha},'Negado')" 
+              style="background:#ef4444;color:white;border:0;padding:6px 12px;border-radius:8px;cursor:pointer;font-weight:700;">
+              ✗ Negar
+            </button>
+          </td>
+        </tr>`;
+    });
 
     html += `</tbody></table></div>`;
     content.innerHTML = html;
@@ -1002,8 +1006,6 @@ titulos.forEach(t => {
 
 async function atualizarStatusPopup(emp, linha, status) {
   const row = document.getElementById(`popup-row-${linha}`);
-
-  // 🔄 efeito visual de carregando
   row.style.opacity = "0.5";
 
   try {
@@ -1012,23 +1014,19 @@ async function atualizarStatusPopup(emp, linha, status) {
 
     if (resp.ok) {
       row.style.opacity = "1";
-
-      // ✅ muda cor da linha conforme status
-      if (status === "Aprovado") {
-        row.style.background = "#064e3b"; // verde escuro
-      } else if (status === "Negado") {
-        row.style.background = "#7f1d1d"; // vermelho escuro
-      }
+      if (status === "Aprovado") row.style.background = "#064e3b";
+      else if (status === "Negado") row.style.background = "#7f1d1d";
+      else row.style.background = "";
     } else {
       alert("⚠️ Erro ao atualizar no servidor");
       row.style.opacity = "1";
     }
-
   } catch (e) {
     alert("❌ Falha ao atualizar: " + e.message);
     row.style.opacity = "1";
   }
 }
+
 
 
 function fecharPopupTabela() {
