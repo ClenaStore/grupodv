@@ -882,7 +882,7 @@ setInterval(() => {
 }, 15000);
 
 </script>
-  <!-- 🔹 POPUP MODAL (Resumo em Tabela) -->
+<!-- 🔹 POPUP MODAL -->
 <div id="popupOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);
   z-index:9999;align-items:center;justify-content:center;">
   <div id="popupBox" style="background:#0f172a;border:1px solid #334155;border-radius:12px;
@@ -895,37 +895,112 @@ setInterval(() => {
 </div>
 
 <script>
-async function abrirPopupTabela(){
+async function abrirPopupTabela() {
   const overlay = document.getElementById("popupOverlay");
   const content = document.getElementById("popupContent");
-  overlay.style.display="flex";
+  overlay.style.display = "flex";
 
-  // Carrega o layout do popup
-  const resp = await fetch("popup.html");
-  const html = await resp.text();
-  content.innerHTML = html;
-
-  // 🔹 Identifica a empresa selecionada no menu
+  // Empresa selecionada
   const empresaSel = document.querySelector("#menuEmpresas input:checked")?.value || "CAP DELICIA";
 
-  // 🔹 Busca os dados direto do GAS
-  try {
-    const req = await fetch(`${endpointTitulos}?action=listar&empresa=${encodeURIComponent(empresaSel)}`);
-    const data = await req.json();
-    const titulos = data.titulos || [];
+  content.innerHTML = `
+    <div style="color:#fff;text-align:center;padding:20px;font-size:15px;">
+      ⏳ Buscando dados de <b>${empresaSel}</b>...
+    </div>
+  `;
 
-    // ✅ Passa os dados para preencher a tabela no popup
-    if (typeof preencherTabelaPopup === "function") preencherTabelaPopup(titulos);
+  try {
+    // ✅ Endpoint do GAS igual ao usado no painel
+    const url = `${endpointTitulos}?action=listar&empresa=${encodeURIComponent(empresaSel)}`;
+    console.log("Buscando:", url);
+    const resp = await fetch(url);
+    const json = await resp.json();
+    console.log("Retorno GAS:", json);
+
+    if (!json || !json.titulos) {
+      content.innerHTML = `<div style="color:#f87171;padding:20px;">❌ Nenhum dado retornado do GAS.</div>`;
+      return;
+    }
+
+    const titulos = json.titulos;
+    if (!titulos.length) {
+      content.innerHTML = `<div style="color:#94a3b8;padding:20px;">Nenhum registro encontrado.</div>`;
+      return;
+    }
+
+    // Monta tabela
+    let html = `
+      <h3 style="margin-top:0;font-size:18px;color:#fff;">
+        📋 Tabela Completa - ${empresaSel}
+      </h3>
+      <table style="width:100%;border-collapse:collapse;font-size:14px;margin-top:10px;">
+        <thead style="background:#1e293b;color:#fff;">
+          <tr>
+            <th style="padding:8px;border:1px solid #334155;">Fornecedor</th>
+            <th style="padding:8px;border:1px solid #334155;">Vencimento</th>
+            <th style="padding:8px;border:1px solid #334155;">Valor</th>
+            <th style="padding:8px;border:1px solid #334155;">Meio</th>
+            <th style="padding:8px;border:1px solid #334155;">Status</th>
+            <th style="padding:8px;border:1px solid #334155;">Histórico</th>
+            <th style="padding:8px;border:1px solid #334155;text-align:center;">Ações</th>
+          </tr>
+        </thead>
+        <tbody style="color:#e2e8f0;background:#0f172a;">
+    `;
+
+    titulos.forEach(t => {
+      const venc = t.vencimento ? new Date(t.vencimento).toLocaleDateString("pt-BR") : "-";
+      const valor = parseFloat(t.valor || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+      const meio = t.meio_pagamento || "Outros";
+      const status = t.status || "Pendente";
+      const hist = t.historico || "-";
+      const obs = t.observacao ? `<div style='color:#60a5fa;font-size:13px;'>Obs: ${t.observacao}</div>` : "";
+
+      html += `
+        <tr>
+          <td style="border:1px solid #334155;padding:6px;">${t.fornecedor || "-"}</td>
+          <td style="border:1px solid #334155;padding:6px;">${venc}</td>
+          <td style="border:1px solid #334155;padding:6px;">${valor}</td>
+          <td style="border:1px solid #334155;padding:6px;">${meio}</td>
+          <td style="border:1px solid #334155;padding:6px;">${status}</td>
+          <td style="border:1px solid #334155;padding:6px;">${hist}${obs}</td>
+          <td style="border:1px solid #334155;padding:6px;text-align:center;">
+            <button style="background:#16a34a;color:#fff;border:0;padding:5px 10px;border-radius:6px;cursor:pointer;margin-right:4px;"
+              onclick="atualizarStatusPopup('${empresaSel}',${t.linha},'Aprovado')">✓</button>
+            <button style="background:#ef4444;color:#fff;border:0;padding:5px 10px;border-radius:6px;cursor:pointer;"
+              onclick="atualizarStatusPopup('${empresaSel}',${t.linha},'Negado')">✗</button>
+          </td>
+        </tr>`;
+    });
+
+    html += `</tbody></table>`;
+    content.innerHTML = html;
   } catch (e) {
-    content.innerHTML = `<p style="color:#f87171">❌ Erro ao carregar dados do GAS</p>`;
-    console.error(e);
+    console.error("Erro:", e);
+    content.innerHTML = `
+      <div style="color:#f87171;padding:20px;text-align:center;">
+        ❌ Erro ao buscar dados do GAS<br>
+        <small>${e.message}</small>
+      </div>
+    `;
   }
 }
 
+async function atualizarStatusPopup(emp, linha, status) {
+  try {
+    const url = `${endpointTitulos}?action=atualizar&empresa=${encodeURIComponent(emp)}&linha=${linha}&status=${encodeURIComponent(status)}`;
+    await fetch(url);
+    alert(`✅ ${emp} linha ${linha} atualizada para ${status}`);
+    abrirPopupTabela(); // recarrega a tabela
+  } catch (e) {
+    alert("Erro ao atualizar: " + e);
+  }
+}
 
-function fecharPopupTabela(){
-  document.getElementById("popupOverlay").style.display="none";
+function fecharPopupTabela() {
+  document.getElementById("popupOverlay").style.display = "none";
 }
 </script>
+
 </body>
 </html>
