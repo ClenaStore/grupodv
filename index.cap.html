@@ -1002,9 +1002,8 @@ titulos.forEach(t => {
 
 async function atualizarStatusPopup(emp, linha, status) {
   const row = document.getElementById(`popup-row-${linha}`);
-  const statusCell = row.querySelector(".status-cell");
 
-  // 🔄 loading visual
+  // 🔄 efeito visual de carregando
   row.style.opacity = "0.5";
 
   try {
@@ -1012,7 +1011,6 @@ async function atualizarStatusPopup(emp, linha, status) {
     const resp = await fetch(url);
 
     if (resp.ok) {
-      statusCell.textContent = status;
       row.style.opacity = "1";
 
       // ✅ muda cor da linha conforme status
@@ -1031,6 +1029,7 @@ async function atualizarStatusPopup(emp, linha, status) {
     row.style.opacity = "1";
   }
 }
+
 
 function fecharPopupTabela() {
   document.getElementById("popupOverlay").style.display = "none";
