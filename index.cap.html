@@ -8,6 +8,7 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/pt.js"></script>
+  
 <style>
 :root{
   --bg:#0b1220;--card:#0f172a;--ink:#e5f0ff;--muted:#a8b3c7;--line:#243043;
@@ -889,10 +890,11 @@ setInterval(() => {
   inset:0;
   background:rgba(0,0,0,0.95);
   backdrop-filter:blur(4px);
-  z-index:9999;
+  z-index:999999999 !important;
   color:#fff;
   overflow:hidden;
 ">
+
   <div style="position:relative;width:100%;height:100%;display:flex;flex-direction:column;">
     
     <!-- 🔹 Cabeçalho fixo -->
