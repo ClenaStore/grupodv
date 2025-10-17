@@ -10,6 +10,7 @@
 <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/pt.js"></script>
   
 <style>
+  
 :root{
   --bg:#0b1220;--card:#0f172a;--ink:#e5f0ff;--muted:#a8b3c7;--line:#243043;
   --teal:#06b6d4;--blue:#4f46e5;--green:#16a34a;--red:#ef4444;--amber:#f59e0b;
@@ -957,12 +958,13 @@ async function abrirPopupTabela() {
     let html = `
       <div style="overflow-x:auto;width:100%;">
       <table style="border-collapse:collapse;min-width:1100px;width:100%;font-size:15px;">
-        <thead style="background:#1e293b;color:#fff;position:sticky;top:0;z-index:10;">
-          <tr>
-            <th>Fornecedor</th><th>Vencimento</th><th>Valor</th><th>Meio</th><th>Status</th>
-            <th>Histórico</th><th>Observação</th><th style="text-align:center;">Ações</th>
-          </tr>
-        </thead>
+      <thead style="background:#1e293b;color:#fff;position:sticky;top:0;z-index:10;">
+  <tr>
+    <th>Fornecedor</th><th>Vencimento</th><th>Valor</th><th>Meio</th>
+    <th>Histórico</th><th style="text-align:center;">Ações</th>
+  </tr>
+</thead>
+
         <tbody style="background:#0f172a;color:#e2e8f0;">
     `;
 
