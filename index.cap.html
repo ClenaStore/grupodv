@@ -886,6 +886,9 @@ lbl.querySelector("input").onchange = ()=>{
 $("filtroMeio").onchange=()=>refresh();
 refresh();
 })();
+
+
+
 // 🔹 Controle de filtros de vencimento (Atuais / Atrasadas)
 let modoData = "atuais"; // padrão
 
@@ -903,22 +906,40 @@ document.getElementById("btnAtrasadas").onclick = () => {
   refresh();
 };
 
-// ✅ Substitui totalmente o filtro por período - agora é só por vencimento
+// ✅ Substitui completamente o filtro por vencimento
 const _processarEmpresa = processarEmpresa;
-processarEmpresa = function(emp, data, _inicio, _fim, filtroStatus, filtroMeio) {
-  const hoje = iso(new Date());
+processarEmpresa = function (emp, data, _inicio, _fim, filtroStatus, filtroMeio) {
+  const hoje = new Date();
+
+  // 🔹 Calcula intervalo de 2 dias antes e 2 dias depois
+  const doisDiasAntes = new Date(hoje);
+  doisDiasAntes.setDate(hoje.getDate() - 2);
+
+  const doisDiasDepois = new Date(hoje);
+  doisDiasDepois.setDate(hoje.getDate() + 2);
+
   let filtradoPorData = data.filter(t => {
-    const venc = iso(t.vencimento);
-    if (modoData === "atuais") return venc === hoje;
-    if (modoData === "atrasadas") return venc < hoje;
+    const venc = new Date(t.vencimento);
+
+    if (modoData === "atuais") {
+      // ✅ inclui 2 dias antes, hoje e 2 dias depois
+      return venc >= doisDiasAntes && venc <= doisDiasDepois;
+    }
+
+    if (modoData === "atrasadas") {
+      // ✅ apenas vencimentos antes de hoje
+      return venc < hoje;
+    }
+
     return true;
   });
 
-  // 🔹 Ordenação automática
+  // 🔹 Ordena por data decrescente (mais recente primeiro)
   filtradoPorData = filtradoPorData.sort((a, b) => new Date(b.vencimento) - new Date(a.vencimento));
 
   _processarEmpresa(emp, filtradoPorData, null, null, filtroStatus, filtroMeio);
 };
+
 
 
 // 🔄 Atualização automática a cada 15 segundos
