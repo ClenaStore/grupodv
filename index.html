@@ -1,606 +1,529 @@
 <!DOCTYPE html>
-<html lang="pt-BR" data-theme="light">
+<html lang="pt-BR" data-theme="dark">
 <head>
   <meta charset="UTF-8">
-  <title>Análise Financeira</title>
+  <title>Análise Financeira - Grupo DV</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 
-  <!-- ================= ICONES DO SITE ================= -->
-  <!-- Link da sua logo aplicado nos ícones -->
+  <!-- ICONES -->
   <link rel="apple-touch-icon" sizes="180x180" href="https://github.com/ClenaStore/grupodv/blob/main/paste/Financeiro.png?raw=true">
   <link rel="icon" type="image/png" sizes="32x32" href="https://github.com/ClenaStore/grupodv/blob/main/paste/Financeiro.png?raw=true">
   <link rel="icon" type="image/png" sizes="16x16" href="https://github.com/ClenaStore/grupodv/blob/main/paste/Financeiro.png?raw=true">
 
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <meta name="apple-mobile-web-app-title" content="Análise Financeira">
-  <meta name="mobile-web-app-capable" content="yes">
-  <!-- ================================================== -->
-
   <style>
-    :root{
-      --bg: #0b1020;
-      --surface: #10172a;
-      --card: #0f172a;
-      --text: #e5e7eb;
-      --muted: #94a3b8;
-      --line: rgba(148,163,184,.25);
-      --brand: #60a5fa;
-      --brand-2: #22d3ee;
-      --ring: rgba(99,102,241,.35);
-      --shadow: 0 20px 60px rgba(2,6,23,.35);
-      --chip-bg:#0b1220;
-      --chip-active:#111827;
-      --chip-text:#cbd5e1;
-      --icon-bg: rgba(255,255,255,.06);
-      --grad: linear-gradient(135deg, var(--brand), var(--brand-2));
-    }
-    [data-theme="light"]{
-      --bg: #f6f7fb;
-      --surface: #ffffff;
-      --card: #ffffff;
-      --text: #0f172a;
-      --muted: #475569;
-      --line: #e5e7eb;
-      --chip-bg:#eef2ff;
-      --chip-active:#1f2937;
-      --chip-text:#111827;
-      --icon-bg: rgba(2,6,23,.06);
-      --shadow: 0 16px 36px rgba(15,23,42,.08);
-    }
+/* ============================================================
+                       TEMA + PALETA
+============================================================ */
+:root{
+  --bg: #0b1120; 
+  --surface: rgba(17, 25, 40, 0.75);
+  --card: rgba(20,25,45,0.55);
+  --card-hover: rgba(25,32,55,0.7);
+  --glass: rgba(255,255,255,0.06);
+  --line: rgba(255,255,255,0.08);
+  --text: #e8ecf2;
+  --muted: #9aa4b2;
+  --brand: #4ca9ff;
+  --brand2: #22d3ee;
+  --brand3: #7dd3fc;
+  --grad: linear-gradient(135deg, var(--brand), var(--brand2));
+  --shadow-lg: 0 28px 80px rgba(0,0,0,.45);
+  --shadow-card: 0 14px 40px rgba(0,0,0,.28);
+}
 
-    * { box-sizing: border-box; }
-    html, body { height: 100%; }
-    body {
-      margin: 0;
-      font-family: ui-sans-serif, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-    }
+[data-theme="light"]{
+  --bg: #f3f6fc;
+  --surface: rgba(255,255,255,0.75);
+  --card: rgba(255,255,255,0.6);
+  --card-hover: rgba(255,255,255,0.95);
+  --text: #111827;
+  --muted: #475569;
+  --line: rgba(0,0,0,0.06);
+  --shadow-lg: 0 28px 80px rgba(0,0,0,.12);
+  --shadow-card: 0 10px 28px rgba(0,0,0,.16);
+}
 
-    /* ===== Tela de senha (Gate) ===== */
-    #gate {
-      position: fixed; inset: 0; z-index: 9999;
-      display: flex; align-items: center; justify-content: center;
-      background: var(--bg);
-    }
-    #gate .box {
-      width: min(92vw, 380px);
-      background: var(--surface);
-      border: 1px solid var(--line);
-      border-radius: 16px;
-      padding: 22px 18px;
-      box-shadow: var(--shadow);
-      text-align: center;
-      animation: fadeIn .25s ease;
-    }
-    #gate img {
-      width: 84px; height: 84px; object-fit: contain;
-      margin-bottom: 10px;
-    }
-    #gate h1 {
-      margin: 8px 0 4px; font-size: 20px;
-    }
-    #gate p {
-      margin: 0 0 14px; color: var(--muted); font-size: 13px;
-    }
-    #gate input {
-      width: 100%; padding: 12px;
-      border: 1px solid var(--line);
-      border-radius: 12px;
-      background: var(--card);
-      color: var(--text);
-      font-size: 15px;
-    }
-    #gate button {
-      margin-top: 10px; width: 100%; padding: 12px;
-      border: none; border-radius: 12px;
-      font-weight: 800;
-      cursor: pointer;
-      background: var(--brand);
-      color: #fff;
-    }
-    #gate .err {
-      color: #dc2626; font-size: 13px;
-      margin-top: 8px; display: none;
-    }
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(6px); }
-      to { opacity: 1; transform: none; }
-    }
+*{box-sizing:border-box;}
+body{
+  margin:0;
+  font-family: Inter, system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
 
-    /* ===== Header e layout ===== */
-    header {
-      position: sticky; top: 0; z-index: 50;
-      backdrop-filter: saturate(160%) blur(8px);
-      background: color-mix(in srgb, var(--surface) 80%, transparent);
-      border-bottom: 1px solid var(--line);
-    }
-    .head-wrap {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 14px 18px;
-      display: flex; align-items: center; gap: 12px;
-    }
-    .brand {
-      display: flex; align-items: center; gap: 10px;
-      text-decoration: none; color: inherit;
-    }
-    .brand img { height: 42px; }
-    .title {
-      font-weight: 800; letter-spacing: .2px;
-      font-size: clamp(18px, 1.6vw, 22px);
-    }
-    .head-spacer { flex: 1; }
-    .icon-btn {
-      border: 1px solid var(--line);
-      background: var(--surface); color: var(--text);
-      padding: 10px 12px;
-      border-radius: 12px;
-      font-weight: 800;
-      cursor: pointer;
-      transition: .2s transform, .2s box-shadow;
-      text-decoration: none;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .icon-btn:hover {
-      transform: translateY(-2px);
-      box-shadow: var(--shadow);
-    }
-    .only-desktop { display: inline-flex; }
-    @media (max-width: 900px) {
-      .only-desktop { display: none !important; }
-    }
+/* ============================================================
+                         LOGIN (GATE)
+============================================================ */
+#gate{
+  position:fixed; inset:0; display:flex;
+  align-items:center; justify-content:center;
+  background:var(--bg); z-index:9999;
+}
 
-    .user { position: relative; }
-    .user-btn {
-      display: flex; align-items: center; gap: 10px;
-      cursor: pointer;
-      border: 1px solid var(--line);
-      background: var(--surface);
-      padding: 6px 8px;
-      border-radius: 999px;
-    }
-    .user-btn img {
-      width: 34px; height: 34px;
-      border-radius: 50%;
-      object-fit: cover;
-      background: var(--icon-bg);
-    }
-    .user-menu {
-      position: absolute; right: 0; top: 110%;
-      background: var(--surface);
-      border: 1px solid var(--line);
-      border-radius: 12px;
-      box-shadow: var(--shadow);
-      min-width: 200px;
-      padding: 6px;
-      display: none;
-    }
-    .user.open .user-menu { display: block; }
-    .user-menu a, .user-menu button {
-      display: flex; width: 100%;
-      background: transparent;
-      color: var(--text);
-      border: none;
-      text-align: left;
-      padding: 10px 12px;
-      border-radius: 10px;
-      cursor: pointer;
-      text-decoration: none;
-      font-weight: 600;
-    }
-    .user-menu a:hover, .user-menu button:hover {
-      background: var(--icon-bg);
-    }
+#gate .box{
+  width:min(92vw,380px);
+  background:var(--surface);
+  border-radius:22px;
+  border:1px solid var(--line);
+  padding:30px;
+  backdrop-filter:blur(30px) saturate(160%);
+  box-shadow:var(--shadow-lg);
+  animation:fadeIn .4s ease;
+  text-align:center;
+}
 
-    .hero {
-      max-width: 1200px;
-      margin: 16px auto 0;
-      padding: 0 18px 18px;
-    }
-    .hero h2 {
-      margin: 8px 0 12px;
-      font-size: clamp(18px, 1.4vw, 20px);
-      color: var(--muted);
-    }
-    .tools {
-      display: flex; gap: 10px;
-      flex-wrap: wrap; align-items: center;
-    }
-    .search {
-      flex: 1; position: relative;
-    }
-    .search input {
-      width: 100%;
-      border: 1px solid var(--line);
-      background: var(--surface);
-      color: var(--text);
-      border-radius: 12px;
-      padding: 12px 14px 12px 40px;
-      outline: none;
-      box-shadow: inset 0 1px 0 rgba(255,255,255,.04);
-    }
-    .search .magnify {
-      position: absolute;
-      left: 12px; top: 50%;
-      transform: translateY(-50%);
-      opacity: .6;
-    }
-    .chips {
-      display: flex; gap: 8px;
-      flex-wrap: wrap;
-    }
-    .chip {
-      border: 1px solid var(--line);
-      background: var(--chip-bg);
-      color: var(--chip-text);
-      padding: 8px 12px;
-      border-radius: 999px;
-      font-weight: 700;
-      cursor: pointer;
-      user-select: none;
-    }
-    .chip.active {
-      background: var(--grad);
-      color: #fff;
-      border-color: transparent;
-    }
+#gate input{
+  width:100%; padding:12px;
+  background:var(--glass);
+  border:1px solid var(--line);
+  border-radius:12px;
+  color:var(--text);
+  font-size:16px;
+  transition:.25s;
+}
+#gate input:focus{
+  border-color:var(--brand);
+  box-shadow:0 0 0 3px rgba(76,169,255,.35);
+}
 
-    .grid {
-      max-width: 1200px;
-      margin: 6px auto 28px;
-      padding: 0 18px;
-      display: grid;
-      gap: 14px;
-      grid-template-columns: repeat(12, minmax(0, 1fr));
-    }
-    @media (max-width: 1160px) {
-      .grid { grid-template-columns: repeat(8, 1fr); }
-    }
-    @media (max-width: 760px) {
-      .grid { grid-template-columns: repeat(4, 1fr); }
-    }
+#gate button{
+  width:100%; margin-top:12px; padding:12px;
+  border:none; border-radius:14px;
+  background:var(--grad);
+  color:#fff; font-weight:800;
+  cursor:pointer; transition:.25s;
+  box-shadow:var(--shadow-card);
+}
+#gate button:hover{
+  transform:translateY(-3px);
+  box-shadow: 0 14px 40px rgba(0,0,0,.35);
+}
 
-    .section-title {
-      grid-column: 1 / -1;
-      margin: 18px 0 6px;
-      color: var(--muted);
-      font-weight: 800;
-      letter-spacing: .2px;
-    }
-    .card {
-      grid-column: span 3 / span 3;
-      background: var(--card);
-      border: 1px solid var(--line);
-      border-radius: 16px;
-      text-decoration: none;
-      color: inherit;
-      padding: 16px;
-      display: flex;
-      gap: 12px;
-      align-items: center;
-      transition: .15s transform, .15s box-shadow, .15s border-color;
-      position: relative;
-      overflow: hidden;
-    }
-    @media (max-width: 1160px) {
-      .card { grid-column: span 4 / span 4; }
-    }
-    @media (max-width: 760px) {
-      .card { grid-column: span 4 / span 4; }
-    }
-    .card::before {
-      content: "";
-      position: absolute;
-      inset: 0 0 auto 0;
-      height: 4px;
-      background: var(--grad);
-      opacity: .9;
-    }
-    .card:hover {
-      transform: translateY(-4px);
-      box-shadow: var(--shadow);
-      border-color: transparent;
-    }
-    .card .icon {
-      width: 46px; height: 46px;
-      border-radius: 12px;
-      display: grid; place-items: center;
-      background: var(--icon-bg);
-      font-size: 22px; font-weight: 800;
-    }
-    .card h3 {
-      margin: 0 0 3px;
-      font-size: 16px;
-    }
-    .card p {
-      margin: 0;
-      color: var(--muted);
-      font-size: 13px;
-    }
-    .badge {
-      position: absolute;
-      right: 12px; top: 12px;
-      font-size: 11px; font-weight: 800;
-      padding: 4px 8px;
-      border-radius: 999px;
-      border: 1px solid var(--line);
-      color: var(--muted);
-      background: color-mix(in srgb, var(--surface) 90%, transparent);
-    }
+/* ============================================================
+                         HEADER PREMIUM
+============================================================ */
+header{
+  position:sticky; top:0; z-index:20;
+  backdrop-filter:blur(25px) saturate(180%);
+  background:rgba(17,23,40,0.45);
+  border-bottom:1px solid var(--line);
+  box-shadow:0 6px 18px rgba(0,0,0,.18);
+}
 
-    footer {
-      max-width: 1200px;
-      margin: 10px auto 30px;
-      padding: 0 18px;
-      color: var(--muted);
-      font-size: 12px;
-      display: flex;
-      justify-content: space-between;
-      gap: 12px;
-      border-top: 1px dashed var(--line);
-      padding-top: 12px;
-    }
+.head-wrap{
+  max-width:1400px; margin:auto;
+  display:flex; align-items:center;
+  padding:16px 20px;
+}
+
+.brand{
+  display:flex; align-items:center; gap:12px;
+  text-decoration:none; color:var(--text);
+}
+.brand img{ height:48px; }
+.title{ font-size:24px; font-weight:900; letter-spacing:.3px; }
+
+.icon-btn{
+  border:1px solid var(--line);
+  background:var(--glass);
+  color:var(--text);
+  padding:10px 16px;
+  border-radius:12px;
+  font-weight:700;
+  cursor:pointer;
+  transition:.25s;
+  display:flex; align-items:center; gap:10px;
+}
+.icon-btn:hover{
+  background:var(--grad);
+  color:#fff;
+  box-shadow:var(--shadow-card);
+  transform:translateY(-3px);
+}
+
+.user-btn img{
+  width:40px; height:40px;
+  border-radius:50%;
+  border:2px solid var(--line);
+}
+
+/* ============================================================
+                        HERO + BUSCA
+============================================================ */
+.hero{
+  max-width:1400px; margin:20px auto 0;
+  padding:0 20px;
+}
+.hero h2{
+  font-size:18px; color:var(--muted);
+}
+
+.search input{
+  width:100%;
+  padding:14px 16px 14px 48px;
+  font-size:16px;
+  background:var(--glass);
+  border:1px solid var(--line);
+  border-radius:16px;
+  transition:.25s;
+}
+.search input:focus{
+  border-color:var(--brand);
+  box-shadow:0 0 0 3px rgba(76,169,255,.35);
+}
+
+.magnify{
+  position:absolute;
+  left:14px; top:50%; transform:translateY(-50%);
+  font-size:18px; opacity:.65;
+}
+
+.chips{
+  display:flex; gap:10px; flex-wrap:wrap;
+  margin-top:12px;
+}
+
+.chip{
+  padding:8px 16px;
+  background:var(--glass);
+  border:1px solid var(--line);
+  border-radius:999px;
+  font-weight:700;
+  cursor:pointer;
+  transition:.25s;
+}
+
+.chip:hover{
+  transform:translateY(-3px);
+  box-shadow:var(--shadow-card);
+}
+
+.chip.active{
+  background:var(--grad);
+  color:#fff;
+  border-color:transparent;
+}
+
+/* ============================================================
+                          GRID PREMIUM
+============================================================ */
+.grid{
+  max-width:1400px;
+  margin:30px auto;
+  padding:0 20px;
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(260px,1fr));
+  gap:22px;
+}
+
+/* ============================================================
+                         CARDS 3D PREMIUM
+============================================================ */
+.card{
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:20px;
+  padding:22px;
+  display:flex; align-items:center; gap:14px;
+  position:relative;
+  backdrop-filter:blur(20px) saturate(180%);
+  box-shadow:var(--shadow-card);
+  text-decoration:none;
+  color:var(--text);
+  transition:.3s ease;
+}
+
+.card:hover{
+  transform:translateY(-6px) scale(1.02);
+  background:var(--card-hover);
+  box-shadow:var(--shadow-lg);
+}
+
+.card::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:linear-gradient(120deg, transparent 65%, rgba(76,169,255,.15));
+  opacity:0;
+  transition:.35s;
+}
+.card:hover::after{opacity:1;}
+
+.card .icon{
+  width:55px; height:55px;
+  background:var(--glass);
+  border-radius:16px;
+  display:grid; place-items:center;
+  font-size:26px;
+  border:1px solid var(--line);
+  color:var(--brand2);
+  box-shadow:inset 0 0 0 1px var(--line);
+}
+
+.badge{
+  position:absolute; top:12px; right:12px;
+  padding:6px 10px;
+  font-size:11px; font-weight:700;
+  background:var(--glass);
+  border-radius:999px;
+  border:1px solid var(--line);
+}
+
+/* ============================================================
+                         FOOTER
+============================================================ */
+footer{
+  max-width:1400px; margin:auto;
+  padding:20px;
+  color:var(--muted);
+  text-align:center;
+  font-size:14px;
+}
+
+@keyframes fadeIn{
+  from{opacity:0; transform:translateY(15px);}
+  to{opacity:1; transform:none;}
+}
   </style>
 
   <script>
-  (function(){
-    const KEY = 'dv_pwd';
-    const t = localStorage.getItem('dv_theme');
-    if(t) document.documentElement.setAttribute('data-theme', t);
+/* ============================================================
+                   LOGICA DE SENHA (MANTIDA)
+============================================================ */
+(function(){
+  const KEY='dv_pwd';
+  const _f=window.fetch.bind(window);
 
-    const _f = window.fetch.bind(window);
-    window.fetch = (input, init = {}) => {
-      const url = (typeof input === 'string') ? input : (input && input.url) || '';
-      const headers = new Headers(init.headers || ((typeof input !== 'string' && input.headers) || {}));
-      const pwd = localStorage.getItem(KEY) || '';
-      if (url.startsWith('/api/') && pwd) headers.set('x-api-key', pwd);
-      return _f(input, Object.assign({}, init, { headers }));
-    };
+  window.fetch=(input,init={})=>{
+    const url=typeof input==="string"?input:(input&&input.url)||'';
+    const headers=new Headers(init.headers||((typeof input!=="string"&&input.headers)||{}));
+    const pwd=localStorage.getItem(KEY)||'';
+    if(url.startsWith('/api/') && pwd) headers.set('x-api-key',pwd);
+    return _f(input,Object.assign({},init,{headers}));
+  };
 
-    async function tryUnlockWith(pwd) {
-      if (!pwd) return false;
-      try {
-        const r = await fetch('/api/ping', { headers: { 'x-api-key': pwd } });
-        if (r.ok) { localStorage.setItem(KEY, pwd); return true; }
-        return false;
-      } catch {
-        localStorage.setItem(KEY, pwd);
-        return true;
-      }
+  async function tryUnlockWith(pwd){
+    if(!pwd) return false;
+    try{
+      const r=await fetch('/api/ping',{headers:{'x-api-key':pwd}});
+      if(r.ok){ localStorage.setItem(KEY,pwd); return true; }
+      return false;
+    }catch{
+      localStorage.setItem(KEY,pwd);
+      return true;
+    }
+  }
+
+  async function ensureGate(){
+    const gate=document.getElementById('gate');
+    const app=document.getElementById('app');
+    const input=document.getElementById('pwdInput');
+    const err=document.getElementById('pwdErr');
+
+    async function submit(){
+      err.style.display='none';
+      const ok=await tryUnlockWith(input.value.trim());
+      if(ok){ gate.style.display='none'; app.hidden=false; }
+      else{ err.textContent='Senha incorreta.'; err.style.display='block'; }
     }
 
-    async function ensureGate() {
-      const app = document.getElementById('app');
-      const gate = document.getElementById('gate');
-      const err = document.getElementById('pwdErr');
-      const input = document.getElementById('pwdInput');
+    document.getElementById('pwdBtn').addEventListener('click',submit);
+    input.addEventListener('keydown',e=>{ if(e.key==='Enter') submit(); });
 
-      async function submit() {
-        err.style.display = 'none';
-        const ok = await tryUnlockWith((input.value || '').trim());
-        if (ok) { gate.style.display = 'none'; app.hidden = false; hydrateUserFromStorage(); }
-        else { err.textContent = 'Senha incorreta.'; err.style.display = 'block'; input.select(); }
-      }
-
-      document.getElementById('pwdBtn').addEventListener('click', submit);
-      input.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); submit(); } });
-
-      const saved = localStorage.getItem(KEY);
-      if (saved) {
-        const ok = await tryUnlockWith(saved);
-        if (ok) { gate.style.display = 'none'; app.hidden = false; hydrateUserFromStorage(); }
-        else { localStorage.removeItem(KEY); gate.style.display = 'flex'; setTimeout(() => input.focus(), 50); }
-      } else {
-        gate.style.display = 'flex';
-        setTimeout(() => input.focus(), 50);
-      }
+    const saved=localStorage.getItem(KEY);
+    if(saved){ 
+      const unlocked=await tryUnlockWith(saved);
+      if(unlocked){ gate.style.display='none'; app.hidden=false; return; }
     }
-    window.addEventListener('DOMContentLoaded', ensureGate);
+    gate.style.display='flex';
+  }
 
-    window.handleLogout = function() { try { localStorage.removeItem(KEY); } catch{} location.reload(); };
-    window.hydrateUserFromStorage = function() {
-      try {
-        const p = JSON.parse(localStorage.getItem('dv_profile') || '{}');
-        if (p && (p.nome || p.foto)) {
-          if (p.foto) document.getElementById('userAvatar').src = p.foto;
-          if (p.nome) document.getElementById('userName').textContent = p.nome;
-        }
-      } catch (e) {}
-    };
-  })();
+  window.addEventListener('DOMContentLoaded',ensureGate);
+})();
   </script>
 </head>
+
 <body>
-  <!-- Gate -->
-  <div id="gate" role="dialog" aria-modal="true" style="display:none">
-    <div class="box">
-      <img src="https://github.com/ClenaStore/grupodv/blob/main/paste/Financeiro.png?raw=true" alt="Grupo DV">
-      <h1>Grupo DV</h1>
-      <p>Digite a senha de acesso para entrar</p>
-      <input id="pwdInput" type="password" placeholder="Senha">
-      <button id="pwdBtn" type="button">Entrar</button>
-      <div id="pwdErr" class="err"></div>
-    </div>
+
+<!-- ============================================================
+                           LOGIN
+============================================================ -->
+<div id="gate">
+  <div class="box">
+    <img src="https://github.com/ClenaStore/grupodv/blob/main/paste/Financeiro.png?raw=true" width="85">
+    <h1 style="margin:10px 0">Grupo DV</h1>
+    <p style="color:var(--muted); margin-bottom:14px;">Digite sua senha para entrar</p>
+    <input id="pwdInput" type="password" placeholder="Senha">
+    <button id="pwdBtn">Entrar</button>
+    <div id="pwdErr" style="color:#ff6b6b; margin-top:10px; display:none"></div>
+  </div>
+</div>
+
+<!-- ============================================================
+                           APLICATIVO
+============================================================ -->
+<div id="app" hidden>
+
+<header>
+  <div class="head-wrap">
+    <a class="brand" href="#">
+      <img src="https://github.com/ClenaStore/grupodv/blob/main/paste/Financeiro.png?raw=true">
+      <div class="title">Análise Financeira</div>
+    </a>
+    <div style="flex:1"></div>
+    <button id="themeToggle" class="icon-btn">🌓 Tema</button>
+  </div>
+</header>
+
+<section class="hero">
+  <h2>Selecione um painel ou pesquise</h2>
+
+  <div class="search" style="position:relative; margin-top:14px;">
+    <span class="magnify">🔍</span>
+    <input id="searchInput" type="search" placeholder="Buscar... (atalho: / )">
   </div>
 
-  <!-- App -->
-  <div id="app" hidden>
-    <header>
-      <div class="head-wrap">
-        <a class="brand" href="index.html">
-          <img src="https://github.com/ClenaStore/grupodv/blob/main/paste/Financeiro.png?raw=true" alt="Logo Grupo DV">
-          <div class="title">Análise Financeira</div>
-        </a>
-        <div class="head-spacer"></div>
-        <a class="icon-btn only-desktop" href="index.relatorios.html">📄 Relatórios</a>
-        <button id="themeToggle" class="icon-btn" type="button">🌓 Tema</button>
-        <div class="user" id="userMenu">
-          <button class="user-btn" type="button">
-            <img id="userAvatar" src="https://github.com/ClenaStore/grupodv/blob/main/paste/Imagem%20do%20WhatsApp%20de%202025-09-08%20%C3%A0(s)%2011.54.12_884bebc9.jpg?raw=true" alt="Avatar do usuário">
-            <strong id="userName" style="font-size:13px">Leonardo</strong>
-          </button>
-          <div class="user-menu">
-            <a href="perfil.html">👤 Meu Perfil</a>
-            <button onclick="handleLogout()">🚪 Sair</button>
-          </div>
-        </div>
-      </div>
-    </header>
-
-    <section class="hero">
-      <h2>Selecione um painel ou filtre pelo nome</h2>
-      <div class="tools">
-        <div class="search" style="min-width:240px">
-          <span class="magnify">🔎</span>
-          <input id="searchInput" type="search" placeholder="Buscar (atalho: / )">
-        </div>
-        <div class="chips" id="chips">
-          <span class="chip active" data-cat="all">Todos</span>
-          <span class="chip" data-cat="financeiro">Financeiro</span>
-          <span class="chip" data-cat="vendas">Vendas</span>
-          <span class="chip" data-cat="operacoes">Operações</span>
-          <span class="chip" data-cat="relatórios">Relatórios</span>
-          <span class="chip" data-cat="qualidade">Qualidade</span>
-        </div>
-      </div>
-    </section>
-
-    <main class="grid" id="grid">
-      <div class="section-title">Financeiro</div>
-      <a class="card" data-cat="financeiro" href="index.resumofinanceiro.html">
-        <div class="icon">📈</div>
-        <div><h3>Resumo Financeiro</h3><p>Entradas por categoria, consolidação diária e WhatsApp</p></div>
-        <span class="badge">Financeiro</span>
-      </a>
-      <a class="card" data-cat="financeiro" href="index.conciliacao.html">
-        <div class="icon">💳</div>
-        <div><h3>Conciliações</h3><p>Comparativo de recebíveis e bandeiras</p></div>
-        <span class="badge">Financeiro</span>
-      </a>     
-      <a class="card" data-cat="financeiro" href="index.cap.html">
-        <div class="icon">🏦</div>
-        <div><h3>CAP</h3><p>Aprovação de pagamentos</p></div>
-        <span class="badge">Financeiro</span>
-      </a>
-      <a class="card" data-cat="financeiro" href="index.meta.html">
-        <div class="icon">🎯</div>
-        <div><h3>Meta de Faturamento</h3><p>Acompanhamento mensal por loja</p></div>
-        <span class="badge">Financeiro</span>
-        </a>
-       </a>
-        <a class="card" data-cat="Financeiro" href="index.relatorios.html">
-        <div class="icon">📈</div>
-        <div><h3>Relatórios periódicos</h3><p>Relatórios das empresas</p></div>
-        <span class="badge">Financeiro</span>
-      </a>
-      <div class="section-title">Vendas</div>
-      <a class="card" data-cat="vendas" href="index.delivery.html">
-        <div class="icon">🚚</div>
-        <div><h3>Vendas Delivery</h3><p>Performance por canal e período</p></div>
-        <span class="badge">Vendas</span>
-      </a>
-      <a class="card" data-cat="vendas" href="index.abc.html">
-        <div class="icon">abc</div>
-        <div><h3>ABC de Vendas</h3><p>Itens classe A/B/C e evolução</p></div>
-        <span class="badge">Vendas</span>
-      </a>
-
-      <div class="section-title">Operações</div>
-      <a class="card" data-cat="operacoes" href="index.travas.html">
-        <div class="icon">🔒</div>
-        <div><h3>Travas</h3><p>Regras e bloqueios operacionais</p></div>
-        <span class="badge">Operações</span>
-      </a>
-      <a class="card" data-cat="operacoes" href="index.couvert.html">
-        <div class="icon">🎤</div>
-        <div><h3>Couvert</h3><p>Arrecadação x pagamentos, histórico e a pagar</p></div>
-        <span class="badge">Operações</span>
-      </a>
-      <a class="card" data-cat="operacoes" href="index.reservas.html">
-        <div class="icon">🗓️</div>
-        <div><h3>Reservas Mercatto</h3><p>Agenda e capacidade</p></div>
-        <span class="badge">Operações</span>
-      </a>
-        <a class="card" data-cat="relatórios" href="index.relatorios.html">
-        <div class="icon">📈</div>
-        <div><h3>Relatórios periódicos</h3><p>Relatórios das empresas</p></div>
-        <span class="badge">Relatórios</span>
-      </a>
-
-      <div class="section-title">Qualidade</div>
-      <a class="card" data-cat="qualidade" href="index.cancelamentos.html">
-        <div class="icon">❌</div>
-        <div><h3>Cancelamentos</h3><p>Motivos e impacto no período</p></div>
-        <span class="badge">Qualidade</span>
-      </a>
-      <a class="card" data-cat="qualidade" href="index.avaliacoes.html">
-        <div class="icon">🔎</div>
-        <div><h3>Pesquisa de satisfação</h3><p>Notas, comentários e tendências</p></div>
-        <span class="badge">Qualidade</span>
-      </a>
-    </main>
-
-    <footer>
-      <div>© Grupo DV • Painel</div>
-      <div>Atalho: pressione <strong>/</strong> para buscar</div>
-    </footer>
+  <div class="chips" id="chips">
+    <span class="chip active" data-cat="all">Todos</span>
+    <span class="chip" data-cat="financeiro">Financeiro</span>
+    <span class="chip" data-cat="vendas">Vendas</span>
+    <span class="chip" data-cat="operacoes">Operações</span>
+    <span class="chip" data-cat="qualidade">Qualidade</span>
+    <span class="chip" data-cat="relatorios">Relatórios</span>
   </div>
+</section>
 
-  <script>
-    const searchInput = document.getElementById('searchInput');
-    const chips = document.getElementById('chips');
-    const cards = Array.from(document.querySelectorAll('.card'));
-    let activeCat = 'all';
+<!-- ============================================================
+                         CARDS / GRID
+============================================================ -->
+<main class="grid" id="grid">
 
-    function applyFilters(){
-      if(!cards.length) return;
-      const q = (searchInput?.value || '').toLowerCase().trim();
-      cards.forEach(card=>{
-        const cat = card.getAttribute('data-cat');
-        const text = (card.getAttribute('data-title') || '').toLowerCase();
-        const matchCat = (activeCat === 'all') || (cat === activeCat);
-        const matchText = !q || text.includes(q);
-        card.style.display = (matchCat && matchText) ? '' : 'none';
-      });
-    }
+  <!-- FINANCEIRO -->
+  <a class="card" data-cat="financeiro" href="index.resumofinanceiro.html">
+    <div class="icon">📊</div>
+    <div><h3>Resumo Financeiro</h3><p style="color:var(--muted)">Consolidação diária e categorias</p></div>
+    <span class="badge">Financeiro</span>
+  </a>
 
-    chips?.addEventListener('click', (e)=>{
-      const chip = e.target.closest('.chip');
-      if(!chip) return;
-      chips.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));
-      chip.classList.add('active');
-      activeCat = chip.getAttribute('data-cat');
-      applyFilters();
-    });
+  <a class="card" data-cat="financeiro" href="index.conciliacao.html">
+    <div class="icon">💳</div>
+    <div><h3>Conciliações</h3><p style="color:var(--muted)">Comparativo de bandeiras</p></div>
+    <span class="badge">Financeiro</span>
+  </a>
 
-    searchInput?.addEventListener('input', applyFilters);
+  <a class="card" data-cat="financeiro" href="index.cap.html">
+    <div class="icon">🏦</div>
+    <div><h3>CAP</h3><p style="color:var(--muted)">Aprovação de pagamentos</p></div>
+    <span class="badge">Financeiro</span>
+  </a>
 
-    window.addEventListener('keydown', (e)=>{
-      if(e.key === '/' && document.activeElement !== searchInput && !document.getElementById('app').hidden){
-        e.preventDefault();
-        searchInput?.focus();
-      }
-    });
+  <a class="card" data-cat="financeiro" href="index.meta.html">
+    <div class="icon">🎯</div>
+    <div><h3>Meta de Faturamento</h3><p style="color:var(--muted)">Acompanhamento mensal</p></div>
+    <span class="badge">Financeiro</span>
+  </a>
 
-    const themeBtn = document.getElementById('themeToggle');
-    function toggleTheme(){
-      const cur = document.documentElement.getAttribute('data-theme') || 'light';
-      const next = (cur === 'light') ? 'dark' : 'light';
-      document.documentElement.setAttribute('data-theme', next);
-      localStorage.setItem('dv_theme', next);
-      if(themeBtn) themeBtn.textContent = '🌓 Tema';
-    }
-    themeBtn?.addEventListener('click', toggleTheme);
+  <!-- VENDAS -->
+  <a class="card" data-cat="vendas" href="index.delivery.html">
+    <div class="icon">🚚</div>
+    <div><h3>Vendas Delivery</h3><p style="color:var(--muted)">Canais e períodos</p></div>
+    <span class="badge">Vendas</span>
+  </a>
 
-    const user = document.getElementById('userMenu');
-    user?.querySelector('.user-btn')?.addEventListener('click', ()=> user.classList.toggle('open'));
-    window.addEventListener('click', (e)=>{
-      if(user && !user.contains(e.target)) user.classList.remove('open');
-    });
-  </script>
+  <a class="card" data-cat="vendas" href="index.abc.html">
+    <div class="icon">🅰️</div>
+    <div><h3>ABC de Vendas</h3><p style="color:var(--muted)">Classe A/B/C e evolução</p></div>
+    <span class="badge">Vendas</span>
+  </a>
+
+  <!-- OPERAÇÕES -->
+  <a class="card" data-cat="operacoes" href="index.travas.html">
+    <div class="icon">🔒</div>
+    <div><h3>Travas</h3><p style="color:var(--muted)">Regras operacionais</p></div>
+    <span class="badge">Operações</span>
+  </a>
+
+  <a class="card" data-cat="operacoes" href="index.couvert.html">
+    <div class="icon">🎤</div>
+    <div><h3>Couvert</h3><p style="color:var(--muted)">Arrecadação e pagamentos</p></div>
+    <span class="badge">Operações</span>
+  </a>
+
+  <a class="card" data-cat="operacoes" href="index.reservas.html">
+    <div class="icon">📅</div>
+    <div><h3>Reservas</h3><p style="color:var(--muted)">Agenda e capacidade</p></div>
+    <span class="badge">Operações</span>
+  </a>
+
+  <!-- QUALIDADE -->
+  <a class="card" data-cat="qualidade" href="index.cancelamentos.html">
+    <div class="icon">❌</div>
+    <div><h3>Cancelamentos</h3><p style="color:var(--muted)">Motivos e impacto</p></div>
+    <span class="badge">Qualidade</span>
+  </a>
+
+  <a class="card" data-cat="qualidade" href="index.avaliacoes.html">
+    <div class="icon">⭐</div>
+    <div><h3>Avaliações</h3><p style="color:var(--muted)">Notas e comentários</p></div>
+    <span class="badge">Qualidade</span>
+  </a>
+
+  <!-- RELATORIOS -->
+  <a class="card" data-cat="relatorios" href="index.relatorios.html">
+    <div class="icon">📑</div>
+    <div><h3>Relatórios</h3><p style="color:var(--muted)">Relatórios gerais</p></div>
+    <span class="badge">Relatórios</span>
+  </a>
+
+</main>
+
+<footer>© Grupo DV — Painéis 2025</footer>
+
+</div>
+
+<!-- ============================================================
+                        FILTROS + TEMA
+============================================================ -->
+<script>
+const searchInput=document.getElementById('searchInput');
+const chips=document.getElementById('chips');
+const cards=Array.from(document.querySelectorAll('.card'));
+let activeCat='all';
+
+function applyFilters(){
+  const q=searchInput.value.toLowerCase().trim();
+  cards.forEach(card=>{
+    const cat=card.getAttribute('data-cat');
+    const matchCat=(activeCat==='all' || cat===activeCat);
+    const matchText=card.innerText.toLowerCase().includes(q);
+    card.style.display=(matchCat && matchText)?'':'none';
+  });
+}
+
+chips.addEventListener('click',e=>{
+  const c=e.target.closest('.chip');
+  if(!c) return;
+  chips.querySelectorAll('.chip').forEach(x=>x.classList.remove('active'));
+  c.classList.add('active');
+  activeCat=c.getAttribute('data-cat');
+  applyFilters();
+});
+
+searchInput.addEventListener('input', applyFilters);
+
+window.addEventListener('keydown', e=>{
+  if(e.key==='/' && document.activeElement!==searchInput){
+    e.preventDefault(); searchInput.focus();
+  }
+});
+
+document.getElementById("themeToggle").onclick=()=>{
+  const root=document.documentElement;
+  const t=root.getAttribute("data-theme");
+  const next=t==="dark"?"light":"dark";
+  root.setAttribute("data-theme",next);
+};
+</script>
+
 </body>
 </html>
